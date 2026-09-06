@@ -1,0 +1,17 @@
+{
+  "name": "現場照片轉 PDF",
+  "short_name": "照片轉PDF",
+  "description": "把現場照片、PDF 與影片畫面合併成一份 PDF，全程在本機處理",
+  "lang": "zh-Hant",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#EDEFF1",
+  "theme_color": "#1B2733",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
