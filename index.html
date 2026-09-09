@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="現場工具箱">
 <meta name="mobile-web-app-capable" content="yes">
-<title>現場工具箱 C1.4</title>
+<title>現場工具箱 C1.5</title>
 <style>
 /* ===== 外殼 ===== */
 
@@ -346,7 +346,7 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">現場工具箱</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C1.4</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C1.5</span></header>
 <nav id="shellTabs">
   <button data-t="CMP" class="on">壓縮</button>
   <button data-t="ANN">標註</button>
@@ -1305,7 +1305,7 @@ var cv=document.getElementById('cv'),ctx=cv.getContext('2d');
 var mc=document.createElement('canvas').getContext('2d');
 var FONT='"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
 var TOOLS={select:['▣','選取'],dim:['↔','尺寸'],area:['▦','面積'],cube:['⬛','立方體'],
-  arrow:['↗','箭頭'],rect:['▭','矩形'],ellipse:['◯','橢圓'],text:['Ａ','文字'],free:['✎','手繪'],line:['／','線']};
+  arrow:['↗','箭頭'],rect:['▭','矩形'],ellipse:['◯','橢圓'],text:['Ａ','文字'],free:['✎','手繪'],line:['／','線'],fit:['◈','實尺']};
 
 function $(i){return document.getElementById(i);}
 function toast(m,ms){var t=$('toast');t.innerHTML=m;t.className='show';
@@ -1355,6 +1355,7 @@ function syncChip(){
   cp.style.display='';cp.textContent=(S.cur+1)+' / '+S.imgs.length+(S.proj?('　'+S.proj):'');
   var t=[];
   t.push(r.unit==='px'?'像素模式':(r.H?('透視校正 '+r.unit):(r.ppcm?('已校正 '+r.unit):('未校正 '+r.unit))));
+  if(r.V)t.push('垂直✓');
   if(r.note)t.push('備註✓');
   if(S.dirty)t.push('<b>● 未存</b>');
   ci.innerHTML=t.join('　');ci.style.display='';
@@ -1369,7 +1370,7 @@ var DB=null,saveT=null;
   rq.onsuccess=function(){DB=rq.result;tryRestore();};}catch(e){}})();
 function serialize(){return S.imgs.map(function(r){
   return{name:r.name,title:r.title,note:r.note,anns:r.anns,ppcm:r.ppcm,unit:r.unit,
-    H:r.H||null,calQuad:r.calQuad||null,blob:r.blob,w:r.w,h:r.h};});}
+    H:r.H||null,calQuad:r.calQuad||null,V:r.V||null,blob:r.blob,w:r.w,h:r.h};});}
 function scheduleSave(){clearTimeout(saveT);saveT=setTimeout(doSave,1200);}
 function doSave(){if(!DB||!S.imgs.length)return;
   try{DB.transaction('s','readwrite').objectStore('s')
@@ -1396,7 +1397,7 @@ function deserialize(items,cb){
         (it.scale.ppu?it.scale.ppu/(UF[it.scale.u]||1):null);}
       out[i]={name:it.name,title:it.title||'',note:it.note||'',cvs:c,w:it.w,h:it.h,
         anns:it.anns||[],undo:[],vp:{s:1,ox:0,oy:0},ppcm:ppcm||null,unit:unit||'cm',
-        H:it.H||null,calQuad:it.calQuad||null,
+        H:it.H||null,calQuad:it.calQuad||null,V:it.V||null,
         blob:it.blob,thumb:c.toDataURL('image/jpeg',0.5)};
       if(--left===0){S.imgs=out;S.cur=0;S.sel=null;ctxBar();
         $('annEmpty').style.display='none';fit();draw();syncChip();if(cb)cb();}};
@@ -1424,7 +1425,7 @@ function loadOne(file,cb){
     var c=document.createElement('canvas');c.width=Math.round(w*r);c.height=Math.round(h*r);
     c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
     c.toBlob(function(bl){cb({name:file.name.replace(/\.[^.]+$/,''),cvs:c,w:c.width,h:c.height,
-      anns:[],undo:[],vp:{s:1,ox:0,oy:0},ppcm:null,unit:'cm',H:null,calQuad:null,title:'',note:'',blob:bl,
+      anns:[],undo:[],vp:{s:1,ox:0,oy:0},ppcm:null,unit:'cm',H:null,calQuad:null,V:null,title:'',note:'',blob:bl,
       thumb:c.toDataURL('image/jpeg',0.5)});},'image/jpeg',0.9);};
   if(window.createImageBitmap){
     createImageBitmap(file,{imageOrientation:'from-image'}).then(function(b){fin(b,b.width,b.height);}).catch(legacy);
@@ -1522,6 +1523,28 @@ function drawQuad(c,pts,r,col,livemode){
   });
   c.restore();
 }
+
+function drawVert(c,pts,r,col,livemode){
+  if(!pts||!pts.length)return;
+  var lw=Math.max(1.2,3/r.vp.s), rad=Math.max(3,9/r.vp.s), i;
+  c.save();c.strokeStyle=col;c.fillStyle=col;c.lineWidth=lw;
+  c.globalAlpha=livemode?1:0.5;
+  if(!livemode)c.setLineDash([lw*3,lw*2.2]);
+  for(i=0;i+1<pts.length;i+=2){
+    c.beginPath();c.moveTo(pts[i].x,pts[i].y);c.lineTo(pts[i+1].x,pts[i+1].y);c.stroke();
+  }
+  c.setLineDash([]);
+  pts.forEach(function(p,i){
+    c.beginPath();c.arc(p.x,p.y,rad,0,6.2832);c.fill();
+    if(livemode){
+      c.save();c.fillStyle='#1a1a1a';c.font='700 '+(rad*1.4)+'px '+FONT;
+      c.textAlign='center';c.textBaseline='middle';
+      c.fillText(String(i+1),p.x,p.y);c.restore();
+    }
+  });
+  c.restore();
+}
+
 function startQuad(){
   if(!cur()){toast('先載入圖片');return;}
   quad={pts:[]}; qdrag=null; S.sel=null; ctxBar(); draw();
@@ -1551,6 +1574,205 @@ function askQuad(){
             '<b>只對這個平面有效</b>：地面校正後量牆面仍會錯，需另外校正',5000);
     },
     onCancel:function(){ quad=null; qdrag=null; draw(); }});
+}
+
+
+/* ==================== 實尺：把真實尺寸投影到照片平面 ====================
+   已有 H（影像→平面 cm）。反矩陣 Hg=H⁻¹ 就是平面→影像。
+   在平面座標畫出真實尺寸的矩形／圓，再逐點用 Hg 投回影像，
+   得到的是透視正確的梯形／橢圓，不是畫面上的正矩形。
+
+   高度靠垂直消失點：相機模型下 t̃ = b̃ + z·λ·v，
+   b̃ 是地面點的未正規化齊次座標，v 是垂直方向的消失點。
+   標兩條平行垂直線求 v，其中一條給實際高度求 λ。          */
+var fitPending=null, vert=null, vdrag=null;
+
+function invH(H){
+  var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7],i=H[8];
+  var A=e*i-f*h, B=-(d*i-f*g), C=d*h-e*g;
+  var det=a*A+b*B+c*C;
+  if(!det||!isFinite(det))return null;
+  var o=[A,-(b*i-c*h),b*f-c*e, B,a*i-c*g,-(a*f-c*d), C,-(a*h-b*g),a*e-b*d];
+  for(var k=0;k<9;k++){o[k]/=det;if(!isFinite(o[k]))return null;}
+  return o;
+}
+/* 有透視校正就用 H；只有單線比例尺時合成一個純縮放矩陣，走同一條路徑 */
+function fitH(r){
+  if(!r)return null;
+  if(r.H)return r.H;
+  if(r.ppcm)return [1/r.ppcm,0,0, 0,1/r.ppcm,0, 0,0,1];
+  return null;
+}
+/* 平面(cm) → 影像，同時回傳未正規化齊次座標供算高度用 */
+function projPt(Hg,X,Y){
+  var x=Hg[0]*X+Hg[1]*Y+Hg[2], y=Hg[3]*X+Hg[4]*Y+Hg[5], w=Hg[6]*X+Hg[7]*Y+Hg[8];
+  if(!w||!isFinite(w))return null;
+  return {x:x/w, y:y/w, h:[x,y,w]};
+}
+function fitTop(r,hom,hcm){
+  var V=r.V;
+  if(!V||!hcm||!hom)return null;
+  var k=hcm*V.lam;
+  var X=hom[0]+k*V.v[0], Y=hom[1]+k*V.v[1], W=hom[2]+k*V.v[2];
+  if(!W||!isFinite(W))return null;
+  return {x:X/W, y:Y/W};
+}
+/* 地面投影多邊形（影像座標） */
+function fitPoly(a,r){
+  var H=fitH(r); if(!H)return null;
+  var Hg=invH(H); if(!Hg)return null;
+  var th=(a.rot||0)*Math.PI/180, cs=Math.cos(th), sn=Math.sin(th), src=[],i;
+  if(a.shape==='circle'){
+    var R=a.W/2;
+    for(i=0;i<48;i++){var u=i/48*6.2831853;src.push([R*Math.cos(u),R*Math.sin(u)]);}
+  }else{
+    var w=a.W/2, d=(a.D||a.W)/2;
+    src=[[-w,-d],[w,-d],[w,d],[-w,d]];
+  }
+  var out=[];
+  for(i=0;i<src.length;i++){
+    var X=a.X+src[i][0]*cs-src[i][1]*sn, Y=a.Y+src[i][0]*sn+src[i][1]*cs;
+    var q=projPt(Hg,X,Y);
+    if(!q)return null;
+    out.push(q);
+  }
+  return out;
+}
+function fmtCm(r,cm){
+  var f=UF[(r&&r.unit&&r.unit!=='px')?r.unit:'cm']||1, v=cm/f;
+  return (v<100?v.toFixed(1):Math.round(v))+' '+((r&&r.unit&&r.unit!=='px')?r.unit:'cm');
+}
+
+/* ==================== 垂直校正（兩條平行垂直線） ==================== */
+function cross3(a,b){return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];}
+
+/* 實尺輸入面板：新增（a=null）與編輯共用 */
+function fitSheet(shape,a){
+  var r=cur();
+  if(!r){toast('先載入圖片');return;}
+  if(!fitH(r)){
+    toast('實尺需要先校準<br>斜拍請用「透視校正（四點）」，正拍可用單線比例尺',4600);
+    return;
+  }
+  shape=a?a.shape:shape;
+  var isC=(shape==='circle');
+  var u=(r.unit==='px'?'cm':r.unit), f=UF[u]||1;
+  function toU(cm){ return cm?String(+(cm/f).toFixed(1)):''; }
+  var h='<h3>'+(a?'編輯實尺':'新增實尺')+'　'+(isC?'圓柱／水桶':'矩形設備')+
+        '　尺寸單位：'+u+'</h3>'+
+        '<input class="fld" id="fName" placeholder="名稱（可留空）" value="'+
+          ((a&&a.s)?a.s.replace(/"/g,'&quot;'):'')+'">'+
+        '<div class="row"><span class="g">'+(isC?'直徑':'寬')+'</span>'+
+          '<input class="spin" style="width:96px;text-align:center" id="fW" inputmode="decimal" value="'+
+          (a?toU(a.W):'')+'"></div>';
+  if(!isC)h+='<div class="row"><span class="g">深</span>'+
+          '<input class="spin" style="width:96px;text-align:center" id="fD" inputmode="decimal" value="'+
+          (a?toU(a.D):'')+'"></div>';
+  h+='<div class="row"><span class="g">高<small>'+
+        (r.V?'已做垂直校正，會畫出立體':'未做垂直校正，只會標數字（地面投影仍然準確）')+
+        '</small></span><input class="spin" style="width:96px;text-align:center" id="fH" inputmode="decimal" value="'+
+        (a?toU(a.Hh):'')+'"></div>'+
+     '<div class="row"><span class="g">角度</span><div class="spin">'+
+        '<button data-r="-15">↺</button><input id="fR" inputmode="numeric" value="'+
+        (a?(a.rot||0):0)+'"><button data-r="15">↻</button></div></div>'+
+     '<div class="row" style="justify-content:center;background:var(--hit);color:#1a1a1a;'+
+        'font-weight:700;cursor:pointer" id="fOk">'+(a?'更新':'下一步：在圖上點一下放置')+'</div>';
+  sheet(h,function(){
+    $('sheet').querySelectorAll('[data-r]').forEach(function(el){
+      el.onclick=function(){
+        var cu=parseInt($('fR').value,10)||0;
+        $('fR').value=((cu+parseInt(el.dataset.r,10))%360+360)%360;
+        if(a){a.rot=parseInt($('fR').value,10)||0;mark();draw();}
+      };});
+    $('fOk').onclick=function(){
+      var W=parseFloat($('fW').value)*f;
+      var D=isC?W:parseFloat(($('fD')||{}).value)*f;
+      var Hh=parseFloat($('fH').value)*f;
+      if(!(W>0)||(!isC&&!(D>0))){toast('請填寫尺寸');return;}
+      if(!(Hh>0))Hh=0;
+      var rot=parseInt($('fR').value,10)||0;
+      var nm=($('fName').value||'').trim();
+      sheetClose();
+      if(a){
+        pushUndo();
+        a.W=W;a.D=D;a.Hh=Hh;a.rot=rot;a.s=nm;
+        mark();draw();
+      }else{
+        fitPending={shape:shape,W:W,D:D,Hh:Hh,s:nm,rot:rot};
+        setTool('select');S.sel=null;ctxBar();
+        toast('在圖上點一下決定擺放位置<br>放好後可拖曳移動、再點一下改尺寸',4200);
+      }
+    };
+  });
+}
+/* 元大設備清單 */
+function fitList(){
+  var r=cur();
+  if(!r){toast('先載入圖片');return;}
+  if(!fitH(r)){toast('實尺需要先校準（四點透視或單線比例尺）',4200);return;}
+  var cat='', h='<h3>元大設備尺寸（單位 mm，選擇後直接生成實尺）</h3><div style="max-height:56vh;overflow:auto">';
+  EQUIP.forEach(function(e,i){
+    if(e[0]!==cat){cat=e[0];h+='<h3 style="margin-top:10px">'+cat+'</h3>';}
+    var isC=(e[3]===null);
+    h+='<div class="row" data-eq="'+i+'" style="cursor:pointer"><span class="g">'+e[1]+
+       '<small>'+(isC?('Ø'+e[2]+' × 高 '+e[4]):(e[2]+' × '+e[3]+' × '+e[4]))+'</small></span>'+
+       '<i style="font-style:normal;opacity:.6">'+(isC?'◯':'▭')+'</i></div>';
+  });
+  h+='</div>';
+  sheet(h,function(){
+    $('sheet').querySelectorAll('[data-eq]').forEach(function(el){
+      el.onclick=function(){
+        var e=EQUIP[parseInt(el.dataset.eq,10)], isC=(e[3]===null);
+        sheetClose();
+        fitPending={shape:isC?'circle':'rect', W:e[2]/10, D:isC?e[2]/10:e[3]/10,
+                    Hh:e[4]/10, s:e[1], rot:0};
+        setTool('select');S.sel=null;ctxBar();
+        toast('已選「'+e[1]+'」<br>在圖上點一下決定擺放位置',4000);
+      };});
+  });
+}
+
+function startVert(){
+  var r=cur();
+  if(!r){toast('先載入圖片');return;}
+  if(!fitH(r)){toast('請先做校準<br>垂直校正需要地面平面當基準',3600);return;}
+  vert={pts:[]}; vdrag=null; S.sel=null; ctxBar(); draw();
+  toast('點四個點：<b>第①條垂直線的底、頂，再第②條的底、頂</b><br>'+
+        '兩條線在真實世界要互相平行且垂直於地面<br>'+
+        '例如門框兩側、櫃子兩個直角邊、牆角線',6000);
+}
+function askVert(){
+  var r=cur();
+  ask({title:'第①條線的實際高度',
+    msg:'只要第①條（你先點的那兩點）的高度\n門框 200　室內門 210　磁磚 30 或 60\n診療椅靠背、櫃子高度都可以',
+    value:'200', ph:'例：200', numeric:true, units:['cm','mm','m','吋'],
+    unit:(r.unit==='px'?'cm':r.unit),
+    onOk:function(v,u){
+      var Z=parseFloat(v)*(UF[u]||1);
+      if(!(Z>0)){toast('請輸入大於 0 的高度');vert=null;draw();return;}
+      var P=vert.pts.map(function(p){return [p.x,p.y,1];});
+      var v1=cross3(cross3(P[0],P[1]), cross3(P[2],P[3]));   // 垂直消失點
+      var H=fitH(r), Hg=invH(H);
+      if(!Hg){toast('校準矩陣異常');vert=null;draw();return;}
+      var pl=applyH(H,vert.pts[0].x,vert.pts[0].y);
+      if(!pl){toast('底點不在校準平面上');vert=null;draw();return;}
+      var b=projPt(Hg,pl.X,pl.Y);
+      if(!b){toast('底點投影失敗');vert=null;draw();return;}
+      var c1=cross3(b.h,P[1]), c2=cross3(v1,P[1]);
+      var k=0;
+      for(var j=1;j<3;j++) if(Math.abs(c2[j])>Math.abs(c2[k])) k=j;
+      if(Math.abs(c2[k])<1e-9){
+        toast('兩條線太接近平行於視線<br>換兩條分得開一點的垂直線',4200);
+        vert=null;draw();return;
+      }
+      var lam=-c1[k]/(Z*c2[k]);
+      if(!isFinite(lam)||lam===0){toast('算不出垂直比例，請重新標定');vert=null;draw();return;}
+      pushUndo();
+      r.V={v:v1, lam:lam, ref:vert.pts.slice(), Z:Z};
+      vert=null; vdrag=null; mark(); draw(); syncChip();
+      toast('垂直校正完成，實尺可以畫出立體高度了',3600);
+    },
+    onCancel:function(){vert=null;vdrag=null;draw();}});
 }
 
 /* ===== 換算 ===== */
@@ -1613,6 +1835,19 @@ function labelsOf(a,r){
     L.push({t:'寬 '+(a.lw||fmtLen(r,q.R-q.L,q.L,(q.T+q.B)/2,q.R,(q.T+q.B)/2)),x:(q.L+q.R)/2,y:q.B+a.f*1.0,f:a.f});
     L.push({t:'高 '+(a.lh||fmtLen(r,q.B-q.T,(q.L+q.R)/2,q.T,(q.L+q.R)/2,q.B)),x:q.L-a.f*1.7,y:(q.T+q.B)/2,f:a.f});
     L.push({t:'深 '+(a.ld||fmtLen(r,Math.hypot(a.dx,a.dy),a.x2,a.y2,a.x2+a.dx,a.y2+a.dy)),x:q.R+a.dx/2+a.f*0.4,y:q.B+a.dy/2,f:a.f});
+  }else if(a.t==='fit'){
+    var G=fitPoly(a,r);
+    if(G){
+      var cx=0,cy=0,ty=1e9;
+      G.forEach(function(p){cx+=p.x;cy+=p.y;if(p.y<ty)ty=p.y;});
+      cx/=G.length;cy/=G.length;
+      var dm=(a.shape==='circle')?('Ø'+fmtCm(r,a.W)):(fmtCm(r,a.W)+' × '+fmtCm(r,a.D));
+      if(a.Hh)dm+='　高 '+fmtCm(r,a.Hh);
+      if(a.s)L.push({t:a.s,x:cx,y:ty-a.f*1.9,f:a.f,strong:true});
+      L.push({t:dm,x:cx,y:cy,f:a.f});
+    }else{
+      L.push({t:'需先校準才能顯示實尺',x:0,y:0,f:a.f});
+    }
   }else if(a.t==='ellipse'){
     if(a.label){q=box(a);L.push({t:a.label,x:(q.L+q.R)/2,y:q.T-a.f*0.9,f:a.f});}
   }else if(a.t==='free'){
@@ -1636,6 +1871,8 @@ function draw(){
   if(live)drawAnn(ctx,live,r);
   if(r.calQuad&&!quad)drawQuad(ctx,r.calQuad,r,'#3fb27f',false);
   if(quad)drawQuad(ctx,quad.pts,r,'#ffb020',true);
+  if(vert)drawVert(ctx,vert.pts,r,'#ffb020',true);
+  else if(r.V&&r.V.ref)drawVert(ctx,r.V.ref,r,'#3fb27f',false);
   ctx.restore();
   if(S.sel&&r.anns.indexOf(S.sel)>=0){
     handles(S.sel).forEach(function(p){
@@ -1688,6 +1925,26 @@ function drawAnn(c,a,r){
   }else if(t==='area'){
     q=box(a);c.globalAlpha=0.12;c.fillRect(q.L,q.T,q.R-q.L,q.B-q.T);c.globalAlpha=1;
     c.strokeRect(q.L,q.T,q.R-q.L,q.B-q.T);
+  }else if(t==='fit'){
+    var G=fitPoly(a,r), i2;
+    if(G){
+      c.globalAlpha=0.16;
+      c.beginPath();G.forEach(function(p,i){i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y);});c.closePath();c.fill();
+      c.globalAlpha=1;
+      c.beginPath();G.forEach(function(p,i){i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y);});c.closePath();c.stroke();
+      if(a.Hh&&r.V){
+        var T=[],ok=true;
+        for(i2=0;i2<G.length;i2++){var tp=fitTop(r,G[i2].h,a.Hh);if(!tp){ok=false;break;}T.push(tp);}
+        if(ok){
+          c.globalAlpha=0.75;
+          var st=(a.shape==='circle')?12:1;
+          for(i2=0;i2<G.length;i2+=st){c.beginPath();c.moveTo(G[i2].x,G[i2].y);c.lineTo(T[i2].x,T[i2].y);c.stroke();}
+          c.globalAlpha=0.55;c.setLineDash([a.w*2.5,a.w*2]);
+          c.beginPath();T.forEach(function(p,i){i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y);});c.closePath();c.stroke();
+          c.setLineDash([]);c.globalAlpha=1;
+        }
+      }
+    }
   }else if(t==='cube'){
     q=cubePts(a);
     c.globalAlpha=0.5;c.setLineDash([a.w*2.5,a.w*2]);
@@ -1705,6 +1962,7 @@ function drawAnn(c,a,r){
   c.restore();
 }
 function handles(a){
+  if(a.t==='fit')return[];
   if(a.t==='text')return[{x:a.x,y:a.y}];
   if(a.t==='free')return[a.p[0],a.p[a.p.length-1]];
   if(a.t==='cube')return[{x:a.x1,y:a.y1},{x:a.x2,y:a.y2},{x:a.x2+a.dx,y:a.y2+a.dy}];
@@ -1731,6 +1989,16 @@ function hit(p,tol){
     }else if(a.t==='free'){
       for(var j=1;j<a.p.length;j++)
         if(d2seg(p.x,p.y,a.p[j-1].x,a.p[j-1].y,a.p[j].x,a.p[j].y)<tol+a.w)return a;
+    }else if(a.t==='fit'){
+      var Gf=fitPoly(a,r);
+      if(Gf){
+        var inside=false;
+        for(var gi=0,gj=Gf.length-1;gi<Gf.length;gj=gi++){
+          if((Gf[gi].y>p.y)!==(Gf[gj].y>p.y)&&
+             p.x<(Gf[gj].x-Gf[gi].x)*(p.y-Gf[gi].y)/(Gf[gj].y-Gf[gi].y)+Gf[gi].x) inside=!inside;
+        }
+        if(inside)return a;
+      }
     }else if(a.t==='area'){
       var qa=box(a);
       if(p.x>qa.L-tol&&p.x<qa.R+tol&&p.y>qa.T-tol&&p.y<qa.B+tol)return a;
@@ -1761,6 +2029,28 @@ cv.addEventListener('pointerdown',function(e){
   if(npc()===2){live=null;drag=null;g=gstate();return;}
   if(npc()>2)return;
   var p=toImg(e.clientX,e.clientY),r=cur(),tol=16/r.vp.s;
+  if(vert){
+    if(vert.pts.length<4){vert.pts.push(p);vdrag=vert.pts.length-1;}
+    else{
+      var vb=-1,vd=1e9;
+      vert.pts.forEach(function(pt,i){var dd=Math.hypot(pt.x-p.x,pt.y-p.y);if(dd<vd){vd=dd;vb=i;}});
+      vdrag=(vd<tol*2.4)?vb:null;
+    }
+    draw();return;
+  }
+  if(fitPending){
+    var Hf=fitH(r);
+    if(!Hf){toast('請先做校準（四點透視或單線比例尺）',3600);fitPending=null;return;}
+    var plf=applyH(Hf,p.x,p.y);
+    if(!plf){toast('這個位置不在校準平面上');return;}
+    pushUndo();
+    var nf={t:'fit',shape:fitPending.shape,W:fitPending.W,D:fitPending.D,Hh:fitPending.Hh,
+            s:fitPending.s,X:plf.X,Y:plf.Y,rot:fitPending.rot||0,
+            c:S.color,w:S.w,f:S.f,lo:[]};
+    r.anns.push(nf);fitPending=null;S.sel=nf;setTool('select');ctxBar();mark();draw();
+    toast('放好了。拖曳可移動，再點一下可改尺寸與角度',3400);
+    return;
+  }
   if(quad){
     if(quad.pts.length<4){quad.pts.push(p);qdrag=quad.pts.length-1;}
     else{
@@ -1802,6 +2092,7 @@ cv.addEventListener('pointermove',function(e){
   if(npc()>=2&&g){var n=gstate(),k=n.d/g.d,v=cur().vp;
     v.ox=n.cx-(g.cx-v.ox)*k;v.oy=n.cy-(g.cy-v.oy)*k;v.s*=k;g=n;draw();return;}
   var p=toImg(e.clientX,e.clientY);
+  if(vert){if(vdrag!==null&&vert.pts[vdrag]){vert.pts[vdrag]=p;draw();}return;}
   if(quad){if(qdrag!==null&&quad.pts[qdrag]){quad.pts[qdrag]=p;draw();}return;}
   if(live){
     if(live.t==='free'){var L=live.p[live.p.length-1];
@@ -1820,7 +2111,9 @@ cv.addEventListener('pointermove',function(e){
       else if(a.t==='cube'&&drag.idx===2){a.dx=p.x-a.x2;a.dy=p.y-a.y2;}
       else if(drag.idx===0){a.x1=p.x;a.y1=p.y;}else{a.x2=p.x;a.y2=p.y;}
     }else{dx=p.x-drag.lx;dy=p.y-drag.ly;drag.lx=p.x;drag.ly=p.y;
-      if(a.t==='text'){a.x+=dx;a.y+=dy;}
+      if(a.t==='fit'){var H2=fitH(cur());var pl2=H2&&applyH(H2,p.x,p.y);
+        if(pl2){a.X=pl2.X;a.Y=pl2.Y;}}
+      else if(a.t==='text'){a.x+=dx;a.y+=dy;}
       else if(a.t==='free')a.p.forEach(function(q){q.x+=dx;q.y+=dy;});
       else{a.x1+=dx;a.y1+=dy;a.x2+=dx;a.y2+=dy;}}
     mark();draw();}
@@ -1828,6 +2121,11 @@ cv.addEventListener('pointermove',function(e){
 function endPtr(e){
   delete ptrs[e.pointerId];
   if(npc()<2)g=null;
+  if(vert){
+    var vWas=vdrag!==null; vdrag=null; drag=null; live=null;
+    if(vWas&&vert.pts.length===4)askVert();
+    return;
+  }
   if(quad){
     var wasDrag=qdrag!==null; qdrag=null; drag=null; live=null;
     if(wasDrag&&quad.pts.length===4)askQuad();
@@ -1861,6 +2159,7 @@ cv.addEventListener('wheel',function(e){if(!cur())return;e.preventDefault();
 /* ===== 改數字 ===== */
 var NUMRE=/^[0-9]+(\.[0-9]+)?$/;
 function editAnn(a){
+  if(a.t==='fit'){fitSheet(a.shape,a);return;}
   if(!a){toast('先用「選取」點一個標註');return;}
   var r=cur();
   if(a.t==='text'){ask({title:'修改文字',value:a.s,onOk:function(v){pushUndo();a.s=v;mark();draw();}});return;}
@@ -1919,7 +2218,15 @@ $('dkTool').onclick=function(){
   function gi(k){return '<div class="gi'+(S.tool===k?' on':'')+'" data-k="'+k+'"><i>'+TOOLS[k][0]+'</i>'+TOOLS[k][1]+'</div>';}
   var h='<h3>測量（會依比例尺自動換算，矩形／面積的數字貼在對應邊）</h3><div class="grid">';
   ['dim','area','rect','cube'].forEach(function(k){h+=gi(k);});
-  h+='</div><h3>繪圖</h3><div class="grid">';
+  var _rr=cur(), _hasCal=!!(_rr&&fitH(_rr));
+  h+='</div><h3>實尺（輸入實際尺寸，投影到照片上擬放）'+
+     (_hasCal?(_rr.V?'　立體高度可用':'　高度僅標數字，可加做垂直校正'):'　<b>需先校準</b>')+
+     '</h3><div class="grid">'+
+     '<div class="gi" data-fit="list"><i>☰</i>元大設備清單</div>'+
+     '<div class="gi" data-fit="rect"><i>▭</i>自訂矩形</div>'+
+     '<div class="gi" data-fit="circle"><i>◯</i>自訂圓柱</div>'+
+     '<div class="gi" data-cal="3"><i>↕</i>垂直校正（兩線）</div>'+
+     '</div><h3>繪圖</h3><div class="grid">';
   ['arrow','line','ellipse','text','free'].forEach(function(k){h+=gi(k);});
   var _r=cur();
   h+='</div><h3>校準　'+(_r&&_r.H?'目前：透視校正（斜拍已修正）':(_r&&_r.ppcm?'目前：單線比例尺':'目前：未校準'))+
@@ -1928,6 +2235,10 @@ $('dkTool').onclick=function(){
      '<div class="gi" data-cal="2"><i>⛶</i>透視校正（四點）</div>'+
      '<div class="gi" data-cal="0"><i>✕</i>清除校準</div></div>';
   sheet(h,function(){
+    $('sheet').querySelectorAll('[data-fit]').forEach(function(el){
+      el.onclick=function(){sheetClose();
+        var v=el.dataset.fit;
+        if(v==='list')fitList(); else fitSheet(v,null);};});
     $('sheet').querySelectorAll('[data-k]').forEach(function(el){
       el.onclick=function(){S.lastDraw=el.dataset.k;setTool(el.dataset.k);sheetClose();};});
     $('sheet').querySelectorAll('[data-cal]').forEach(function(el){
@@ -1935,7 +2246,8 @@ $('dkTool').onclick=function(){
         var v=el.dataset.cal;
         if(v==='1')startCal();
         else if(v==='2')startQuad();
-        else{var r=cur();if(r){r.ppcm=null;r.H=null;r.calQuad=null;quad=null;
+        else if(v==='3')startVert();
+        else{var r=cur();if(r){r.ppcm=null;r.H=null;r.calQuad=null;r.V=null;quad=null;vert=null;
           mark();draw();syncChip();toast('校準已清除');}}};});
   });};
 function startCal(){if(!cur()){toast('先載入圖片');return;}
@@ -1944,6 +2256,45 @@ function startCal(){if(!cur()){toast('先載入圖片');return;}
   toast('在圖上畫一條「已知長度」的線<br>例如門框寬、地磚、鋼瓶直徑',3400);}
 
 /* ===== 樣式 ===== */
+
+/* 元大各設備尺寸（2025-09-16）：[類別, 名稱, 寬, 深, 高]，單位 mm。
+   圓柱類第 3 欄為直徑、第 4 欄為 null。 */
+var EQUIP=[
+ ['空壓機','S-101 / S-301',490,950,720],
+ ['空壓機','S-888',490,880,820],
+ ['空壓機','NDC-A2 / A3',520,640,715],
+ ['空壓機','SLP-07EE',355,590,690],
+ ['空壓機','SLP-22EF',453,507,990],
+ ['空壓機','SLP-37EF',545,622,1180],
+ ['空壓機','變頻器電箱（岩田用）',300,300,180],
+ ['冷凍乾燥機','TRX-5D',233,490,455],
+ ['冷凍乾燥機','SPL-0042（Parker）',210,450,430],
+ ['吸唾機','VFD-20',330,520,720],
+ ['吸唾機','SS-1B 系列',330,450,580],
+ ['吸唾機','NDV-22 / NDV-33',520,640,730],
+ ['吸唾機','K2',350,420,810],
+ ['吸唾機','S2',390,530,800],
+ ['吸唾機','V4',380,450,780],
+ ['吸唾機','V4 空間預抓（含分離桶.消音箱）',800,500,900],
+ ['假牙製作台','MM-05A',390,720,1000],
+ ['假牙製作台','MM-05P',430,460,1000],
+ ['口外飛沫抽吸機','MM-10D 主機',325,375,375],
+ ['口外飛沫抽吸機','MM-10D 子機',232,325,280],
+ ['攜帶式診療設備組','PDE-T',420,350,1160],
+ ['攜帶式診療設備組','PDE-M',410,300,560],
+ ['攜帶式診療設備組','PDE-D',270,390,60],
+ ['其他','石膏沉澱箱 CLEtw',310,230,330],
+ ['其他','石膏集塵箱 CDBtw',310,230,330],
+ ['其他','V4 消音箱',310,230,210],
+ ['RO 逆滲透','LU-600',389,250,620],
+ ['RO 逆滲透','LU-800',460,280,830],
+ ['圓柱','V4 分離桶　Ø180',180,null,445],
+ ['圓柱','V4 分離桶（含滑接螺牙）Ø205',205,null,445],
+ ['圓柱','氣水分離桶　Ø105',105,null,370],
+ ['圓柱','RO 儲水桶 10.7Gal　Ø389',389,null,575],
+ ['圓柱','RO 儲水桶 20Gal　Ø389',389,null,771]
+];
+
 var COLORS=['#ff2d2d','#ffd400','#2bd4ff','#37e07a','#ff8a00','#c94fff','#ffffff','#111111'];
 function styleSheet(){
   var t=(S.sel&&cur()&&cur().anns.indexOf(S.sel)>=0)?S.sel:null;
@@ -2061,11 +2412,11 @@ function exportJSON(){
   items.forEach(function(it,i){
     b2d(it.blob,function(d){
       out[i]={name:it.name,title:it.title,note:it.note,anns:it.anns,
-        ppcm:it.ppcm,unit:it.unit,H:it.H||null,calQuad:it.calQuad||null,w:it.w,h:it.h,img:d};
+        ppcm:it.ppcm,unit:it.unit,H:it.H||null,calQuad:it.calQuad||null,V:it.V||null,w:it.w,h:it.h,img:d};
       if(--left===0){
-        var j=JSON.stringify({app:'cy-annot',ver:'1.6',proj:S.proj,ts:Date.now(),items:out});
+        var j=JSON.stringify({app:'cy-annot',ver:'1.7',proj:S.proj,ts:Date.now(),items:out});
         dl(new Blob([j],{type:'application/json'}),
-          stamp()+'_'+(S.proj||'標註專案')+'_C1.6.json');
+          stamp()+'_'+(S.proj||'標註專案')+'_C1.7.json');
         clean();toast('專案檔已下載');}});});
 }
 $('fj').onchange=function(e){
@@ -2078,7 +2429,7 @@ $('fj').onchange=function(e){
       S.proj=d.proj||'';
       deserialize(d.items.map(function(it){
         return{name:it.name,title:it.title,note:it.note,anns:it.anns,ppcm:it.ppcm,
-          unit:it.unit,H:it.H||null,calQuad:it.calQuad||null,w:it.w,h:it.h,blob:d2b(it.img)};}),
+          unit:it.unit,H:it.H||null,calQuad:it.calQuad||null,V:it.V||null,w:it.w,h:it.h,blob:d2b(it.img)};}),
         function(){clean();toast('已匯入 '+S.imgs.length+' 張');});
     }catch(err){toast('匯入失敗：'+err.message);}};
   fr.readAsText(f);
