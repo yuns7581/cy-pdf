@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="現場工具箱">
 <meta name="mobile-web-app-capable" content="yes">
-<title>現場工具箱 C1.2</title>
+<title>現場工具箱 C1.3</title>
 <style>
 /* ===== 外殼 ===== */
 
@@ -344,7 +344,7 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">現場工具箱</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C1.2</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C1.3</span></header>
 <nav id="shellTabs">
   <button data-t="CMP" class="on">壓縮</button>
   <button data-t="ANN">標註</button>
@@ -837,7 +837,7 @@ window.TB = (function(){
   var deferred=null;
   if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
     window.addEventListener('load',function(){
-      navigator.serviceWorker.register('./sw.js').then(function(reg){
+      navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(function(reg){
         reg.addEventListener('updatefound',function(){
           var w=reg.installing; if(!w)return;
           w.addEventListener('statechange',function(){
