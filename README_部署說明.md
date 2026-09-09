@@ -1,4 +1,4 @@
-# 現場工具箱 C1.3 — PWA 部署說明
+# 現場工具箱 C1.4 — PWA 部署說明
 
 ## 檔案清單（6 個，全部放同一層）
 
@@ -11,7 +11,7 @@
 | `icon-512.png` | 高解析圖示、啟動畫面 | 不建議 |
 | `icon-maskable-512.png` | Android 自適應圖示（會被裁成圓形／方形） | 不建議 |
 
-本機備份請把 `index.html` 另存一份為 `20260909_現場工具箱_C1.3.html`，維持版次可追溯。
+本機備份請把 `index.html` 另存一份為 `20260909_現場工具箱_C1.4.html`，維持版次可追溯。
 
 ---
 
@@ -43,7 +43,7 @@
 改完 `index.html` 之後，**一定要同步改 `sw.js` 第 3 行的版本號**：
 
 ```js
-const CACHE = 'cy-toolbox-C1.3';   // → 改成 C1.4
+const CACHE = 'cy-toolbox-C1.4';   // → 改成 C1.5
 ```
 
 不改這行的話，Service Worker 會繼續餵舊快取，你會以為更新沒生效。
@@ -73,3 +73,4 @@ C1.3 之後不會再發生這個問題。
 - 定期檢查 Settings → Collaborators（應該是空的）與 Settings → Developer settings → Personal access tokens（沒在用就全部撤銷）。
 - 即使被誤刪，Git 保留完整歷史，可以從任一 commit 還原。真正不可逆的只有「刪掉整個 repo」。
 - repo 內**永遠不要放**：客戶名單、勘查照片、報價、API 金鑰、任何個資。這個 repo 只放程式碼。
+- C1.4 起 `index.html` 帶有 `noindex,nofollow,noarchive`，搜尋引擎不會收錄這個網址，也不會留快照。網址本身仍然是公開的，知道的人照樣打得開——這是「不被搜到」，不是「加密保護」。

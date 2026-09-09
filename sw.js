@@ -1,8 +1,8 @@
-/* 現場工具箱 Service Worker  C1.3
+/* 現場工具箱 Service Worker  C1.4
    ─────────────────────────────────────────────
    改版流程：改完 index.html 之後，把下面 CACHE 的版本號一起改掉。
    不改的話舊快取不會失效，你會以為更新沒生效。            */
-const CACHE = 'cy-toolbox-C1.3';
+const CACHE = 'cy-toolbox-C1.4';
 
 const ASSETS = [
   './',
