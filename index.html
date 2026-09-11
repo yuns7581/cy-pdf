@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="現場工具箱">
 <meta name="mobile-web-app-capable" content="yes">
-<title>現場工具箱 C1.7</title>
+<title>現場工具箱 C1.8</title>
 <style>
 /* ===== 外殼 ===== */
 
@@ -27,7 +27,7 @@ body.annOpen{overflow:hidden}
 #tbInstall{display:none;background:#ffffff1f;border:1px solid #ffffff44;color:#fff;
   border-radius:16px;padding:5px 11px;font-size:12.5px;font-family:inherit;cursor:pointer}
 #shellTabs{display:flex;background:#095154;position:sticky;top:44px;z-index:39}
-#shellTabs button{flex:1;background:none;border:0;color:#cfe4e4;padding:11px 2px;font-size:14.5px;font-family:inherit;border-bottom:3px solid transparent;cursor:pointer}
+#shellTabs button{flex:1;background:none;border:0;color:#cfe4e4;padding:11px 1px;font-size:13.5px;white-space:nowrap;font-family:inherit;border-bottom:3px solid transparent;cursor:pointer}
 #shellTabs button.on{color:#fff;border-bottom-color:#7fd6d6;font-weight:600}
 body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 .pane{display:none}
@@ -346,11 +346,12 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">現場工具箱</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C1.7</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C1.8</span></header>
 <nav id="shellTabs">
   <button data-t="CMP" class="on">壓縮</button>
   <button data-t="ANN">標註</button>
   <button data-t="PDF">轉 PDF</button>
+  <button data-t="VIEW">檢視 PDF</button>
 </nav>
 <div id="tbToast"></div>
 
@@ -836,8 +837,73 @@ window.TB = (function(){
     if(t==='ANN'&&window.ANN&&ANN.wake) ANN.wake();
   }
   document.getElementById('shellTabs').addEventListener('click',function(e){
-    var b=e.target.closest('button[data-t]'); if(b) go(b.dataset.t);
+    var b=e.target.closest('button[data-t]'); if(!b) return;
+    if(b.dataset.t==='VIEW'){ location.href='./viewer.html'; return; }
+    go(b.dataset.t);
   });
+  /* ---- 跨頁交接：接收 viewer.html 送過來的頁面圖 ---- */
+  function hoTake(){
+    return new Promise(function(res){
+      if(typeof indexedDB==='undefined') return res([]);
+      var r;
+      try{ r=indexedDB.open('cy_handoff',1); }catch(e){ return res([]); }
+      r.onupgradeneeded=function(e){
+        var d=e.target.result;
+        if(!d.objectStoreNames.contains('q')) d.createObjectStore('q',{keyPath:'id',autoIncrement:true});
+      };
+      r.onsuccess=function(){
+        var d=r.result;
+        if(!d.objectStoreNames.contains('q')) return res([]);
+        var tx=d.transaction('q','readwrite'), st=tx.objectStore('q'), out=[];
+        var g=st.getAll();
+        g.onsuccess=function(){
+          (g.result||[]).forEach(function(o){
+            out.push(new File([o.blob], o.name||'page.jpg', {type:o.type||'image/jpeg'}));
+          });
+          st.clear();
+        };
+        tx.oncomplete=function(){ res(out); };
+        tx.onerror=function(){ res([]); };
+      };
+      r.onerror=function(){ res([]); };
+    });
+  }
+  function checkHandoff(){
+    var m=/[#&]to=(ann|pdf|cmp)/.exec(location.hash||'');
+    if(!m) return;
+    history.replaceState(null,'',location.pathname+location.search);
+    hoTake().then(function(fs){
+      if(!fs.length){ toast('沒有收到交接的頁面'); return; }
+      if(m[1]==='ann'){ go('ANN'); if(window.ANN&&ANN.push) ANN.push(fs); }
+      else if(m[1]==='pdf'){
+        if(window.PDF&&PDF.push){
+          fs.forEach(function(f){ PDF.push(f,f.name); });
+          if(PDF.passthrough) PDF.passthrough();
+          PDF.render();
+        }
+        go('PDF');
+      }else{ go('CMP'); }
+      toast('已接收 '+fs.length+' 張來自 PDF 檢視器的頁面',3600);
+    });
+  }
+  window.addEventListener('load',function(){ setTimeout(checkHandoff,300); });
+
+  /* ---- 檢視器 2.5 MB，安裝時不抓；載入後閒置時在背景補快取 ---- */
+  function precacheViewer(){
+    if(!('caches' in window)||!navigator.onLine) return;
+    caches.keys().then(function(ks){
+      var k=ks.filter(function(x){return x.indexOf('cy-toolbox-')===0;})[0];
+      if(!k) return;
+      caches.open(k).then(function(c){
+        c.match('./viewer.html').then(function(hit){
+          if(hit) return;
+          c.add('./viewer.html').catch(function(){});
+        });
+      });
+    });
+  }
+  window.addEventListener('load',function(){ setTimeout(precacheViewer,6000); });
+
   /* ---- PWA：Service Worker 與安裝提示 ---- */
   var deferred=null;
   if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){

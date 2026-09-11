@@ -1,8 +1,8 @@
-/* 現場工具箱 Service Worker  C1.7
+/* 現場工具箱 Service Worker  C1.8
    ─────────────────────────────────────────────
    改版流程：改完 index.html 之後，把下面 CACHE 的版本號一起改掉。
    不改的話舊快取不會失效，你會以為更新沒生效。            */
-const CACHE = 'cy-toolbox-C1.7';
+const CACHE = 'cy-toolbox-C1.8';
 
 const ASSETS = [
   './',
@@ -43,19 +43,21 @@ self.addEventListener('fetch', function (e) {
   if (req.method !== 'GET') return;
   if (new URL(req.url).origin !== self.location.origin) return;
 
-  /* 網頁本身走「網路優先」：有訊號一定拿到最新版，
-     沒訊號才回退快取。這是離線可用與版本正確的平衡點。 */
+  /* 網頁本身走「網路優先」：有訊號一定拿到最新版，沒訊號才回退快取。
+     index.html 與 viewer.html 兩頁共用這條路徑，各自存自己的快取。 */
   if (req.mode === 'navigate') {
     e.respondWith(
       fetch(req).then(function (res) {
         var copy = res.clone();
         e.waitUntil(caches.open(CACHE).then(function (c) {
-          return c.put('./index.html', copy);
+          return c.put(req, copy);          /* 用 req 當鍵：index 與 viewer 各自一份 */
         }));
         return res;
       }).catch(function () {
-        return caches.match('./index.html').then(function (h) {
-          return h || caches.match('./');
+        return caches.match(req).then(function (h) {
+          return h || caches.match('./index.html').then(function (h2) {
+            return h2 || caches.match('./');
+          });
         });
       })
     );
