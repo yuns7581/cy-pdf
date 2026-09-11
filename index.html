@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="現場工具箱">
 <meta name="mobile-web-app-capable" content="yes">
-<title>現場工具箱 C1.6</title>
+<title>現場工具箱 C1.7</title>
 <style>
 /* ===== 外殼 ===== */
 
@@ -346,7 +346,7 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">現場工具箱</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C1.6</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C1.7</span></header>
 <nav id="shellTabs">
   <button data-t="CMP" class="on">壓縮</button>
   <button data-t="ANN">標註</button>
@@ -371,9 +371,11 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
       <button class="btn sec" onclick="fiImg.click()">📷 選圖片</button>
       <button class="btn sec" onclick="fiDoc.click()">📁 檔案瀏覽</button>
     </div>
+    <button class="btn sec wide" style="margin-top:8px" onclick="fiPack.click()">🗂 ＋ PDF 或 zip</button>
+    <input type="file" id="fiPack" accept=".zip,.pdf,application/zip,application/pdf" class="hide">
     <input type="file" id="fiImg" accept="image/*" multiple class="hide">
     <input type="file" id="fiDoc" multiple class="hide">
-    <p class="hint" style="margin:8px 0 0">可一次選多張。原檔不會被更動，壓縮結果另存新檔。</p>
+    <p class="hint" style="margin:8px 0 0">可一次選多張。原檔不會被更動，壓縮結果另存新檔。<br>PDF 會抽出裡面的原始 JPEG 照片（不重新編碼）；zip 會取出所有圖片檔。</p>
   </div>
 
   <div class="card">
@@ -541,6 +543,7 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 
 <div id="toast"></div>
 <input type="file" id="fi" accept="image/*" multiple>
+<input type="file" id="annPack" accept=".zip,.pdf,application/zip,application/pdf">
 <input type="file" id="fj" accept=".json,application/json">
 
 
@@ -871,6 +874,26 @@ window.TB = (function(){
   return {
     go:go, toast:toast, cur:function(){return cur;},
     seqName:seqName, seqBump:seqBump, seqGet:seqGet, today:tday,
+    /* PDF／zip → 圖片檔陣列，三個分頁共用 */
+    importPack:function(file){
+      if(!file) return Promise.reject(new Error('沒有檔案'));
+      if(!window.PDF||!PDF.readZip) return Promise.reject(new Error('解析模組尚未就緒'));
+      var n=(file.name||'').toLowerCase(), t=file.type||'';
+      if(/\\.zip$/.test(n)||/zip/.test(t))
+        return PDF.readZip(file).then(function(r){
+          return {files:(r.files||[]).map(function(x){return x.file;}), skipped:r.skipped||0, kind:'zip'};
+        });
+      if(/\\.pdf$/.test(n)||t==='application/pdf')
+        return PDF.pdfImages(file).then(function(r){
+          return {files:r.files||[], skipped:r.skipped||0, kind:'pdf'};
+        });
+      return Promise.reject(new Error('只支援 PDF 或 zip'));
+    },
+    packMsg:function(r){
+      var m='匯入 '+r.files.length+' 張';
+      if(r.skipped) m+='　（'+r.skipped+' 個'+(r.kind==='pdf'?'非 JPEG 影像':'非圖片項目')+'略過）';
+      return m;
+    },
     /* 由壓縮／標註呼叫，把檔案送進轉 PDF */
     toPDF:function(files){
       if(!files||!files.length){ toast('沒有可送出的檔案'); return; }
@@ -953,6 +976,15 @@ function addImages(files){
   $('iStat').textContent='已選 '+items.length+' 張，共 '+fmt(items.reduce((s,x)=>s+x.orig,0));
   renderImages();
 }
+$('fiPack').addEventListener('change',e=>{
+  const f=e.target.files&&e.target.files[0]; e.target.value='';
+  if(!f)return;
+  window.TB.toast('解析中…',8000);
+  window.TB.importPack(f).then(r=>{
+    if(!r.files.length){window.TB.toast('這個檔案裡沒有可用的圖片'+(r.skipped?('（'+r.skipped+' 個略過）'):''),4000);return;}
+    addImages(r.files); window.TB.toast(window.TB.packMsg(r),3600);
+  }).catch(err=>window.TB.toast('讀取失敗：'+(err&&err.message||err),4000));
+});
 fiImg.addEventListener('change',e=>{addImages(e.target.files); e.target.value='';});
 fiDoc.addEventListener('change',e=>{addImages(e.target.files); e.target.value='';});
 
@@ -1406,7 +1438,29 @@ function deserialize(items,cb){
 }
 
 /* ===== 載圖 ===== */
-$('dkAdd').onclick=function(){$('fi').click();};
+$('dkAdd').onclick=function(){
+  sheet('<h3>要從哪裡載入照片？</h3><div class="grid">'+
+    '<div class="gi" data-src="img"><i>&#128247;</i>相片</div>'+
+    '<div class="gi" data-src="pack"><i>&#128451;</i>PDF 或 zip</div></div>'+
+    '<h3>PDF 會抽出裡面的原始 JPEG 照片，不重新編碼；zip 會取出所有圖片檔</h3>',
+    function(){
+      $('sheet').querySelectorAll('[data-src]').forEach(function(el){
+        el.onclick=function(){
+          sheetClose();
+          $(el.dataset.src==='pack'?'annPack':'fi').click();
+        };});
+    });
+};
+$('annPack').onchange=function(e){
+  var f=e.target.files&&e.target.files[0]; e.target.value='';
+  if(!f)return;
+  toast('解析中…',8000);
+  window.TB.importPack(f).then(function(r){
+    if(!r.files.length){toast('這個檔案裡沒有可用的圖片'+(r.skipped?('（'+r.skipped+' 個略過）'):''),4000);return;}
+    addFiles(r.files);
+    setTimeout(function(){toast(window.TB.packMsg(r),3600);},600);
+  }).catch(function(err){toast('讀取失敗：'+(err&&err.message||err),4000);});
+};
 function addFiles(fs){
   if(!fs||!fs.length)return;toast('載入中…');
   var base=S.imgs.length,done=0,buf=[];
@@ -2960,7 +3014,7 @@ function makePDFSource(u8){
         return self;
       });
     },
-    getPages:getPages, resolve:resolve, getObj:getObj,
+    getPages:getPages, resolve:resolve, getObj:getObj, inflate:inflate,
     _tok:readToken, _val:parseValue
   };
 }
@@ -4185,6 +4239,51 @@ window.addEventListener('resize',function(){
 });
 
 
+/* ==================== 從 PDF 抽出內嵌照片 ====================
+   只取 DCTDecode（JPEG）影像，直接把原始位元組取出，零重新編碼。
+   本工具箱產生的 PDF、相機類 PDF、多數掃描器輸出都是這一類。
+   Flate/JPX 等其他編碼會計入 skipped 並回報。               */
+function pdfImages(f){
+  var base=(f.name||'pdf').replace(/\.[^.]+$/,'');
+  function pad(n){ return ('000'+n).slice(-3); }
+  return f.arrayBuffer().then(function(buf){
+    return makePDFSource(new Uint8Array(buf)).init();
+  }).then(function(src){
+    return src.getPages().then(function(pages){
+      var out=[], seen={}, skipped=0;
+      return pages.reduce(function(pm,pg,pi){
+        return pm.then(function(){
+          return src.resolve(pg.dict.m['Resources']||pg.inh['Resources']).then(function(res){
+            if(!res||res.t!=='dict')return;
+            return src.resolve(res.m['XObject']).then(function(xo){
+              if(!xo||xo.t!=='dict')return;
+              return Object.keys(xo.m).reduce(function(km,k){
+                return km.then(function(){
+                  var ref=xo.m[k];
+                  var id=(ref&&ref.t==='ref')?('r'+ref.num):('p'+pi+'_'+k);
+                  if(seen[id])return; seen[id]=1;
+                  return src.resolve(ref).then(function(ob){
+                    if(!ob||ob.t!=='stream')return;
+                    var d=ob.dict.m;
+                    if(!d['Subtype']||d['Subtype'].v!=='Image')return;
+                    var fv=d['Filter'], nm=[];
+                    if(fv&&fv.t==='name')nm=[fv.v];
+                    else if(fv&&fv.t==='arr')nm=fv.v.map(function(x){return x&&x.v;});
+                    if(nm.length===1&&nm[0]==='DCTDecode'){
+                      out.push(new File([ob.data.slice()],
+                        base+'_'+pad(out.length+1)+'.jpg',{type:'image/jpeg'}));
+                    }else{ skipped++; }
+                  });
+                });
+              },Promise.resolve());
+            });
+          });
+        });
+      },Promise.resolve()).then(function(){ return {files:out, skipped:skipped}; });
+    });
+  });
+}
+
 /* ==================== 兩段式影像設定 ==================== */
 function qHint(){
   var s=imgSpec(), t;
@@ -4211,6 +4310,8 @@ qHint();
 window.PDF={
   push:function(f,nm){ pushImage(f,nm); },
   render:render,
+  pdfImages:pdfImages,
+  readZip:unzip,
   passthrough:function(){
     cfg.imgMax='orig'; $('imgMax').value='orig'; $('imgQ').disabled=true; qHint();
   }
