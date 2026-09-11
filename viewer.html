@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="現場工具箱">
-<title>現場PDF檢視器 C1.8</title>
+<title>現場PDF檢視器 C1.9</title>
 <style>
 :root{--pdv-brand:#0d6b6e;--pdv-brand-d:#095053;--pdv-bg:#eceff1;--pdv-panel:#fff;--pdv-line:#d5dbde;--pdv-txt:#1d2528;--pdv-dim:#6b7a80;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1075,6 +1075,52 @@ function sendTo(where){
   });
 }
 $('pdvBack').onclick=function(){ location.href='./index.html'; };
+
+/* 從分享選單或工具箱送進來的 PDF */
+function hoTake(){
+  return new Promise(function(res){
+    if(typeof indexedDB==='undefined') return res([]);
+    var r;
+    try{ r=indexedDB.open('cy_handoff',1); }catch(e){ return res([]); }
+    r.onupgradeneeded=function(e){
+      var d=e.target.result;
+      if(!d.objectStoreNames.contains('q')) d.createObjectStore('q',{keyPath:'id',autoIncrement:true});
+    };
+    r.onsuccess=function(){
+      var d=r.result;
+      if(!d.objectStoreNames.contains('q')) return res([]);
+      var tx=d.transaction('q','readwrite'), st=tx.objectStore('q'), out=[];
+      var g=st.getAll();
+      g.onsuccess=function(){
+        (g.result||[]).forEach(function(o){
+          out.push(new File([o.blob], o.name||'shared.pdf', {type:o.type||'application/pdf'}));
+        });
+        st.clear();
+      };
+      tx.oncomplete=function(){ res(out); };
+      tx.onerror=function(){ res([]); };
+    };
+    r.onerror=function(){ res([]); };
+  });
+}
+if(/[#&]open=1/.test(location.hash||'')){
+  history.replaceState(null,'',location.pathname+location.search);
+  setTimeout(function(){
+    hoTake().then(function(fs){
+      if(!fs.length){ toast('沒有收到檔案'); return; }
+      loadFile(fs[0]);
+      if(fs.length>1) toast('收到 '+fs.length+' 份，先開第一份，其餘請用檔案庫',3600);
+    });
+  },200);
+}
+/* 桌面版「開啟方式」啟動 */
+if('launchQueue' in window){
+  try{
+    window.launchQueue.setConsumer(function(p){
+      if(p&&p.files&&p.files.length) p.files[0].getFile().then(loadFile);
+    });
+  }catch(e){}
+}
 
 function exportPng(){
   var el=PAGES.querySelector('.pg[data-p="'+PDV.cur+'"]'); if(!el){ toast('請先開啟 PDF'); return; }

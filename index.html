@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="現場工具箱">
 <meta name="mobile-web-app-capable" content="yes">
-<title>現場工具箱 C1.8</title>
+<title>現場工具箱 C1.9</title>
 <style>
 /* ===== 外殼 ===== */
 
@@ -42,6 +42,16 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 .handoff button{flex:1;background:#fff;color:#0d6b6e;border:1px solid #0d6b6e;border-radius:8px;
   padding:10px;font-size:14px;font-family:inherit;font-weight:600;cursor:pointer}
 .handoff button:disabled{opacity:.4}
+#tbPick{position:fixed;inset:0;background:#0009;z-index:120;display:none;align-items:flex-end}
+#tbPick.on{display:flex}
+#tbPick .bx{background:#fff;width:100%;border-radius:14px 14px 0 0;
+  padding:16px 14px calc(16px + env(safe-area-inset-bottom));max-height:80vh;overflow:auto}
+#tbPick h4{margin:0 0 4px;font-size:15.5px}
+#tbPick p{margin:0 0 12px;font-size:12.5px;color:#5a6a6a;line-height:1.6}
+#tbPick button{display:block;width:100%;margin-top:8px;padding:13px;border:1px solid #0d6b6e;
+  background:#fff;color:#0d6b6e;border-radius:10px;font-size:15px;font-weight:600;
+  font-family:inherit;cursor:pointer;text-align:left}
+#tbPick button.gh{border-color:#c8d0d0;color:#67797a;font-weight:400;text-align:center}
 #tbToast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#000d;color:#fff;
   padding:10px 16px;border-radius:10px;font-size:13.5px;opacity:0;transition:opacity .25s;
   pointer-events:none;z-index:99;max-width:88%;text-align:center;line-height:1.6}
@@ -346,7 +356,7 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">現場工具箱</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C1.8</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C1.9</span></header>
 <nav id="shellTabs">
   <button data-t="CMP" class="on">壓縮</button>
   <button data-t="ANN">標註</button>
@@ -354,6 +364,9 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
   <button data-t="VIEW">檢視 PDF</button>
 </nav>
 <div id="tbToast"></div>
+<div id="tbPick"><div class="bx">
+  <h4 id="tbPickT"></h4><p id="tbPickS"></p><div id="tbPickB"></div>
+</div></div>
 
 <div class="pane on" id="tCMP">
 
@@ -868,12 +881,107 @@ window.TB = (function(){
       r.onerror=function(){ res([]); };
     });
   }
+  function hoPut(files){
+    return new Promise(function(res){
+      if(typeof indexedDB==='undefined') return res(0);
+      var r;
+      try{ r=indexedDB.open('cy_handoff',1); }catch(e){ return res(0); }
+      r.onupgradeneeded=function(e){
+        var d=e.target.result;
+        if(!d.objectStoreNames.contains('q')) d.createObjectStore('q',{keyPath:'id',autoIncrement:true});
+      };
+      r.onsuccess=function(){
+        var d=r.result, tx=d.transaction('q','readwrite'), st=tx.objectStore('q');
+        st.clear();
+        files.forEach(function(f){ st.add({name:f.name,type:f.type,blob:f}); });
+        tx.oncomplete=function(){ res(files.length); };
+        tx.onerror=function(){ res(0); };
+      };
+      r.onerror=function(){ res(0); };
+    });
+  }
+  function isPdf(f){ return f.type==='application/pdf'||/\.pdf$/i.test(f.name||''); }
+  function isZip(f){ return /zip/.test(f.type||'')||/\.zip$/i.test(f.name||''); }
+  function isImg(f){ return /^image\//.test(f.type||'')||/\.(jpe?g|png|webp|heic|heif|bmp|gif|avif)$/i.test(f.name||''); }
+
+  function pick(title,sub,opts){
+    var box=document.getElementById('tbPick'), body=document.getElementById('tbPickB');
+    document.getElementById('tbPickT').textContent=title;
+    document.getElementById('tbPickS').textContent=sub;
+    body.innerHTML='';
+    opts.forEach(function(o){
+      var el=document.createElement('button');
+      el.textContent=o.t;
+      if(o.ghost) el.className='gh';
+      el.onclick=function(){ box.classList.remove('on'); o.fn(); };
+      body.appendChild(el);
+    });
+    box.classList.add('on');
+  }
+
+  function toImgs(list){
+    return list.reduce(function(pm,f){
+      return pm.then(function(acc){
+        if(isImg(f)) { acc.push(f); return acc; }
+        return exports.importPack(f).then(function(r){
+          return acc.concat(r.files||[]);
+        }).catch(function(){ return acc; });
+      });
+    },Promise.resolve([]));
+  }
+  function sendImgs(fs,dest){
+    toImgs(fs).then(function(imgs){
+      if(!imgs.length){ toast('這些檔案裡沒有可用的照片',3600); return; }
+      if(dest==='cmp'){ go('CMP'); if(window.CMP&&CMP.addImages) CMP.addImages(imgs); }
+      else if(dest==='ann'){ go('ANN'); if(window.ANN&&ANN.push) ANN.push(imgs); }
+      else{
+        if(window.PDF&&PDF.push){
+          imgs.forEach(function(f){ PDF.push(f,f.name); });
+          if(PDF.passthrough) PDF.passthrough();
+          PDF.render();
+        }
+        go('PDF');
+      }
+      toast('已匯入 '+imgs.length+' 張',3000);
+    });
+  }
+
+  function intake(fs,sub){
+    if(!fs||!fs.length){ toast('沒有收到檔案'); return; }
+    var pdfs=fs.filter(isPdf), packs=fs.filter(function(f){return isPdf(f)||isZip(f);});
+    var opts=[];
+    if(pdfs.length) opts.push({t:'用 PDF 檢視器開啟',fn:function(){
+      hoPut(pdfs).then(function(){ location.href='./viewer.html#open=1'; });
+    }});
+    if(packs.length) opts.push({t:'抽出裡面的照片 → 壓縮',fn:function(){ sendImgs(fs,'cmp'); }});
+    opts.push({t:'壓縮',fn:function(){ sendImgs(fs,'cmp'); }});
+    opts.push({t:'標註量測',fn:function(){ sendImgs(fs,'ann'); }});
+    opts.push({t:'轉 PDF 排版',fn:function(){ sendImgs(fs,'pdf'); }});
+    opts.push({t:'取消',ghost:true,fn:function(){}});
+    pick('收到 '+fs.length+' 個檔案', sub, opts);
+  }
+
+  /* 桌面版檔案處理器：從系統「開啟方式」啟動 */
+  function initLaunchQueue(){
+    if(!('launchQueue' in window)) return;
+    try{
+      window.launchQueue.setConsumer(function(params){
+        if(!params||!params.files||!params.files.length) return;
+        Promise.all(params.files.map(function(h){ return h.getFile(); })).then(function(fs){
+          intake(fs,'從系統「開啟方式」帶入');
+        });
+      });
+    }catch(e){}
+  }
+  window.addEventListener('load',function(){ setTimeout(initLaunchQueue,200); });
+
   function checkHandoff(){
-    var m=/[#&]to=(ann|pdf|cmp)/.exec(location.hash||'');
+    var m=/[#&]to=(ann|pdf|cmp|share)/.exec(location.hash||'');
     if(!m) return;
     history.replaceState(null,'',location.pathname+location.search);
     hoTake().then(function(fs){
       if(!fs.length){ toast('沒有收到交接的頁面'); return; }
+      if(m[1]==='share'){ intake(fs,'從其他 App 分享進來'); return; }
       if(m[1]==='ann'){ go('ANN'); if(window.ANN&&ANN.push) ANN.push(fs); }
       else if(m[1]==='pdf'){
         if(window.PDF&&PDF.push){
@@ -937,8 +1045,8 @@ window.TB = (function(){
     document.getElementById('tbInstall').style.display='none';
   });
 
-  return {
-    go:go, toast:toast, cur:function(){return cur;},
+  var exports = {
+    go:go, toast:toast, cur:function(){return cur;}, intake:intake,
     seqName:seqName, seqBump:seqBump, seqGet:seqGet, today:tday,
     /* PDF／zip → 圖片檔陣列，三個分頁共用 */
     importPack:function(file){
@@ -978,6 +1086,7 @@ window.TB = (function(){
       ANN.push(files);
     }
   };
+  return exports;
 })();
 
 </script>
@@ -1384,7 +1493,7 @@ function outFiles(){
 $('hoPdf').onclick=function(){ window.TB.toPDF(outFiles()); };
 $('hoAnn').onclick=function(){ window.TB.toANN(outFiles()); };
 
-window.CMP={clearAll:clearAll,downloadZip:downloadZip,runImages:runImages,
+window.CMP={addImages:addImages,clearAll:clearAll,downloadZip:downloadZip,runImages:runImages,
   runVideo:runVideo,setMode:setMode,stopVideo:stopVideo,switchTab:switchTab,
   outFiles:outFiles};
 

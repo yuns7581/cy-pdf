@@ -1,8 +1,8 @@
-/* 現場工具箱 Service Worker  C1.8
+/* 現場工具箱 Service Worker  C1.9
    ─────────────────────────────────────────────
    改版流程：改完 index.html 之後，把下面 CACHE 的版本號一起改掉。
    不改的話舊快取不會失效，你會以為更新沒生效。            */
-const CACHE = 'cy-toolbox-C1.8';
+const CACHE = 'cy-toolbox-C1.9';
 
 const ASSETS = [
   './',
@@ -36,6 +36,51 @@ self.addEventListener('activate', function (e) {
       }));
     }).then(function () { return self.clients.claim(); })
   );
+});
+
+
+/* ============ 分享目標：Android 分享選單把檔案 POST 進來 ============
+   沒有伺服器，所以由 SW 攔下這個 POST，把檔案寫進 cy_handoff，
+   再 303 轉址到對應頁面讓它取用。必須先寫完再回應，否則頁面會撲空。 */
+function hoSave(files) {
+  return new Promise(function (res) {
+    if (typeof indexedDB === 'undefined') return res(0);
+    var r;
+    try { r = indexedDB.open('cy_handoff', 1); } catch (e) { return res(0); }
+    r.onupgradeneeded = function (e) {
+      var d = e.target.result;
+      if (!d.objectStoreNames.contains('q')) d.createObjectStore('q', { keyPath: 'id', autoIncrement: true });
+    };
+    r.onsuccess = function () {
+      var d = r.result;
+      var tx = d.transaction('q', 'readwrite'), st = tx.objectStore('q');
+      st.clear();
+      files.forEach(function (f) { st.add({ name: f.name, type: f.type, blob: f }); });
+      tx.oncomplete = function () { res(files.length); };
+      tx.onerror = function () { res(0); };
+    };
+    r.onerror = function () { res(0); };
+  });
+}
+
+self.addEventListener('fetch', function (e) {
+  var u = new URL(e.request.url);
+  if (e.request.method !== 'POST' || !/\/share-target$/.test(u.pathname)) return;
+  e.respondWith((async function () {
+    var to = './index.html#to=share';
+    try {
+      var fd = await e.request.formData();
+      var files = fd.getAll('file').filter(function (f) { return f && f.name; });
+      if (files.length) {
+        await hoSave(files);
+        var allPdf = files.every(function (f) {
+          return f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
+        });
+        if (allPdf) to = './viewer.html#open=1';
+      }
+    } catch (err) { /* 讀不到就照樣進工具箱，由頁面顯示訊息 */ }
+    return Response.redirect(to, 303);
+  })());
 });
 
 self.addEventListener('fetch', function (e) {
