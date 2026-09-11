@@ -1,13 +1,12 @@
-/* 現場工具箱 Service Worker  C1.9
+/* 現場工具箱 Service Worker  C2.0
    ─────────────────────────────────────────────
    改版流程：改完 index.html 之後，把下面 CACHE 的版本號一起改掉。
    不改的話舊快取不會失效，你會以為更新沒生效。            */
-const CACHE = 'cy-toolbox-C1.9';
+const CACHE = 'cy-toolbox-C2.0';
 
 const ASSETS = [
   './',
   './index.html',
-  './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',
   './icon-maskable-512.png'
@@ -86,7 +85,11 @@ self.addEventListener('fetch', function (e) {
 self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET') return;
-  if (new URL(req.url).origin !== self.location.origin) return;
+  var uu = new URL(req.url);
+  if (uu.origin !== self.location.origin) return;
+  /* manifest 一律直通網路：瀏覽器產生 WebAPK／安裝時會重抓 manifest，
+     若被快取擋下會拿到舊版，分享目標與檔案處理器就註冊不到。 */
+  if (/manifest\.webmanifest$/.test(uu.pathname)) return;
 
   /* 網頁本身走「網路優先」：有訊號一定拿到最新版，沒訊號才回退快取。
      index.html 與 viewer.html 兩頁共用這條路徑，各自存自己的快取。 */

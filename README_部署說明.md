@@ -1,4 +1,4 @@
-# 現場工具箱 C1.9 — PWA 部署說明
+# 現場工具箱 C2.0 — PWA 部署說明
 
 ## 檔案清單（7 個，全部放同一層）
 
@@ -7,12 +7,12 @@
 | `index.html` | 工具箱本體（壓縮／標註／轉 PDF） | **不可**，GitHub Pages 靠這個名字當首頁 |
 | `viewer.html` | 現場 PDF 檢視器（2.5 MB，內含 pdf.js 與 23 個 CJK CMap） | **不可**，兩頁互相連結 |
 | `sw.js` | Service Worker，負責離線快取 | **不可**，`index.html` 內寫死路徑 |
-| `manifest.webmanifest` | App 名稱、圖示、啟動方式 | **不可** |
+| `manifest.webmanifest` | App 名稱、圖示、分享目標、檔案處理器 | **不可**。C2.0 起 SW 不再快取它，永遠直通網路 |
 | `icon-192.png` | 主畫面圖示 | 不建議 |
 | `icon-512.png` | 高解析圖示、啟動畫面 | 不建議 |
 | `icon-maskable-512.png` | Android 自適應圖示（會被裁成圓形／方形） | 不建議 |
 
-本機備份請把 `index.html` 另存一份為 `20260911_現場工具箱_C1.9.html`，維持版次可追溯。
+本機備份請把 `index.html` 另存一份為 `20260911_現場工具箱_C2.0.html`，維持版次可追溯。
 
 ---
 
@@ -44,7 +44,7 @@
 改完 `index.html` 之後，**一定要同步改 `sw.js` 第 3 行的版本號**：
 
 ```js
-const CACHE = 'cy-toolbox-C1.9';   // → 改成 C2.0
+const CACHE = 'cy-toolbox-C2.0';   // → 改成 C2.1
 ```
 
 不改這行的話，Service Worker 會繼續餵舊快取，你會以為更新沒生效。

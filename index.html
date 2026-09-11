@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="現場工具箱">
 <meta name="mobile-web-app-capable" content="yes">
-<title>現場工具箱 C1.9</title>
+<title>現場工具箱 C2.0</title>
 <style>
 /* ===== 外殼 ===== */
 
@@ -356,7 +356,7 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">現場工具箱</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C1.9</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C2.0</span></header>
 <nav id="shellTabs">
   <button data-t="CMP" class="on">壓縮</button>
   <button data-t="ANN">標註</button>
@@ -457,6 +457,30 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
     <input type="file" id="fiVid" accept="video/*" class="hide">
     <input type="file" id="fiVDoc" class="hide">
     <div class="stat" id="vInfo" style="margin-top:9px">尚未選擇影片</div>
+  </div>
+
+  <div class="card hide" id="vTrimCard">
+    <h2>剪輯範圍</h2>
+    <video id="vPrev" playsinline controls preload="metadata"       style="width:100%;background:#000;border-radius:8px;display:block"></video>
+    <div class="row" style="margin-top:10px">
+      <label>起點</label>
+      <span id="vT0" style="font-variant-numeric:tabular-nums;font-weight:600">00:00.0</span>
+      <button class="btn sec" id="vSetA" style="padding:7px 11px;font-size:13px">設為目前</button>
+    </div>
+    <div class="row">
+      <label>終點</label>
+      <span id="vT1" style="font-variant-numeric:tabular-nums;font-weight:600">00:00.0</span>
+      <button class="btn sec" id="vSetB" style="padding:7px 11px;font-size:13px">設為目前</button>
+    </div>
+    <div class="row">
+      <button class="btn sec" id="vSeekA" style="flex:1;padding:7px;font-size:13px">跳到起點</button>
+      <button class="btn sec" id="vSeekB" style="flex:1;padding:7px;font-size:13px">跳到終點</button>
+      <button class="btn sec" id="vAll" style="flex:1;padding:7px;font-size:13px">全選</button>
+    </div>
+    <p class="hint" id="vTrimInfo" style="margin:8px 0 0"></p>
+    <button class="btn wide" id="vCut" style="margin-top:10px">✂ 無損裁剪（不重新編碼）</button>
+    <p class="hint" style="margin:8px 0 0">無損裁剪直接複製原始畫格位元組，畫質與原檔<b>完全相同</b>，幾秒內完成。起點會自動往前對齊到最近的關鍵幀（可能早 0～2 秒），這是不重編碼的物理限制。<br>只支援 MP4／MOV；其他格式或需要改解析度時，請改用下方的轉檔（會重新編碼）。</p>
+    <div id="vCutOut"></div>
   </div>
 
   <div class="card">
@@ -1091,6 +1115,362 @@ window.TB = (function(){
 
 </script>
 <script>
+/* ==================== MP4 無損裁剪 ==================== */
+/* ============================================================
+   MP4 無損裁剪：不解碼、不重編碼。
+   讀 moov 的 sample table 找出時間範圍內的樣本，
+   重寫 stts/stsz/stsc/stco/stss/ctts 並複製原始樣本位元組。
+   影片起點會自動對齊到前一個關鍵幀（stss），所以實際起點
+   可能比指定的早 0～2 秒，這是無損裁剪的物理限制。
+   ============================================================ */
+var MP4Trim = (function () {
+  function rd16(a, p) { return (a[p] << 8) | a[p + 1]; }
+  function rd32(a, p) { return ((a[p] << 24) | (a[p + 1] << 16) | (a[p + 2] << 8) | a[p + 3]) >>> 0; }
+  function rd64(a, p) { return rd32(a, p) * 4294967296 + rd32(a, p + 4); }
+  function s4(a, p) { return String.fromCharCode(a[p], a[p + 1], a[p + 2], a[p + 3]); }
+  function wr32(a, p, v) { a[p] = (v >>> 24) & 255; a[p + 1] = (v >>> 16) & 255; a[p + 2] = (v >>> 8) & 255; a[p + 3] = v & 255; }
+  function wr64(a, p, v) { wr32(a, p, Math.floor(v / 4294967296)); wr32(a, p + 4, v >>> 0); }
+
+  function boxes(u8, start, end) {
+    var out = [], p = start;
+    while (p + 8 <= end) {
+      var size = rd32(u8, p), type = s4(u8, p + 4), hdr = 8;
+      if (size === 1) { if (p + 16 > end) break; size = rd64(u8, p + 8); hdr = 16; }
+      else if (size === 0) { size = end - p; }
+      if (size < hdr || p + size > end) break;
+      out.push({ type: type, start: p, size: size, hdr: hdr, dStart: p + hdr, dEnd: p + size });
+      p += size;
+    }
+    return out;
+  }
+  function idx(list) { var o = {}; list.forEach(function (b) { if (!o[b.type]) o[b.type] = b; }); return o; }
+
+  function mkBox(type, payload) {
+    var b = new Uint8Array(8 + payload.length);
+    wr32(b, 0, b.length);
+    for (var i = 0; i < 4; i++) b[4 + i] = type.charCodeAt(i);
+    b.set(payload, 8);
+    return b;
+  }
+  function cat(parts) {
+    var n = 0, i;
+    for (i = 0; i < parts.length; i++) n += parts[i].length;
+    var o = new Uint8Array(n), p = 0;
+    for (i = 0; i < parts.length; i++) { o.set(parts[i], p); p += parts[i].length; }
+    return o;
+  }
+
+  /* ---- 展開一個 stbl 成逐樣本的時間／大小／位移 ---- */
+  function stblInfo(u8, stbl) {
+    var b = idx(boxes(u8, stbl.dStart, stbl.dEnd));
+    if (!b.stts || !b.stsz || !b.stsc || (!b.stco && !b.co64)) throw new Error('sample table 不完整');
+    var i, j, o = {};
+
+    var p = b.stts.dStart + 4, n = rd32(u8, p); p += 4;
+    var times = [], durs = [], t = 0;
+    for (i = 0; i < n; i++) {
+      var cnt = rd32(u8, p), d = rd32(u8, p + 4); p += 8;
+      for (j = 0; j < cnt; j++) { times.push(t); durs.push(d); t += d; }
+    }
+    o.times = times; o.durs = durs; o.dur = t;
+
+    var q = b.stsz.dStart + 4, uni = rd32(u8, q), c2 = rd32(u8, q + 4); q += 8;
+    var sizes = new Array(c2);
+    if (uni) { for (i = 0; i < c2; i++) sizes[i] = uni; }
+    else { for (i = 0; i < c2; i++) { sizes[i] = rd32(u8, q); q += 4; } }
+    o.sizes = sizes;
+
+    var co = b.stco || b.co64, is64 = !b.stco;
+    var r = co.dStart + 4, cn = rd32(u8, r); r += 4;
+    var chunks = new Array(cn);
+    for (i = 0; i < cn; i++) { chunks[i] = is64 ? rd64(u8, r) : rd32(u8, r); r += is64 ? 8 : 4; }
+
+    var s = b.stsc.dStart + 4, sn = rd32(u8, s); s += 4;
+    var ent = [];
+    for (i = 0; i < sn; i++) { ent.push({ first: rd32(u8, s), spc: rd32(u8, s + 4), desc: rd32(u8, s + 8) }); s += 12; }
+    o.desc = ent.length ? ent[0].desc : 1;
+
+    var offs = new Array(sizes.length), si = 0;
+    for (var ci = 0; ci < cn && si < sizes.length; ci++) {
+      var spc = 1, e;
+      for (e = ent.length - 1; e >= 0; e--) if (ent[e].first <= ci + 1) { spc = ent[e].spc; break; }
+      var off = chunks[ci];
+      for (j = 0; j < spc && si < sizes.length; j++) { offs[si] = off; off += sizes[si]; si++; }
+    }
+    if (si < sizes.length) throw new Error('chunk 對應不足');
+    o.offs = offs;
+
+    if (b.stss) {
+      var y = b.stss.dStart + 4, yn = rd32(u8, y); y += 4;
+      var sync = new Array(yn);
+      for (i = 0; i < yn; i++) { sync[i] = rd32(u8, y); y += 4; }
+      o.sync = sync;
+    }
+    if (b.ctts) {
+      var z = b.ctts.dStart + 4, zn = rd32(u8, z); z += 4;
+      var cts = [];
+      for (i = 0; i < zn; i++) {
+        var c3 = rd32(u8, z), v = rd32(u8, z + 4) | 0; z += 8;
+        for (j = 0; j < c3; j++) cts.push(v);
+      }
+      o.cts = cts; o.cttsVer = u8[b.ctts.dStart];
+    }
+    return o;
+  }
+
+  /* ---- 重建各個 sample table ---- */
+  function bStts(durs) {
+    var runs = [], i;
+    for (i = 0; i < durs.length; i++) {
+      if (runs.length && runs[runs.length - 1].d === durs[i]) runs[runs.length - 1].c++;
+      else runs.push({ c: 1, d: durs[i] });
+    }
+    var p = new Uint8Array(8 + runs.length * 8);
+    wr32(p, 4, runs.length);
+    for (i = 0; i < runs.length; i++) { wr32(p, 8 + i * 8, runs[i].c); wr32(p, 12 + i * 8, runs[i].d); }
+    return mkBox('stts', p);
+  }
+  function bCtts(vals, ver) {
+    var runs = [], i;
+    for (i = 0; i < vals.length; i++) {
+      if (runs.length && runs[runs.length - 1].v === vals[i]) runs[runs.length - 1].c++;
+      else runs.push({ c: 1, v: vals[i] });
+    }
+    var p = new Uint8Array(8 + runs.length * 8);
+    p[0] = ver || 0;
+    wr32(p, 4, runs.length);
+    for (i = 0; i < runs.length; i++) { wr32(p, 8 + i * 8, runs[i].c); wr32(p, 12 + i * 8, runs[i].v >>> 0); }
+    return mkBox('ctts', p);
+  }
+  function bStsz(sizes) {
+    var p = new Uint8Array(12 + sizes.length * 4);
+    wr32(p, 4, 0); wr32(p, 8, sizes.length);
+    for (var i = 0; i < sizes.length; i++) wr32(p, 12 + i * 4, sizes[i]);
+    return mkBox('stsz', p);
+  }
+  function bStsc(desc) {
+    var p = new Uint8Array(8 + 12);
+    wr32(p, 4, 1); wr32(p, 8, 1); wr32(p, 12, 1); wr32(p, 16, desc || 1);
+    return mkBox('stsc', p);
+  }
+  function bStco(offs, use64) {
+    var i, p;
+    if (use64) {
+      p = new Uint8Array(8 + offs.length * 8);
+      wr32(p, 4, offs.length);
+      for (i = 0; i < offs.length; i++) wr64(p, 8 + i * 8, offs[i]);
+      return mkBox('co64', p);
+    }
+    p = new Uint8Array(8 + offs.length * 4);
+    wr32(p, 4, offs.length);
+    for (i = 0; i < offs.length; i++) wr32(p, 8 + i * 4, offs[i]);
+    return mkBox('stco', p);
+  }
+  function bStss(nums) {
+    var p = new Uint8Array(8 + nums.length * 4);
+    wr32(p, 4, nums.length);
+    for (var i = 0; i < nums.length; i++) wr32(p, 8 + i * 4, nums[i]);
+    return mkBox('stss', p);
+  }
+
+  function patchDur(u8, box, kind, dur) {
+    var d = u8.slice(box.start, box.dEnd), ver = d[box.hdr];
+    var base = box.hdr;
+    var off;
+    if (kind === 'mvhd') off = ver === 1 ? base + 24 : base + 16;
+    else if (kind === 'tkhd') off = ver === 1 ? base + 28 : base + 20;
+    else off = ver === 1 ? base + 24 : base + 16;   /* mdhd */
+    if (ver === 1) wr64(d, off, dur); else wr32(d, off, Math.min(dur, 4294967295));
+    return d;
+  }
+
+  var CONT = { moov: 1, trak: 1, mdia: 1, minf: 1, stbl: 1 };
+
+  function build(u8, node, ctx) {
+    if (node.type === 'stbl') {
+      var kids = boxes(u8, node.dStart, node.dEnd), parts = [], t = ctx.cur;
+      kids.forEach(function (k) {
+        if (k.type === 'stsd') parts.push(u8.slice(k.start, k.dEnd));
+      });
+      parts.push(bStts(t.durs));
+      if (t.cts) parts.push(bCtts(t.cts, t.cttsVer));
+      if (t.stss) parts.push(bStss(t.stss));
+      parts.push(bStsc(t.desc));
+      parts.push(bStsz(t.sizes));
+      parts.push(bStco(t.offs, ctx.use64));
+      return mkBox('stbl', cat(parts));
+    }
+    if (CONT[node.type]) {
+      var out = [], kids2 = boxes(u8, node.dStart, node.dEnd);
+      for (var i = 0; i < kids2.length; i++) {
+        var k = kids2[i];
+        if (k.type === 'edts') continue;                       /* 丟掉 edit list */
+        if (node.type === 'moov' && k.type === 'trak') {
+          ctx.cur = ctx.tracks[ctx.ti++];
+          if (!ctx.cur) continue;
+          out.push(build(u8, k, ctx));
+          continue;
+        }
+        if (k.type === 'mvhd') { out.push(patchDur(u8, k, 'mvhd', ctx.movieDur)); continue; }
+        if (k.type === 'tkhd') { out.push(patchDur(u8, k, 'tkhd', ctx.cur.trackDur)); continue; }
+        if (k.type === 'mdhd') { out.push(patchDur(u8, k, 'mdhd', ctx.cur.mediaDur)); continue; }
+        out.push(CONT[k.type] || k.type === 'stbl' ? build(u8, k, ctx) : u8.slice(k.start, k.dEnd));
+      }
+      return mkBox(node.type, cat(out));
+    }
+    return u8.slice(node.start, node.dEnd);
+  }
+
+  /* ---- 主流程 ---- */
+  function trim(u8, t0, t1) {
+    var top = idx(boxes(u8, 0, u8.length));
+    if (!top.ftyp || !top.moov || !top.mdat) throw new Error('不是標準 MP4（缺 ftyp／moov／mdat）');
+
+    var moovBoxes = boxes(u8, top.moov.dStart, top.moov.dEnd);
+    var mv = idx(moovBoxes);
+    if (!mv.mvhd) throw new Error('缺 mvhd');
+    var mvVer = u8[mv.mvhd.dStart];
+    var movTs = mvVer === 1 ? rd32(u8, mv.mvhd.dStart + 20) : rd32(u8, mv.mvhd.dStart + 12);
+
+    var traks = moovBoxes.filter(function (b) { return b.type === 'trak'; });
+    if (!traks.length) throw new Error('沒有軌道');
+
+    var T = [];
+    traks.forEach(function (tk) {
+      var tb = idx(boxes(u8, tk.dStart, tk.dEnd));
+      if (!tb.mdia) return;
+      var mb = idx(boxes(u8, tb.mdia.dStart, tb.mdia.dEnd));
+      if (!mb.mdhd || !mb.minf || !mb.hdlr) return;
+      var ver = u8[mb.mdhd.dStart];
+      var ts = ver === 1 ? rd32(u8, mb.mdhd.dStart + 20) : rd32(u8, mb.mdhd.dStart + 12);
+      var kind = s4(u8, mb.hdlr.dStart + 8);
+      var sb = idx(boxes(u8, mb.minf.dStart, mb.minf.dEnd));
+      if (!sb.stbl) return;
+      T.push({ ts: ts, kind: kind, info: stblInfo(u8, sb.stbl) });
+    });
+    if (!T.length) throw new Error('無法解析任何軌道');
+
+    /* 影片起點對齊到前一個關鍵幀 */
+    var vid = null;
+    for (var i = 0; i < T.length; i++) if (T[i].kind === 'vide') { vid = T[i]; break; }
+    var startSec = t0;
+    if (vid) {
+      var inf = vid.info, want = t0 * vid.ts, best = 0;
+      var list = inf.sync || null;
+      if (list) {
+        for (i = 0; i < list.length; i++) {
+          var si = list[i] - 1;
+          if (inf.times[si] <= want) best = si; else break;
+        }
+      } else {
+        for (i = 0; i < inf.times.length; i++) { if (inf.times[i] <= want) best = i; else break; }
+      }
+      startSec = inf.times[best] / vid.ts;
+    }
+
+    /* 各軌選取樣本範圍 */
+    var picks = [], total = 0;
+    T.forEach(function (tr) {
+      var inf = tr.info, a = 0, b = inf.times.length - 1, k;
+      if (tr.kind === 'vide') {
+        for (k = 0; k < inf.times.length; k++) if (Math.abs(inf.times[k] / tr.ts - startSec) < 1e-6) { a = k; break; }
+      } else {
+        a = 0;
+        for (k = 0; k < inf.times.length; k++) {
+          if ((inf.times[k] + inf.durs[k]) / tr.ts > startSec) { a = k; break; }
+        }
+      }
+      for (k = a; k < inf.times.length; k++) {
+        if (inf.times[k] / tr.ts >= t1) { b = k - 1; break; }
+        b = k;
+      }
+      if (b < a) b = a;
+      picks.push({ tr: tr, a: a, b: b });
+      total += b - a + 1;
+    });
+    if (!total) throw new Error('選取範圍內沒有可用的畫面');
+
+    /* 依原始檔案位移排序所有選取樣本，決定在新 mdat 裡的位置 */
+    var all = [];
+    picks.forEach(function (pk, ti) {
+      for (var k = pk.a; k <= pk.b; k++)
+        all.push({ ti: ti, k: k, off: pk.tr.info.offs[k], size: pk.tr.info.sizes[k] });
+    });
+    all.sort(function (x, y) { return x.off - y.off; });
+    var mdatSize = 0;
+    var newOff = picks.map(function (pk) { return new Array(pk.b - pk.a + 1); });
+    all.forEach(function (s) { newOff[s.ti][s.k - picks[s.ti].a] = mdatSize; mdatSize += s.size; });
+
+    /* 組 moov 需要的軌道資料 */
+    var tracks = picks.map(function (pk) {
+      var inf = pk.tr.info, a = pk.a, b = pk.b, k;
+      var durs = inf.durs.slice(a, b + 1);
+      var sizes = inf.sizes.slice(a, b + 1);
+      var mediaDur = 0;
+      for (k = 0; k < durs.length; k++) mediaDur += durs[k];
+      var stss = null;
+      if (inf.sync) {
+        stss = [];
+        for (k = 0; k < inf.sync.length; k++) {
+          var s0 = inf.sync[k] - 1;
+          if (s0 >= a && s0 <= b) stss.push(s0 - a + 1);
+        }
+        if (!stss.length) stss = [1];
+      }
+      return {
+        durs: durs, sizes: sizes, desc: inf.desc,
+        cts: inf.cts ? inf.cts.slice(a, b + 1) : null, cttsVer: inf.cttsVer,
+        stss: stss, mediaDur: mediaDur,
+        trackDur: Math.round(mediaDur / pk.tr.ts * movTs),
+        offs: null
+      };
+    });
+    var movieDur = 0;
+    tracks.forEach(function (t) { if (t.trackDur > movieDur) movieDur = t.trackDur; });
+
+    var ftyp = u8.slice(top.ftyp.start, top.ftyp.dEnd);
+    var mdatHdr = mdatSize + 8 > 4294967295 ? 16 : 8;
+    var use64 = false;
+
+    function makeMoov(base) {
+      tracks.forEach(function (t, ti) {
+        t.offs = newOff[ti].map(function (p) { return base + p; });
+      });
+      var ctx = { tracks: tracks, ti: 0, cur: null, movieDur: movieDur, use64: use64 };
+      return build(u8, top.moov, ctx);
+    }
+
+    var moov1 = makeMoov(0);
+    var base = ftyp.length + moov1.length + mdatHdr;
+    if (base + mdatSize > 4294967295) { use64 = true; moov1 = makeMoov(0); base = ftyp.length + moov1.length + mdatHdr; }
+    var moov = makeMoov(base);
+    if (moov.length !== moov1.length) {           /* 尺寸應該相同，保險起見再算一次 */
+      base = ftyp.length + moov.length + mdatHdr;
+      moov = makeMoov(base);
+    }
+
+    var mdat = new Uint8Array(mdatHdr + mdatSize);
+    if (mdatHdr === 8) { wr32(mdat, 0, mdat.length); }
+    else { wr32(mdat, 0, 1); wr64(mdat, 8, mdat.length); }
+    mdat[4] = 109; mdat[5] = 100; mdat[6] = 97; mdat[7] = 116;   /* 'mdat' */
+    var w = mdatHdr;
+    all.forEach(function (s) { mdat.set(u8.subarray(s.off, s.off + s.size), w); w += s.size; });
+
+    return {
+      blob: new Blob([ftyp, moov, mdat], { type: 'video/mp4' }),
+      startSec: startSec,
+      endSec: startSec + movieDur / movTs,
+      snapped: Math.abs(startSec - t0) > 0.05
+    };
+  }
+
+  return { trim: trim };
+})();
+
+
+
+</script>
+<script>
 /* ==================== 圖片影片壓縮 ==================== */
 (function(){
 "use strict";
@@ -1361,6 +1741,7 @@ async function setVideo(file){
   const mm=Math.floor(vMeta.d/60), ss=Math.round(vMeta.d%60);
   $('vInfo').innerHTML=file.name+'<br>'+vMeta.w+'×'+vMeta.h+' · '+mm+'分'+ss+'秒 · '+fmt(file.size);
   $('vRun').disabled=false;
+  setupTrim(file);
   updEst();
 }
 fiVid.addEventListener('change',e=>{setVideo(e.target.files[0]); e.target.value='';});
@@ -1393,7 +1774,8 @@ async function runVideo(){
   const target=parseFloat($('vTarget').value)*1048576;
   const o=outSize();
   const aBps=withAudio?96000:0;
-  const vBps=Math.max(150000, Math.round(target*8/vMeta.d - aBps));
+  const segLen=Math.max(0.1,(vB-vA)||vMeta.d);
+  const vBps=Math.max(150000, Math.round(target*8/segLen - aBps));
 
   $('vRun').disabled=true; $('vStop').classList.remove('hide');
   $('vStat').textContent='準備中…'; vStopFlag=false;
@@ -1404,6 +1786,7 @@ async function runVideo(){
   const v=document.createElement('video');
   v.src=URL.createObjectURL(vFile); v.playsInline=true; v.muted=!withAudio;
   await new Promise(r=>{v.onloadeddata=r;});
+  if(vA>0.05){ v.currentTime=vA; await new Promise(r=>{v.onseeked=r;}); }
 
   const tracks=[];
   const cstream=cv.captureStream(fps);
@@ -1440,9 +1823,10 @@ async function runVideo(){
   let raf=null;
   const drawLoop=()=>{
     if(v.paused||v.ended) return;
+    if(vB>vA+0.05 && v.currentTime>=vB){ v.pause(); if(vRec&&vRec.state!=='inactive') vRec.stop(); return; }
     ctx.drawImage(v,0,0,cv.width,cv.height);
-    $('vBar').style.width=(v.currentTime/vMeta.d*100)+'%';
-    $('vStat').textContent='轉檔中 '+v.currentTime.toFixed(1)+' / '+vMeta.d.toFixed(1)+' 秒';
+    $('vBar').style.width=((v.currentTime-vA)/segLen*100)+'%';
+    $('vStat').textContent='轉檔中 '+(v.currentTime-vA).toFixed(1)+' / '+segLen.toFixed(1)+' 秒';
     raf=requestAnimationFrame(drawLoop);
   };
 
@@ -1481,6 +1865,67 @@ function stopVideo(){ vStopFlag=true; $('vStat').textContent='停止中…'; }
 
 /* 初始化 */
 if(!window.MediaRecorder){ $('tabV').textContent='影片(不支援)'; }
+
+
+/* ================= 影片無損裁剪 ================= */
+let vA=0, vB=0;
+function tfmt(s){
+  s=Math.max(0,s||0);
+  const m=Math.floor(s/60), r=s-m*60;
+  return String(m).padStart(2,'0')+':'+r.toFixed(1).padStart(4,'0');
+}
+function trimSync(){
+  $('vT0').textContent=tfmt(vA);
+  $('vT1').textContent=tfmt(vB);
+  const len=Math.max(0,vB-vA);
+  const frac=vMeta&&vMeta.d?len/vMeta.d:0;
+  const est=vFile?vFile.size*frac:0;
+  $('vTrimInfo').innerHTML='選取長度 <b>'+len.toFixed(1)+' 秒</b>（原片 '+(vMeta?vMeta.d.toFixed(1):'?')+
+    ' 秒）　預估輸出約 '+fmt(est);
+  $('vCut').disabled=!(len>0.2);
+}
+function setupTrim(file){
+  const isMp4=/\.(mp4|m4v|mov)$/i.test(file.name||'')||/mp4|quicktime/.test(file.type||'');
+  $('vTrimCard').classList.remove('hide');
+  $('vCutOut').innerHTML='';
+  const v=$('vPrev');
+  if(v.src) URL.revokeObjectURL(v.src);
+  v.src=URL.createObjectURL(file);
+  vA=0; vB=vMeta?vMeta.d:0;
+  trimSync();
+  $('vCut').disabled=!isMp4;
+  if(!isMp4) $('vTrimInfo').innerHTML='這個格式無法無損裁剪（只支援 MP4／MOV），請改用下方轉檔。';
+}
+$('vSetA').onclick=()=>{ vA=$('vPrev').currentTime; if(vA>=vB) vB=Math.min(vMeta.d,vA+1); trimSync(); };
+$('vSetB').onclick=()=>{ vB=$('vPrev').currentTime; if(vB<=vA) vA=Math.max(0,vB-1); trimSync(); };
+$('vSeekA').onclick=()=>{ $('vPrev').currentTime=vA; };
+$('vSeekB').onclick=()=>{ $('vPrev').currentTime=Math.max(0,vB-0.1); };
+$('vAll').onclick=()=>{ vA=0; vB=vMeta?vMeta.d:0; trimSync(); };
+
+$('vCut').onclick=async()=>{
+  if(!vFile) return;
+  $('vCut').disabled=true;
+  $('vCutOut').innerHTML='<div class="stat">裁剪中…</div>';
+  try{
+    const buf=new Uint8Array(await vFile.arrayBuffer());
+    const r=MP4Trim.trim(buf, vA, vB);
+    const base=(vFile.name||'video').replace(/\.[^.]+$/,'');
+    const nm=base+'_剪輯_'+Math.round(r.startSec)+'-'+Math.round(r.endSec)+'s.mp4';
+    const url=URL.createObjectURL(r.blob);
+    $('vCutOut').innerHTML=
+      '<div class="stat" style="margin-top:10px">完成：'+fmt(r.blob.size)+
+      '（原檔 '+fmt(vFile.size)+'）　'+r.startSec.toFixed(2)+' → '+r.endSec.toFixed(2)+' 秒'+
+      (r.snapped?'<br>起點已往前對齊到關鍵幀':'')+'</div>';
+    const a=document.createElement('a');
+    a.className='btn wide'; a.style.marginTop='8px'; a.href=url; a.download=nm;
+    a.textContent='下載 '+nm;
+    $('vCutOut').appendChild(a);
+  }catch(e){
+    $('vCutOut').innerHTML='<div class="stat">無損裁剪失敗：'+(e&&e.message||e)+
+      '<br>這支影片的結構不支援，請改用下方轉檔（會重新編碼）。</div>';
+  }
+  $('vCut').disabled=false;
+};
 
 
 /* ---- 交接：把壓好的檔丟給其他工具 ---- */
