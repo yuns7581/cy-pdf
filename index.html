@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="現場工具箱">
 <meta name="mobile-web-app-capable" content="yes">
-<title>現場工具箱 C2.0</title>
+<title>現場工具箱 C2.1</title>
 <style>
 /* ===== 外殼 ===== */
 
@@ -356,7 +356,7 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">現場工具箱</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C2.0</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C2.1</span></header>
 <nav id="shellTabs">
   <button data-t="CMP" class="on">壓縮</button>
   <button data-t="ANN">標註</button>
@@ -395,7 +395,54 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
   <div class="card">
     <h2>壓縮設定</h2>
     <div class="row">
-      <label>長邊上限</label>
+      <label>輸出尺寸</label>
+        <select id="iFit">
+          <option value="" selected>不指定（只依長邊上限縮小）</option>
+          <option value="85.6x53.98">身分證／健保卡／信用卡　85.6 × 54 mm</option>
+          <option value="91x55">名片　91 × 55 mm</option>
+          <option value="35x45">2 吋證件照　35 × 45 mm</option>
+          <option value="28x35">1 吋證件照　28 × 35 mm</option>
+          <option value="210x297">A4 直式　210 × 297 mm</option>
+          <option value="297x210">A4 橫式　297 × 210 mm</option>
+          <option value="mm">自訂（公釐）</option>
+          <option value="px">自訂（像素）</option>
+        </select>
+      </div>
+      <div class="row hide" id="iDimRow">
+        <label id="iDimLbl">寬 × 高（mm）</label>
+        <span style="display:flex;gap:6px;align-items:center">
+          <input type="number" id="iW" value="85.6" step="0.1" min="1" style="width:78px">
+          <span>×</span>
+          <input type="number" id="iH" value="54" step="0.1" min="1" style="width:78px">
+        </span>
+      </div>
+      <div class="row hide" id="iDpiRow">
+        <label>列印解析度</label>
+        <select id="iDpi">
+          <option value="150">150 dpi（螢幕、草稿）</option>
+          <option value="300" selected>300 dpi（一般列印）</option>
+          <option value="600">600 dpi（高品質）</option>
+        </select>
+      </div>
+      <div class="row hide" id="iFillRow">
+        <label>比例不合時</label>
+        <select id="iFill">
+          <option value="contain" selected>完整置入，空白補底色</option>
+          <option value="cover">裁切填滿，切掉超出部分</option>
+        </select>
+      </div>
+      <div class="row hide" id="iBgRow">
+        <label>底色</label>
+        <select id="iBg">
+          <option value="#ffffff" selected>白色</option>
+          <option value="#000000">黑色</option>
+          <option value="#f0f0f0">淺灰</option>
+          <option value="#0d6b6e">品牌綠</option>
+        </select>
+      </div>
+      <p class="hint hide" id="iFitInfo" style="margin:0 0 10px"></p>
+      <div class="row" id="iMaxRow">
+        <label>長邊上限</label>
       <select id="iMax">
         <option value="0" selected>不縮放（原尺寸）</option>
         <option value="3000">3000 px</option>
@@ -1115,7 +1162,7 @@ window.TB = (function(){
 
 </script>
 <script>
-/* ==================== MP4 無損裁剪 ==================== */
+/* ============== MP4 無損裁剪 ＋ JPEG 實體尺寸中繼資料 ============== */
 /* ============================================================
    MP4 無損裁剪：不解碼、不重編碼。
    讀 moov 的 sample table 找出時間範圍內的樣本，
@@ -1469,6 +1516,45 @@ var MP4Trim = (function () {
 
 
 
+/* 把 JPEG 的 JFIF APP0 區段改寫成指定 dpi。
+   canvas 輸出的 JPEG 不帶實體密度，Word 與印表機會當成 96 dpi 排版，
+   印出來尺寸會錯。這裡只動 APP0 的 5 個位元組，影像資料完全不碰。 */
+function jpegSetDpi(u8, dpi) {
+  if (!(u8[0] === 0xFF && u8[1] === 0xD8)) return u8;      // 不是 JPEG
+  var d = Math.max(1, Math.min(65535, Math.round(dpi)));
+  var p = 2;
+  while (p + 4 <= u8.length) {
+    if (u8[p] !== 0xFF) break;
+    var m = u8[p + 1];
+    if (m === 0xD8 || m === 0x01 || (m >= 0xD0 && m <= 0xD7)) { p += 2; continue; }
+    if (m === 0xDA || m === 0xD9) break;                    // 掃描資料開始
+    var len = (u8[p + 2] << 8) | u8[p + 3];
+    if (m === 0xE0 && len >= 16 &&
+        u8[p + 4] === 0x4A && u8[p + 5] === 0x46 && u8[p + 6] === 0x49 && u8[p + 7] === 0x46) {
+      var o = u8.slice();
+      o[p + 11] = 1;                                        // units = 每英吋
+      o[p + 12] = (d >> 8) & 255; o[p + 13] = d & 255;      // Xdensity
+      o[p + 14] = (d >> 8) & 255; o[p + 15] = d & 255;      // Ydensity
+      return o;
+    }
+    p += 2 + len;
+  }
+  // 沒有 APP0 就補一段標準的插在 SOI 之後
+  var app0 = new Uint8Array([
+    0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00,
+    0x01, 0x01, 0x01,
+    (d >> 8) & 255, d & 255, (d >> 8) & 255, d & 255,
+    0x00, 0x00
+  ]);
+  var out = new Uint8Array(u8.length + app0.length);
+  out[0] = 0xFF; out[1] = 0xD8;
+  out.set(app0, 2);
+  out.set(u8.subarray(2), 2 + app0.length);
+  return out;
+}
+
+
+
 </script>
 <script>
 /* ==================== 圖片影片壓縮 ==================== */
@@ -1602,9 +1688,21 @@ async function compressOne(it){
   const maxSide=parseInt($('iMax').value,10);
   let scale = maxSide? Math.min(1, maxSide/Math.max(ow,oh)) : 1;
   const cv=document.createElement('canvas'), ctx=cv.getContext('2d');
+  const FS=fitSpec();
   const draw=s=>{
+    if(FS){
+      cv.width=FS.w; cv.height=FS.h;
+      ctx.fillStyle=FS.bg; ctx.fillRect(0,0,cv.width,cv.height);
+      const k = FS.mode==='cover' ? Math.max(cv.width/ow,cv.height/oh)
+                                  : Math.min(cv.width/ow,cv.height/oh);
+      const dw=ow*k, dh=oh*k;
+      ctx.imageSmoothingQuality='high';
+      ctx.drawImage(bmp,(cv.width-dw)/2,(cv.height-dh)/2,dw,dh);
+      return;
+    }
     cv.width=Math.max(1,Math.round(ow*s)); cv.height=Math.max(1,Math.round(oh*s));
     ctx.fillStyle='#fff'; ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.imageSmoothingQuality='high';
     ctx.drawImage(bmp,0,0,cv.width,cv.height);
   };
   let blob;
@@ -1624,16 +1722,24 @@ async function compressOne(it){
       if(best){ blob=best; break; }
       blob=await toBlob(cv,type,0.30);
       if(blob.size<=target*1.05) break;
+      if(FS) break;                      // 指定尺寸時畫布固定，不再縮
       scale*=0.80;                       // 品質已見底 → 再縮尺寸
     }
   }
   if(bmp.close) bmp.close();
   it.w=cv.width; it.h=cv.height;
-  if(blob.size>=it.orig){                 // 壓不小就沿用原檔
+  if(FS&&FS.dpi&&type==='image/jpeg'){
+    try{
+      const u=new Uint8Array(await blob.arrayBuffer());
+      blob=new Blob([jpegSetDpi(u,FS.dpi)],{type:'image/jpeg'});
+    }catch(e){}
+  }
+  if(!FS && blob.size>=it.orig){          // 壓不小就沿用原檔（指定尺寸時一律採用新檔）
     it.blob=it.file; it.w=ow; it.h=oh; it.outName=it.name;
   }else{
     it.blob=blob;
-    it.outName=baseName(it.name)+(type==='image/webp'?'_min.webp':'_min.jpg');
+    it.outName=baseName(it.name)+(FS?('_'+cv.width+'x'+cv.height):'_min')+
+      (type==='image/webp'?'.webp':'.jpg');
   }
 }
 
@@ -1926,6 +2032,48 @@ $('vCut').onclick=async()=>{
   }
   $('vCut').disabled=false;
 };
+
+
+/* ================= 指定輸出尺寸 ================= */
+function fitSpec(){
+  const v=$('iFit').value;
+  if(!v) return null;
+  const dpi=parseInt($('iDpi').value,10)||300;
+  let w,h,unit;
+  if(v==='px'){ w=parseFloat($('iW').value); h=parseFloat($('iH').value); unit='px'; }
+  else if(v==='mm'){ w=parseFloat($('iW').value); h=parseFloat($('iH').value); unit='mm'; }
+  else { const t=v.split('x'); w=parseFloat(t[0]); h=parseFloat(t[1]); unit='mm'; }
+  if(!(w>0)||!(h>0)) return null;
+  const pw = unit==='mm' ? Math.round(w/25.4*dpi) : Math.round(w);
+  const ph = unit==='mm' ? Math.round(h/25.4*dpi) : Math.round(h);
+  return {w:Math.max(1,pw), h:Math.max(1,ph), dpi:(unit==='mm'?dpi:0),
+          mode:$('iFill').value, bg:$('iBg').value, unit:unit, mmW:w, mmH:h};
+}
+function fitSync(){
+  const v=$('iFit').value, on=!!v, custom=(v==='mm'||v==='px'), isPx=(v==='px');
+  ['iDimRow','iDpiRow','iFillRow','iBgRow','iFitInfo'].forEach(id=>$(id).classList.toggle('hide',!on));
+  $('iDimRow').classList.toggle('hide',!custom);
+  $('iDpiRow').classList.toggle('hide',!on||isPx);
+  $('iMaxRow').classList.toggle('hide',on);
+  $('iBgRow').classList.toggle('hide',!on||$('iFill').value!=='contain');
+  $('iDimLbl').textContent = isPx ? '寬 × 高（像素）' : '寬 × 高（mm）';
+  const s=fitSpec();
+  if(!s){ $('iFitInfo').textContent=''; return; }
+  let t='輸出 '+s.w+' × '+s.h+' 像素';
+  if(s.dpi) t+='　＝ '+s.mmW+' × '+s.mmH+' mm @ '+s.dpi+' dpi（會寫入檔案，Word 與印表機才會照實體尺寸排版）';
+  if(s.mode==='contain') t+='　比例不合時等比縮入、四周補底色';
+  else t+='　比例不合時等比放大置中裁切';
+  $('iFitInfo').innerHTML=t;
+}
+['iFit','iW','iH','iDpi','iFill','iBg'].forEach(id=>{
+  const el=$(id); if(el) el.addEventListener('change',fitSync);
+});
+$('iFit').addEventListener('change',()=>{
+  const v=$('iFit').value;
+  if(v&&v!=='mm'&&v!=='px'){ const t=v.split('x'); $('iW').value=t[0]; $('iH').value=t[1]; }
+  fitSync();
+});
+fitSync();
 
 
 /* ---- 交接：把壓好的檔丟給其他工具 ---- */
