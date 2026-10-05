@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="現場工具箱">
 <meta name="mobile-web-app-capable" content="yes">
-<title>現場工具箱 C2.1</title>
+<title>現場工具箱 C2.4</title>
 <style>
 /* ===== 外殼 ===== */
 
@@ -356,7 +356,7 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">現場工具箱</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C2.1</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C2.4</span></header>
 <nav id="shellTabs">
   <button data-t="CMP" class="on">壓縮</button>
   <button data-t="ANN">標註</button>
@@ -2584,6 +2584,144 @@ function fitList(){
   });
 }
 
+
+/* ==================== 拉正掃描 ====================
+   點文件四角 → 解出 rect→image 的單應性 → 對輸出每個像素反向取樣。
+   只對「平面」有效：卡片、平放的單張紙。彎曲的書頁修不了。 */
+var SCAN_PRESETS=[
+  ['身分證／健保卡／信用卡', 85.6, 53.98],
+  ['名片', 91, 55],
+  ['A4 直式', 210, 297],
+  ['A4 橫式', 297, 210],
+  ['B5 直式', 176, 250],
+  ['發票／收據（寬 80）', 80, 150],
+  ['2 吋證件照', 35, 45]
+];
+function startScan(){
+  if(!cur()){toast('先載入圖片');return;}
+  quad={pts:[],mode:'scan'}; qdrag=null; S.sel=null; ctxBar(); draw();
+  toast('依序點文件的四個角：<b>左上 → 右上 → 右下 → 左下</b><br>'+
+        '按住可拖曳微調，放開才定位<br>'+
+        '只適用平面：卡片、平放的紙。彎曲的書頁拉不平',6000);
+}
+function askScan(){
+  var h='<h3>拉正成哪種尺寸？</h3><div style="max-height:44vh;overflow:auto">';
+  SCAN_PRESETS.forEach(function(p,i){
+    h+='<div class="row" data-sp="'+i+'" style="cursor:pointer"><span class="g">'+p[0]+
+       '<small>'+p[1]+' × '+p[2]+' mm</small></span></div>';
+  });
+  h+='<div class="row" data-sp="-1" style="cursor:pointer"><span class="g">自訂尺寸'+
+     '<small>自己填寬高（mm）</small></span></div></div>'+
+     '<div class="row"><span class="g">解析度</span><div class="spin">'+
+     '<button data-dpi="150">150</button><button data-dpi="300" class="on">300</button>'+
+     '<button data-dpi="600">600</button></div></div>'+
+     '<h3>300 dpi 適合一般列印與存檔；600 dpi 適合要放大看小字的文件</h3>';
+  sheet(h,function(){
+    var dpi=300;
+    $('sheet').querySelectorAll('[data-dpi]').forEach(function(el){
+      el.onclick=function(){
+        dpi=parseInt(el.dataset.dpi,10);
+        $('sheet').querySelectorAll('[data-dpi]').forEach(function(x){x.classList.remove('on');});
+        el.classList.add('on');
+      };});
+    $('sheet').querySelectorAll('[data-sp]').forEach(function(el){
+      el.onclick=function(){
+        var i=parseInt(el.dataset.sp,10);
+        sheetClose();
+        if(i>=0){ doScan(SCAN_PRESETS[i][1],SCAN_PRESETS[i][2],dpi,SCAN_PRESETS[i][0]); return; }
+        ask({title:'自訂輸出尺寸',msg:'填「寬,高」（公釐）\n例：A5 148,210　明信片 100,148',
+          value:'100,148', ph:'例：148,210',
+          onOk:function(v){
+            var t=(v||'').split(/[,，]/), W=parseFloat(t[0]), H=parseFloat(t[1]);
+            if(!(W>0)||!(H>0)){toast('請填「寬,高」兩個數字');quad=null;draw();return;}
+            doScan(W,H,dpi,'自訂');
+          },
+          onCancel:function(){ quad=null; draw(); }});
+      };});
+  },function(){ quad=null; qdrag=null; draw(); });
+}
+function bilinear(src,sw,sh,x,y,out,o){
+  if(x<0)x=0; if(y<0)y=0;
+  if(x>sw-1)x=sw-1; if(y>sh-1)y=sh-1;
+  var x0=x|0, y0=y|0, x1=x0+1<sw?x0+1:x0, y1=y0+1<sh?y0+1:y0;
+  var fx=x-x0, fy=y-y0, w0=(1-fx)*(1-fy), w1=fx*(1-fy), w2=(1-fx)*fy, w3=fx*fy;
+  var i0=(y0*sw+x0)*4, i1=(y0*sw+x1)*4, i2=(y1*sw+x0)*4, i3=(y1*sw+x1)*4;
+  out[o]  =src[i0]*w0+src[i1]*w1+src[i2]*w2+src[i3]*w3;
+  out[o+1]=src[i0+1]*w0+src[i1+1]*w1+src[i2+1]*w2+src[i3+1]*w3;
+  out[o+2]=src[i0+2]*w0+src[i1+2]*w1+src[i2+2]*w2+src[i3+2]*w3;
+  out[o+3]=255;
+}
+function doScan(mmW,mmH,dpi,label){
+  var r=cur(), pts=quad.pts.slice();
+  quad=null; qdrag=null; draw();
+  var outW=Math.max(1,Math.round(mmW/25.4*dpi)), outH=Math.max(1,Math.round(mmH/25.4*dpi));
+  if(outW*outH>40e6){ toast('輸出太大（'+outW+'×'+outH+'），請降低解析度',4200); return; }
+  var Hr=solveH([{x:0,y:0},{x:outW,y:0},{x:outW,y:outH},{x:0,y:outH}], pts);
+  if(!Hr){ toast('這四點算不出有效平面，請重新點選',3600); return; }
+
+  var sc=document.createElement('canvas');
+  sc.width=r.w; sc.height=r.h;
+  sc.getContext('2d').drawImage(r.cvs,0,0);
+  var sd=sc.getContext('2d').getImageData(0,0,r.w,r.h).data;
+
+  /* 原圖比輸出密很多時做 2×2 超取樣，小字才不會有鋸齒 */
+  var side=Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y);
+  var ss=(side/outW>1.3)?2:1;
+
+  var oc=document.createElement('canvas'); oc.width=outW; oc.height=outH;
+  var octx=oc.getContext('2d');
+  var img=octx.createImageData(outW,1);
+  var row=img.data, tmp=new Float64Array(4);
+  var y=0;
+  toast('拉正中… 0%',60000);
+
+  function step(){
+    var t0=Date.now();
+    while(y<outH && Date.now()-t0<60){
+      for(var x=0;x<outW;x++){
+        var R=0,G=0,B=0,n=0;
+        for(var sy=0;sy<ss;sy++)for(var sx=0;sx<ss;sx++){
+          var u=x+(sx+0.5)/ss, v=y+(sy+0.5)/ss;
+          var w=Hr[6]*u+Hr[7]*v+Hr[8];
+          var ix=(Hr[0]*u+Hr[1]*v+Hr[2])/w, iy=(Hr[3]*u+Hr[4]*v+Hr[5])/w;
+          bilinear(sd,r.w,r.h,ix,iy,tmp,0);
+          R+=tmp[0];G+=tmp[1];B+=tmp[2];n++;
+        }
+        var o=x*4;
+        row[o]=R/n; row[o+1]=G/n; row[o+2]=B/n; row[o+3]=255;
+      }
+      octx.putImageData(img,0,y);
+      y++;
+    }
+    if(y<outH){ toast('拉正中… '+Math.round(y/outH*100)+'%',60000); setTimeout(step,0); return; }
+    finish();
+  }
+  function finish(){
+    oc.toBlob(function(b){
+      b.arrayBuffer().then(function(ab){
+        var u=new Uint8Array(ab);
+        if(typeof jpegSetDpi==='function') u=jpegSetDpi(u,dpi);
+        var out=new Blob([u],{type:'image/jpeg'});
+        var base=(r.title||r.name||'scan').replace(/\.[^.]+$/,'');
+        var nm=base+'_拉正_'+outW+'x'+outH+'.jpg';
+        var f=new File([out],nm,{type:'image/jpeg'});
+        toast('完成：'+outW+'×'+outH+'　'+label+' @ '+dpi+' dpi',2000);
+        sheet('<h3>拉正完成　'+label+'<br>'+outW+' × '+outH+' 像素　'+mmW+' × '+mmH+' mm @ '+dpi+' dpi</h3>'+
+          '<img src="'+URL.createObjectURL(out)+'" style="width:100%;border-radius:8px;display:block;margin:8px 0">'+
+          '<button class="big" id="scDl">下載 JPEG</button>'+
+          '<button class="big alt" id="scPdf">送到「轉 PDF」</button>'+
+          '<button class="big alt" id="scAnn">加入標註清單</button>',
+          function(){
+            $('scDl').onclick=function(){ sheetClose(); dl(out,nm); };
+            $('scPdf').onclick=function(){ sheetClose(); window.TB.toPDF([f]); };
+            $('scAnn').onclick=function(){ sheetClose(); addFiles([f]); };
+          });
+      });
+    },'image/jpeg',0.94);
+  }
+  setTimeout(step,30);
+}
+
 function startVert(){
   var r=cur();
   if(!r){toast('先載入圖片');return;}
@@ -2991,7 +3129,7 @@ function endPtr(e){
   }
   if(quad){
     var wasDrag=qdrag!==null; qdrag=null; drag=null; live=null;
-    if(wasDrag&&quad.pts.length===4)askQuad();
+    if(wasDrag&&quad.pts.length===4){ if(quad.mode==='scan') askScan(); else askQuad(); }
     return;
   }
   if(live){
@@ -3093,6 +3231,7 @@ $('dkTool').onclick=function(){
      '<div class="gi" data-fit="rect"><i>&#9645;</i>自訂矩形</div>'+
      '<div class="gi" data-fit="circle"><i>&#9711;</i>自訂圓柱</div>'+
      '<div class="gi" data-cal="4"><i>&#8646;</i>切換為'+(_pk==='wall'?'地面':'立面')+'模式</div>'+
+     '<div class="gi" data-scan="1"><i>&#9707;</i>拉正掃描</div>'+
      (_pk==='floor'?'<div class="gi" data-cal="3"><i>&#8597;</i>垂直校正（兩線）</div>':'')+
      '</div><h3>繪圖</h3><div class="grid">';
   ['arrow','line','ellipse','text','free'].forEach(function(k){h+=gi(k);});
@@ -3103,6 +3242,8 @@ $('dkTool').onclick=function(){
      '<div class="gi" data-cal="2"><i>⛶</i>透視校正（四點）</div>'+
      '<div class="gi" data-cal="0"><i>✕</i>清除校準</div></div>';
   sheet(h,function(){
+    $('sheet').querySelectorAll('[data-scan]').forEach(function(el){
+      el.onclick=function(){sheetClose();startScan();};});
     $('sheet').querySelectorAll('[data-fit]').forEach(function(el){
       el.onclick=function(){sheetClose();
         var v=el.dataset.fit;

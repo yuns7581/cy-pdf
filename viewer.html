@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="現場工具箱">
-<title>現場PDF檢視器 C2.0</title>
+<title>現場PDF檢視器 C2.4</title>
 <style>
 :root{--pdv-brand:#0d6b6e;--pdv-brand-d:#095053;--pdv-bg:#eceff1;--pdv-panel:#fff;--pdv-line:#d5dbde;--pdv-txt:#1d2528;--pdv-dim:#6b7a80;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -211,13 +211,20 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:var(--pdv-bg
       <div class="row" data-act="rot"><div class="g"><b>旋轉 90°</b><small>橫式圖面用</small></div></div>
       <div class="row" data-act="night"><div class="g"><b>夜間模式</b><small id="pdvNightLbl">關閉</small></div></div>
       <div class="row" data-act="export"><div class="g"><b>匯出含標註的 PDF</b><small>原檔向量保留，標註燒入</small></div></div>
-      <div class="row" data-act="png"><div class="g"><b>匯出目前頁為圖片</b><small>PNG，貼進 LINE 或工單用</small></div></div>
+      <div class="row" data-act="shot"><div class="g"><b>高解析度截圖</b><small>整頁或目前畫面範圍，150／300／600 dpi，比手機螢幕截圖清楚得多</small></div></div>
+      <div class="row" data-act="pages"><div class="g"><b>擷取頁面成新 PDF</b><small>挑指定頁另存，標註一起帶走</small></div></div>
+      <div class="row" data-act="png"><div class="g"><b>匯出目前頁為圖片</b><small>照畫面解析度，最快</small></div></div>
       <div class="row" data-act="toann"><div class="g"><b>送到工具箱「標註」</b><small>本頁轉成圖片交給標註工具，可量尺寸、放實尺</small></div></div>
       <div class="row" data-act="topdf"><div class="g"><b>送到工具箱「轉 PDF」</b><small>本頁轉成圖片，和現場照片一起排版</small></div></div>
       <div class="row" data-act="toolbox"><div class="g"><b>回工具箱</b><small>壓縮／標註／轉 PDF</small></div></div>
       <div class="row" data-act="clearann"><div class="g"><b>清除本檔所有標註</b><small id="pdvAnnCnt"></small></div></div>
       <div class="row" data-act="info"><div class="g"><b>文件資訊</b></div></div>
     </div>
+  </div>
+
+  <div class="sheet" id="pdvSheetTool">
+    <h3><span id="pdvToolTitle">工具</span><button data-close>✕</button></h3>
+    <div class="body" id="pdvToolBody"></div>
   </div>
 
   <div id="pdvModal">
@@ -946,7 +953,220 @@ function shareOrDl(blob,fname,mime){
 }
 function baseName(){ return (PDV.name||'document').replace(/\.pdf$/i,''); }
 
-function exportPdf(){
+/* 把 JPEG 的 JFIF APP0 區段改寫成指定 dpi。
+   canvas 輸出的 JPEG 不帶實體密度，Word 與印表機會當成 96 dpi 排版，
+   印出來尺寸會錯。這裡只動 APP0 的 5 個位元組，影像資料完全不碰。 */
+function jpegSetDpi(u8, dpi) {
+  if (!(u8[0] === 0xFF && u8[1] === 0xD8)) return u8;      // 不是 JPEG
+  var d = Math.max(1, Math.min(65535, Math.round(dpi)));
+  var p = 2;
+  while (p + 4 <= u8.length) {
+    if (u8[p] !== 0xFF) break;
+    var m = u8[p + 1];
+    if (m === 0xD8 || m === 0x01 || (m >= 0xD0 && m <= 0xD7)) { p += 2; continue; }
+    if (m === 0xDA || m === 0xD9) break;                    // 掃描資料開始
+    var len = (u8[p + 2] << 8) | u8[p + 3];
+    if (m === 0xE0 && len >= 16 &&
+        u8[p + 4] === 0x4A && u8[p + 5] === 0x46 && u8[p + 6] === 0x49 && u8[p + 7] === 0x46) {
+      var o = u8.slice();
+      o[p + 11] = 1;                                        // units = 每英吋
+      o[p + 12] = (d >> 8) & 255; o[p + 13] = d & 255;      // Xdensity
+      o[p + 14] = (d >> 8) & 255; o[p + 15] = d & 255;      // Ydensity
+      return o;
+    }
+    p += 2 + len;
+  }
+  // 沒有 APP0 就補一段標準的插在 SOI 之後
+  var app0 = new Uint8Array([
+    0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00,
+    0x01, 0x01, 0x01,
+    (d >> 8) & 255, d & 255, (d >> 8) & 255, d & 255,
+    0x00, 0x00
+  ]);
+  var out = new Uint8Array(u8.length + app0.length);
+  out[0] = 0xFF; out[1] = 0xD8;
+  out.set(app0, 2);
+  out.set(u8.subarray(2), 2 + app0.length);
+  return out;
+}
+
+
+
+/* ============ 頁碼範圍：1-3,7,10-12 ============ */
+function parseRange(str,n){
+  var out=[], seen={};
+  (str||'').split(/[,，、\s]+/).forEach(function(tok){
+    if(!tok) return;
+    var m=/^(\d+)\s*[-~－—]\s*(\d+)$/.exec(tok);
+    if(m){
+      var a=+m[1], b=+m[2], st=a<=b?1:-1;
+      for(var i=a; st>0?i<=b:i>=b; i+=st) if(i>=1&&i<=n&&!seen[i]){ seen[i]=1; out.push(i); }
+      return;
+    }
+    var v=parseInt(tok,10);
+    if(v>=1&&v<=n&&!seen[v]){ seen[v]=1; out.push(v); }
+  });
+  return out;
+}
+function toolSheet(title,html,init){
+  $('pdvToolTitle').textContent=title;
+  $('pdvToolBody').innerHTML=html;
+  sheet('pdvSheetTool',true);
+  if(init) init();
+}
+function askPages(){
+  if(!PDV.doc){ toast('請先開啟 PDF'); return; }
+  var n=PDV.n;
+  toolSheet('擷取頁面成新 PDF',
+    '<div class="row"><div class="g"><b>要哪幾頁？</b><small>共 '+n+' 頁。可用 1-3,7,10-12，也可倒序如 5-1</small></div></div>'+
+    '<div class="row"><input id="pgRange" value="'+PDV.cur+'" inputmode="text" '+
+      'style="flex:1;font-size:16px;padding:10px;border-radius:8px;border:1px solid var(--pdv-line);'+
+      'background:var(--pdv-bg);color:inherit"></div>'+
+    '<div class="row"><button class="btn" id="pgCur" style="flex:1">目前這頁</button>'+
+      '<button class="btn" id="pgOdd" style="flex:1">奇數頁</button>'+
+      '<button class="btn" id="pgEven" style="flex:1">偶數頁</button>'+
+      '<button class="btn" id="pgAll" style="flex:1">全部</button></div>'+
+    '<div class="row" data-go="1" style="justify-content:center"><div class="g" style="text-align:center">'+
+      '<b id="pgGo">產生新 PDF</b><small>標註會一起帶進新檔</small></div></div>',
+    function(){
+      var f=$('pgRange');
+      $('pgCur').onclick=function(){ f.value=String(PDV.cur); };
+      $('pgAll').onclick=function(){ f.value='1-'+n; };
+      $('pgOdd').onclick=function(){ var a=[]; for(var i=1;i<=n;i+=2)a.push(i); f.value=a.join(','); };
+      $('pgEven').onclick=function(){ var a=[]; for(var i=2;i<=n;i+=2)a.push(i); f.value=a.join(','); };
+      $('pdvToolBody').querySelector('[data-go]').onclick=function(){
+        var list=parseRange(f.value,n);
+        if(!list.length){ toast('頁碼看不懂，例：1-3,7'); return; }
+        sheet(null,false);
+        exportPdf({pages:list, label:f.value.replace(/\s/g,'')});
+      };
+    });
+}
+
+/* ============ 高解析度截圖 ============
+   不是抓螢幕畫布，是用 pdf.js 以指定 dpi 重新渲染，
+   所以放大多少倍都不會糊。區域裁切用 render transform 位移，
+   只畫需要的那一塊，不必先產生整張大圖。 */
+function visibleFrac(p){
+  var el=PAGES.querySelector('.pg[data-p="'+p+'"]'); if(!el) return null;
+  var r=el.getBoundingClientRect(), vw=PAGES.getBoundingClientRect();
+  var x0=Math.max(0,(vw.left-r.left)/r.width), x1=Math.min(1,(vw.right-r.left)/r.width);
+  var y0=Math.max(0,(vw.top-r.top)/r.height), y1=Math.min(1,(vw.bottom-r.top)/r.height);
+  if(x1-x0<0.02||y1-y0<0.02) return null;
+  return [x0,y0,x1,y1];
+}
+function askShot(){
+  if(!PDV.doc){ toast('請先開啟 PDF'); return; }
+  var vis=visibleFrac(PDV.cur), pct=vis?Math.round((vis[2]-vis[0])*(vis[3]-vis[1])*100):100;
+  toolSheet('高解析度截圖 — 第 '+PDV.cur+' 頁',
+    '<div class="row"><div class="g"><b>範圍</b><small>目前畫面＝你現在看到的那一塊，等同螢幕截圖但用向量重繪</small></div></div>'+
+    '<div class="row"><button class="btn on" id="shFull" style="flex:1">整頁</button>'+
+      '<button class="btn" id="shVis" style="flex:1"'+(vis?'':' disabled')+'>目前畫面'+(vis?'（約 '+pct+'%）':'（不適用）')+'</button></div>'+
+    '<div class="row"><div class="g"><b>解析度</b><small id="shInfo"></small></div></div>'+
+    '<div class="row"><button class="btn" id="d150" style="flex:1">150</button>'+
+      '<button class="btn on" id="d300" style="flex:1">300</button>'+
+      '<button class="btn" id="d600" style="flex:1">600 dpi</button></div>'+
+    '<div class="row"><div class="g"><b>格式</b></div>'+
+      '<button class="btn on" id="fJpg">JPEG</button><button class="btn" id="fPng">PNG</button></div>'+
+    '<div class="row" data-go="1" style="justify-content:center"><div class="g" style="text-align:center">'+
+      '<b>產生圖片</b><small>標註會一起畫上去</small></div></div>',
+    function(){
+      var mode='full', dpi=300, fmt='image/jpeg';
+      function sel(ids,on){ ids.forEach(function(i){ $(i).classList.toggle('on', i===on); }); }
+      function info(){
+        var b=PDV.base[PDV.cur-1]||{w:595,h:842};
+        var W=b.w, H=b.h;
+        if(PDV.rot%180===90){ var t=W; W=H; H=t; }
+        var fx=1, fy=1;
+        if(mode==='vis'&&vis){ fx=vis[2]-vis[0]; fy=vis[3]-vis[1]; }
+        var pw=Math.round(W*fx*dpi/72), ph=Math.round(H*fy*dpi/72);
+        $('shInfo').textContent='輸出 '+pw+' × '+ph+' 像素（'+(pw*ph/1e6).toFixed(1)+' MP）';
+      }
+      $('shFull').onclick=function(){ mode='full'; sel(['shFull','shVis'],'shFull'); info(); };
+      $('shVis').onclick=function(){ if(!vis)return; mode='vis'; sel(['shFull','shVis'],'shVis'); info(); };
+      ['150','300','600'].forEach(function(v){
+        $('d'+v).onclick=function(){ dpi=+v; sel(['d150','d300','d600'],'d'+v); info(); };
+      });
+      $('fJpg').onclick=function(){ fmt='image/jpeg'; sel(['fJpg','fPng'],'fJpg'); };
+      $('fPng').onclick=function(){ fmt='image/png'; sel(['fJpg','fPng'],'fPng'); };
+      info();
+      $('pdvToolBody').querySelector('[data-go]').onclick=function(){
+        sheet(null,false);
+        doShot(PDV.cur, mode==='vis'?vis:[0,0,1,1], dpi, fmt);
+      };
+    });
+}
+function paintAnn(ctx,p,W,H,ox,oy){
+  var list=PDV.ann[p]||[]; if(!list.length) return;
+  var k=pxPerPt(p,W,H);
+  ctx.save(); ctx.translate(-ox,-oy);
+  list.forEach(function(o){
+    ctx.save();
+    var lw=Math.max(1, wpOf(o,p)*k);
+    if(o.t==='ink'||o.t==='arrow'){ ctx.strokeStyle=o.c; ctx.lineWidth=lw; ctx.lineCap='round'; ctx.lineJoin='round'; }
+    if(o.t==='ink'){
+      ctx.beginPath();
+      o.pts.forEach(function(pt,i){ var q=toPx(pt[0],pt[1],W,H); if(i)ctx.lineTo(q[0],q[1]); else ctx.moveTo(q[0],q[1]); });
+      ctx.stroke();
+    } else if(o.t==='hl'){
+      var a=toPx(o.x,o.y,W,H), b=toPx(o.x+o.w2,o.y+o.h2,W,H);
+      ctx.globalAlpha=.32; ctx.fillStyle=o.c;
+      ctx.fillRect(Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1]));
+    } else if(o.t==='arrow'){
+      var s2=toPx(o.x,o.y,W,H), e=toPx(o.x2,o.y2,W,H);
+      ctx.beginPath(); ctx.moveTo(s2[0],s2[1]); ctx.lineTo(e[0],e[1]); ctx.stroke();
+      var ang=Math.atan2(e[1]-s2[1],e[0]-s2[0]), hl=Math.max(8,lw*5);
+      ctx.beginPath(); ctx.moveTo(e[0],e[1]);
+      ctx.lineTo(e[0]-hl*Math.cos(ang-0.4), e[1]-hl*Math.sin(ang-0.4));
+      ctx.moveTo(e[0],e[1]);
+      ctx.lineTo(e[0]-hl*Math.cos(ang+0.4), e[1]-hl*Math.sin(ang+0.4));
+      ctx.stroke();
+    } else if(o.t==='text'){
+      var q2=toPx(o.x,o.y,W,H), fs=Math.max(9, spOf(o,p)*k);
+      ctx.fillStyle=o.c;
+      ctx.font='600 '+fs+'px -apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif';
+      ctx.textBaseline='top';
+      o.v.split('\n').forEach(function(ln,i){ ctx.fillText(ln,q2[0],q2[1]+i*fs*1.25); });
+    }
+    ctx.restore();
+  });
+  ctx.restore();
+}
+function doShot(p,frac,dpi,fmt){
+  spin(true,'渲染中…');
+  PDV.doc.getPage(p).then(function(pg){
+    var sc=dpi/72;
+    var vp=pg.getViewport({scale:sc, rotation:PDV.rot});
+    var ox=Math.round(frac[0]*vp.width), oy=Math.round(frac[1]*vp.height);
+    var w=Math.max(1,Math.round((frac[2]-frac[0])*vp.width));
+    var h=Math.max(1,Math.round((frac[3]-frac[1])*vp.height));
+    if(w*h>45e6){ spin(false); toast('輸出太大（'+w+'×'+h+'），請降低 dpi 或縮小範圍',4200); return; }
+    var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+    var ctx=cv.getContext('2d',{alpha:(fmt==='image/png')});
+    if(fmt!=='image/png'){ ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h); }
+    return pg.render({canvasContext:ctx, viewport:vp, transform:[1,0,0,1,-ox,-oy]}).promise.then(function(){
+      paintAnn(ctx,p,vp.width,vp.height,ox,oy);
+      return new Promise(function(res){
+        cv.toBlob(function(b){ res(b); }, fmt, fmt==='image/jpeg'?0.94:undefined);
+      });
+    }).then(function(b){
+      return b.arrayBuffer().then(function(ab){
+        var u=new Uint8Array(ab);
+        if(fmt==='image/jpeg'&&typeof jpegSetDpi==='function') u=jpegSetDpi(u,dpi);
+        var out=new Blob([u],{type:fmt});
+        var ext=fmt==='image/png'?'png':'jpg';
+        var nm=baseName()+'_P'+p+'_'+dpi+'dpi_'+w+'x'+h+'.'+ext;
+        spin(false);
+        shareOrDl(out,nm,fmt);
+        toast('已產生 '+w+' × '+h+'　'+dpi+' dpi',2800);
+      });
+    });
+  }).catch(function(e){
+    spin(false); toast('截圖失敗：'+(e&&e.message||e),3600);
+  });
+}
+
+function exportPdf(opts){
   if(!PDV.doc){ toast('請先開啟 PDF'); return; }
   if(!window.PDFLib){ toast('匯出模組未載入'); return; }
   spin(true,'產生 PDF…');
@@ -1000,11 +1220,22 @@ function exportPdf(){
         }
       });
     });
-    return Promise.all(jobs).then(function(){ return out.save({useObjectStreams:false}); });
+    return Promise.all(jobs).then(function(){
+      if(opts&&opts.pages&&opts.pages.length){
+        return PDFLib.PDFDocument.create().then(function(nd){
+          return nd.copyPages(out, opts.pages.map(function(n){return n-1;})).then(function(cp){
+            cp.forEach(function(pg){ nd.addPage(pg); });
+            return nd.save({useObjectStreams:false});
+          });
+        });
+      }
+      return out.save({useObjectStreams:false});
+    });
   }).then(function(bytes){
     spin(false);
-    shareOrDl(new Blob([bytes],{type:'application/pdf'}), baseName()+'_標註.pdf','application/pdf');
-    toast('已產生：'+baseName()+'_標註.pdf', 2600);
+    var nm=baseName()+(opts&&opts.pages?('_P'+opts.label):'_標註')+'.pdf';
+    shareOrDl(new Blob([bytes],{type:'application/pdf'}), nm,'application/pdf');
+    toast('已產生：'+nm+(opts&&opts.pages?('　'+opts.pages.length+' 頁'):''), 2600);
   }).catch(function(e){
     spin(false); console.error(e);
     toast('匯出失敗：'+(e&&e.message?e.message:'未知錯誤'),3400);
@@ -1197,7 +1428,7 @@ $('pdvCloseFind').onclick=function(){
 
 /* ============ 面板 ============ */
 function sheet(id,on){
-  ['pdvSheetLib','pdvSheetOl','pdvSheetMore'].forEach(function(s){ $(s).classList.toggle('on', s===id&&on); });
+  ['pdvSheetLib','pdvSheetOl','pdvSheetMore','pdvSheetTool'].forEach(function(s){ $(s).classList.toggle('on', s===id&&on); });
   $('pdvMask').classList.toggle('on',!!on);
 }
 $('pdvMask').onclick=function(){ sheet(null,false); };
@@ -1273,6 +1504,8 @@ $('pdvSheetMore').addEventListener('click',function(e){
     try{localStorage.setItem('pdv_night',PDV.night?'1':'0');}catch(e){} }
   else if(a==='export'){ sheet(null,false); exportPdf(); }
   else if(a==='png'){ sheet(null,false); exportPng(); }
+  else if(a==='shot'){ sheet(null,false); askShot(); }
+  else if(a==='pages'){ sheet(null,false); askPages(); }
   else if(a==='toann'){ sheet(null,false); sendTo('ann'); }
   else if(a==='topdf'){ sheet(null,false); sendTo('pdf'); }
   else if(a==='toolbox'){ location.href='./index.html'; }
