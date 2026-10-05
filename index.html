@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="現場工具箱">
 <meta name="mobile-web-app-capable" content="yes">
-<title>現場工具箱 C2.4</title>
+<title>現場工具箱 C2.5</title>
 <style>
 /* ===== 外殼 ===== */
 
@@ -356,7 +356,7 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">現場工具箱</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C2.4</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C2.5</span></header>
 <nav id="shellTabs">
   <button data-t="CMP" class="on">壓縮</button>
   <button data-t="ANN">標註</button>
@@ -485,11 +485,16 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
   <div class="card hide" id="iCard">
     <h2>結果 <span class="badge" id="iSum"></span></h2>
     <div id="iList"></div>
+    <p class="hint hide" id="iSlim" style="margin:0 0 10px"></p>
+    <div class="handoff">
+      <button id="hoPdf1">→ 組成 PDF（每頁 1 張）</button>
+    </div>
     <div class="handoff">
       <button id="hoAnn">→ 送到標註</button>
-      <button id="hoPdf">→ 送到轉 PDF</button>
+      <button id="hoPdf">→ 送到轉 PDF（多格版面）</button>
     </div>
-    <p class="hint" style="margin-top:8px">送到「轉 PDF」後，影像品質請選「原始直通」，壓縮好的檔會直接嵌入、不再重新編碼（零二次損失）。</p>
+    <p class="hint" style="margin-top:8px">「組成 PDF」會自動設成每頁 1 張、原始直通，等於把原 PDF 的每一頁換成壓縮後的影像，<b>不再二次編碼</b>。<br>
+    注意：重組後只保留影像，原 PDF 的文字層、書籤、表單欄位不會保留（掃描件本來就沒有這些，影響不大）。</p>
   </div>
 </div>
 
@@ -1140,14 +1145,18 @@ window.TB = (function(){
       return m;
     },
     /* 由壓縮／標註呼叫，把檔案送進轉 PDF */
-    toPDF:function(files){
+    toPDF:function(files,opt){
       if(!files||!files.length){ toast('沒有可送出的檔案'); return; }
       if(!window.PDF||!PDF.push){ toast('轉 PDF 模組未就緒'); return; }
       files.forEach(function(f){ PDF.push(f,f.name); });
       if(PDF.passthrough) PDF.passthrough();
+      if(opt&&opt.perPage&&PDF.setPerPage) PDF.setPerPage(opt.perPage);
+      if(opt&&opt.name&&PDF.setName) PDF.setName(opt.name);
       PDF.render();
       go('PDF');
-      toast('已送入 '+files.length+' 張到「轉 PDF」<br>影像品質已自動切成「原始直通」，不會二次壓縮',4000);
+      toast(opt&&opt.perPage===1
+        ? ('已送入 '+files.length+' 頁，版面設為每頁 1 張、原始直通<br>按最下方「產生 PDF」即可')
+        : ('已送入 '+files.length+' 張到「轉 PDF」<br>影像品質已自動切成「原始直通」，不會二次壓縮'),4600);
     },
     /* 由壓縮呼叫，把檔案送進標註 */
     toANN:function(files){
@@ -1617,12 +1626,14 @@ function addImages(files){
   $('iStat').textContent='已選 '+items.length+' 張，共 '+fmt(items.reduce((s,x)=>s+x.orig,0));
   renderImages();
 }
+var srcPack=null;
 $('fiPack').addEventListener('change',e=>{
   const f=e.target.files&&e.target.files[0]; e.target.value='';
   if(!f)return;
   window.TB.toast('解析中…',8000);
   window.TB.importPack(f).then(r=>{
     if(!r.files.length){window.TB.toast('這個檔案裡沒有可用的圖片'+(r.skipped?('（'+r.skipped+' 個略過）'):''),4000);return;}
+    srcPack={name:f.name, size:f.size, kind:r.kind, pages:r.files.length};
     addImages(r.files); window.TB.toast(window.TB.packMsg(r),3600);
   }).catch(err=>window.TB.toast('讀取失敗：'+(err&&err.message||err),4000));
 });
@@ -1630,6 +1641,7 @@ fiImg.addEventListener('change',e=>{addImages(e.target.files); e.target.value=''
 fiDoc.addEventListener('change',e=>{addImages(e.target.files); e.target.value='';});
 
 function renderImages(){
+  try{ slimSync(); }catch(e){}
   const box=$('iList'); box.innerHTML='';
   $('iCard').classList.toggle('hide',!items.length);
   let os=0,ns=0,done=0;
@@ -2083,7 +2095,23 @@ function outFiles(){
     return (b instanceof File)? b : new File([b], nm, {type:b.type||'image/jpeg'});
   });
 }
+function slimSync(){
+  var el=$('iSlim');
+  if(!srcPack||srcPack.kind!=='pdf'){ el.classList.add('hide'); return; }
+  var done=items.filter(function(x){return x.blob;});
+  if(!done.length){ el.classList.add('hide'); return; }
+  var after=done.reduce(function(a,x){return a+(x.blob.size||0);},0);
+  var pct=Math.round((1-after/srcPack.size)*100);
+  el.innerHTML='原 PDF <b>'+srcPack.name+'</b>　'+fmt(srcPack.size)+'　'+srcPack.pages+' 頁'+
+    '<br>影像壓縮後合計 <b>'+fmt(after)+'</b>'+(pct>0?('　約省 <b>'+pct+'%</b>'):'')+
+    '　（重組後的 PDF 會再多約 '+fmt(srcPack.pages*1200)+' 結構開銷）';
+  el.classList.remove('hide');
+}
 $('hoPdf').onclick=function(){ window.TB.toPDF(outFiles()); };
+$('hoPdf1').onclick=function(){
+  var nm=srcPack?srcPack.name.replace(/\.[^.]+$/,'')+'_壓縮':'';
+  window.TB.toPDF(outFiles(), {perPage:1, name:nm});
+};
 $('hoAnn').onclick=function(){ window.TB.toANN(outFiles()); };
 
 window.CMP={addImages:addImages,clearAll:clearAll,downloadZip:downloadZip,runImages:runImages,
@@ -5223,7 +5251,14 @@ window.PDF={
   readZip:unzip,
   passthrough:function(){
     cfg.imgMax='orig'; $('imgMax').value='orig'; $('imgQ').disabled=true; qHint();
-  }
+  },
+  setPerPage:function(n){
+    cfg.perPage=n;
+    Array.prototype.forEach.call($('perPage').querySelectorAll('button'),function(b){
+      b.setAttribute('aria-pressed', parseInt(b.dataset.v,10)===n?'true':'false');
+    });
+  },
+  setName:function(nm){ if(nm) $('fname').value=nm; }
 };
 
 render();
