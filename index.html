@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="現場工具箱">
 <meta name="mobile-web-app-capable" content="yes">
-<title>現場工具箱 C2.5</title>
+<title>現場工具箱 C2.6</title>
 <style>
 /* ===== 外殼 ===== */
 
@@ -356,7 +356,7 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">現場工具箱</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C2.5</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C2.6</span></header>
 <nav id="shellTabs">
   <button data-t="CMP" class="on">壓縮</button>
   <button data-t="ANN">標註</button>
@@ -702,6 +702,13 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
         </div>
       </div>
       <div class="row">
+        <span>頁面貼合</span>
+        <div class="seg" id="full">
+          <button type="button" data-v="0" aria-pressed="true">固定 A4</button>
+          <button type="button" data-v="1">貼合影像（無白邊）</button>
+        </div>
+      </div>
+      <div class="row">
         <span>紙張方向</span>
         <div class="seg" id="orient">
           <button type="button" data-v="p" aria-pressed="true">直向</button>
@@ -715,6 +722,7 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
           <button type="button" data-v="cover">裁切填滿</button>
         </div>
       </div>
+      <p class="hint" id="fullHint" style="margin:-4px 0 10px"></p>
       <div class="row">
         <span>長邊上限</span>
         <select id="imgMax" class="sel">
@@ -1151,11 +1159,12 @@ window.TB = (function(){
       files.forEach(function(f){ PDF.push(f,f.name); });
       if(PDF.passthrough) PDF.passthrough();
       if(opt&&opt.perPage&&PDF.setPerPage) PDF.setPerPage(opt.perPage);
+      if(opt&&opt.full&&PDF.setFull) PDF.setFull(1);
       if(opt&&opt.name&&PDF.setName) PDF.setName(opt.name);
       PDF.render();
       go('PDF');
       toast(opt&&opt.perPage===1
-        ? ('已送入 '+files.length+' 頁，版面設為每頁 1 張、原始直通<br>按最下方「產生 PDF」即可')
+        ? ('已送入 '+files.length+' 頁，版面已設為<b>貼合影像、無白邊</b>、原始直通<br>按最下方「產生 PDF」即可')
         : ('已送入 '+files.length+' 張到「轉 PDF」<br>影像品質已自動切成「原始直通」，不會二次壓縮'),4600);
     },
     /* 由壓縮呼叫，把檔案送進標註 */
@@ -2110,7 +2119,7 @@ function slimSync(){
 $('hoPdf').onclick=function(){ window.TB.toPDF(outFiles()); };
 $('hoPdf1').onclick=function(){
   var nm=srcPack?srcPack.name.replace(/\.[^.]+$/,'')+'_壓縮':'';
-  window.TB.toPDF(outFiles(), {perPage:1, name:nm});
+  window.TB.toPDF(outFiles(), {perPage:1, full:1, name:nm});
 };
 $('hoAnn').onclick=function(){ window.TB.toANN(outFiles()); };
 
@@ -3651,7 +3660,7 @@ setTool(S.tool);resize();
 "use strict";
 
 var items=[];   // {kind:'img'|'pdf', ...}
-var cfg={perPage:6, orient:'p', fit:'contain', imgMax:'1100', imgQ:60, footer:1, cover:false, cvOrg:true};
+var cfg={perPage:6, orient:'p', fit:'contain', full:0, imgMax:'1100', imgQ:60, footer:1, cover:false, cvOrg:true};
 /* 兩段式：長邊上限 × JPEG 品質。imgMax==='orig' 走原檔直通 */
 function imgSpec(){
   if(cfg.imgMax==='orig') return {max:100000,q:.95,pass:true};
@@ -4500,13 +4509,14 @@ $('sortRow').addEventListener('click',function(e){
   }
   render();
 });
-[['perPage','perPage'],['orient','orient'],['fit','fit'],['footerOpt','footer']].forEach(function(p){
+[['perPage','perPage'],['orient','orient'],['fit','fit'],['full','full'],['footerOpt','footer']].forEach(function(p){
   $(p[0]).addEventListener('click',function(e){
     var b=e.target.closest('button[data-v]'); if(!b) return;
     Array.prototype.forEach.call(this.querySelectorAll('button'),function(x){
       x.setAttribute('aria-pressed',x===b?'true':'false');
     });
-    cfg[p[1]]=(p[1]==='perPage'||p[1]==='footer')?parseInt(b.dataset.v,10):b.dataset.v;
+    cfg[p[1]]=(p[1]==='perPage'||p[1]==='footer'||p[1]==='full')?parseInt(b.dataset.v,10):b.dataset.v;
+    fullHint();
     render();
   });
 });
@@ -4961,6 +4971,25 @@ function buildDoc(seq,opts){
   seq.forEach(function(block){
     if(block.kind==='img'){
       var imgs=block.imgs;
+      if(cfg.full){                       /* 貼合影像：一頁一張、頁面尺寸＝影像比例、零邊界 */
+        imgs.forEach(function(im){
+          tasks.push(function(){
+            var id=addImg({w:im.w,h:im.h,bytes:im.bytes,cs:im.cs,filter:'DCTDecode'});
+            var L=841.89, pw2, ph2;
+            if(im.w>=im.h){ pw2=L; ph2=L*im.h/im.w; } else { ph2=L; pw2=L*im.w/im.h; }
+            var body='q '+f2(pw2)+' 0 0 '+f2(ph2)+' 0 0 cm /Im'+id+' Do Q\n';
+            var pgId=alloc(), ctId=alloc();
+            setP(ctId,['<< /Length '+body.length+' >>\nstream\n'+body+'endstream']);
+            setP(pgId,[
+              '<< /Type /Page /Parent '+PAGES+' 0 R /MediaBox [0 0 '+f2(pw2)+' '+f2(ph2)+']'+
+              ' /Resources << /XObject << /Im'+id+' '+id+' 0 R >> >> /Contents '+ctId+' 0 R >>'
+            ]);
+            kids.push(pgId);
+            return Promise.resolve();
+          });
+        });
+        return;
+      }
       for(var st=0; st<imgs.length; st+=cfg.perPage){
         (function(slice){
           tasks.push(function(){
@@ -5222,6 +5251,11 @@ function pdfImages(f){
 }
 
 /* ==================== 兩段式影像設定 ==================== */
+function fullHint(){
+  $('fullHint').innerHTML = cfg.full
+    ? '每頁一張，頁面尺寸直接取影像比例，<b>四邊零留白</b>，不加頁尾。重組掃描型 PDF 用這個。<br>此模式下「每頁張數／紙張方向／格子填法／頁尾」不作用。'
+    : '固定 A4 版面，照片依每頁張數排格子，四周留白並可加頁尾。現場照片報告用這個。';
+}
 function qHint(){
   var s=imgSpec(), t;
   if(s.pass) t='原始直通：相機原檔位元組直接嵌入，零損失。檔案最大，適合要留存原始證據的報告。';
@@ -5241,7 +5275,7 @@ $('imgMax').addEventListener('change',function(){
   qHint(); render();
 });
 $('imgQ').addEventListener('change',function(){ cfg.imgQ=parseInt(this.value,10); qHint(); render(); });
-qHint();
+qHint(); fullHint();
 
 /* ==================== 對外交接介面 ==================== */
 window.PDF={
@@ -5258,7 +5292,14 @@ window.PDF={
       b.setAttribute('aria-pressed', parseInt(b.dataset.v,10)===n?'true':'false');
     });
   },
-  setName:function(nm){ if(nm) $('fname').value=nm; }
+  setName:function(nm){ if(nm) $('fname').value=nm; },
+  setFull:function(v){
+    cfg.full=v?1:0;
+    Array.prototype.forEach.call($('full').querySelectorAll('button'),function(b){
+      b.setAttribute('aria-pressed', parseInt(b.dataset.v,10)===cfg.full?'true':'false');
+    });
+    fullHint();
+  }
 };
 
 render();
