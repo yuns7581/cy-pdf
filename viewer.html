@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="現場工具箱">
-<title>現場PDF檢視器 C2.4</title>
+<title>現場PDF檢視器 C2.7</title>
 <style>
 :root{--pdv-brand:#0d6b6e;--pdv-brand-d:#095053;--pdv-bg:#eceff1;--pdv-panel:#fff;--pdv-line:#d5dbde;--pdv-txt:#1d2528;--pdv-dim:#6b7a80;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -211,6 +211,7 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:var(--pdv-bg
       <div class="row" data-act="rot"><div class="g"><b>旋轉 90°</b><small>橫式圖面用</small></div></div>
       <div class="row" data-act="night"><div class="g"><b>夜間模式</b><small id="pdvNightLbl">關閉</small></div></div>
       <div class="row" data-act="export"><div class="g"><b>匯出含標註的 PDF</b><small>原檔向量保留，標註燒入</small></div></div>
+      <div class="row" data-act="slim"><div class="g"><b>PDF 瘦身（整頁重繪）</b><small>每頁原樣重繪成影像，文字、向量、任何格式的圖都一比一保留，檔案大幅縮小</small></div></div>
       <div class="row" data-act="shot"><div class="g"><b>高解析度截圖</b><small>整頁或目前畫面範圍，150／300／600 dpi，比手機螢幕截圖清楚得多</small></div></div>
       <div class="row" data-act="pages"><div class="g"><b>擷取頁面成新 PDF</b><small>挑指定頁另存，標註一起帶走</small></div></div>
       <div class="row" data-act="png"><div class="g"><b>匯出目前頁為圖片</b><small>照畫面解析度，最快</small></div></div>
@@ -1014,6 +1015,105 @@ function toolSheet(title,html,init){
   sheet('pdvSheetTool',true);
   if(init) init();
 }
+
+/* ==================== PDF 瘦身（整頁重繪） ====================
+   抽影像的做法只救得了內嵌 JPEG，而且型錄這類一頁多圖的 PDF
+   抽出來也拼不回原樣。這裡改成用 pdf.js 把每一頁照原樣重繪成
+   一張影像再組回 PDF：文字、向量、PNG／CCITT／JPX 任何格式的
+   圖都會出現在畫面上，等於視覺上一比一，代價是文字層不保留。 */
+function askSlim(){
+  if(!PDV.doc){ toast('請先開啟 PDF'); return; }
+  var orig=(PDV.bytes&&PDV.bytes.length)||0;
+  toolSheet('PDF 瘦身（整頁重繪）',
+    '<div class="row"><div class="g"><b>原檔</b><small>'+(PDV.name||'')+'　'+
+      (orig?fmtSize(orig):'大小未知')+'　'+PDV.n+' 頁</small></div></div>'+
+    '<div class="row"><div class="g"><b>解析度</b><small id="slInfo"></small></div></div>'+
+    '<div class="row"><button class="btn" id="s110" style="flex:1">110</button>'+
+      '<button class="btn on" id="s150" style="flex:1">150</button>'+
+      '<button class="btn" id="s200" style="flex:1">200</button>'+
+      '<button class="btn" id="s300" style="flex:1">300 dpi</button></div>'+
+    '<div class="row"><div class="g"><b>JPEG 品質</b><small>文件掃描件 65 起跳；純照片型錄可到 50</small></div></div>'+
+    '<div class="row"><button class="btn" id="q50" style="flex:1">50</button>'+
+      '<button class="btn on" id="q65" style="flex:1">65</button>'+
+      '<button class="btn" id="q80" style="flex:1">80</button></div>'+
+    '<div class="row"><div class="g"><b>頁面範圍</b><small>留空＝全部，可填 1-3,7</small></div></div>'+
+    '<div class="row"><input id="slRange" placeholder="全部" inputmode="text" '+
+      'style="flex:1;font-size:16px;padding:10px;border-radius:8px;border:1px solid var(--pdv-line);'+
+      'background:var(--pdv-bg);color:inherit"></div>'+
+    '<div class="row" data-go="1" style="justify-content:center"><div class="g" style="text-align:center">'+
+      '<b>開始瘦身</b><small>文字層、書籤、表單欄位不會保留；標註會燒進畫面</small></div></div>',
+    function(){
+      var dpi=150, q=65;
+      function sel(ids,on){ ids.forEach(function(i){ $(i).classList.toggle('on', i===on); }); }
+      function info(){
+        var b=PDV.base[PDV.cur-1]||{w:595,h:842};
+        var W=b.w,H=b.h; if(PDV.rot%180===90){ var t=W; W=H; H=t; }
+        $('slInfo').textContent='每頁約 '+Math.round(W*dpi/72)+' × '+Math.round(H*dpi/72)+' 像素';
+      }
+      [110,150,200,300].forEach(function(v){
+        $('s'+v).onclick=function(){ dpi=v; sel(['s110','s150','s200','s300'],'s'+v); info(); };
+      });
+      [50,65,80].forEach(function(v){
+        $('q'+v).onclick=function(){ q=v; sel(['q50','q65','q80'],'q'+v); };
+      });
+      info();
+      $('pdvToolBody').querySelector('[data-go]').onclick=function(){
+        var raw=($('slRange').value||'').trim();
+        var list=raw?parseRange(raw,PDV.n):null;
+        if(raw&&!list.length){ toast('頁碼看不懂，例：1-3,7'); return; }
+        if(!list){ list=[]; for(var i=1;i<=PDV.n;i++) list.push(i); }
+        sheet(null,false);
+        doSlim(dpi,q,list);
+      };
+    });
+}
+function doSlim(dpi,q,list){
+  var out, sc=dpi/72, total=0, t0=Date.now();
+  spin(true,'準備中…');
+  PDFLib.PDFDocument.create().then(function(doc){
+    out=doc;
+    return list.reduce(function(chain,p,i){
+      return chain.then(function(){
+        spin(true,'重繪第 '+p+' 頁（'+(i+1)+'/'+list.length+'）…');
+        return PDV.doc.getPage(p).then(function(pg){
+          var vp1=pg.getViewport({scale:1, rotation:PDV.rot});
+          var vp=pg.getViewport({scale:sc, rotation:PDV.rot});
+          var w=Math.max(1,Math.round(vp.width)), h=Math.max(1,Math.round(vp.height));
+          if(w*h>40e6) throw new Error('第 '+p+' 頁在 '+dpi+' dpi 下太大，請降低解析度');
+          var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+          var ctx=cv.getContext('2d',{alpha:false});
+          ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
+          return pg.render({canvasContext:ctx, viewport:vp}).promise.then(function(){
+            try{ paintAnn(ctx,p,vp.width,vp.height,0,0); }catch(e){}
+            return new Promise(function(res){ cv.toBlob(res,'image/jpeg',q/100); });
+          }).then(function(b){ return b.arrayBuffer(); }).then(function(ab){
+            total+=ab.byteLength;
+            return out.embedJpg(new Uint8Array(ab));
+          }).then(function(img){
+            var pageObj=out.addPage([vp1.width, vp1.height]);
+            pageObj.drawImage(img,{x:0,y:0,width:vp1.width,height:vp1.height});
+            cv.width=1; cv.height=1;
+            return new Promise(function(r){ setTimeout(r,0); });
+          });
+        });
+      });
+    },Promise.resolve());
+  }).then(function(){
+    spin(true,'組檔中…');
+    return out.save({useObjectStreams:false});
+  }).then(function(bytes){
+    spin(false);
+    var orig=(PDV.bytes&&PDV.bytes.length)||0;
+    var nm=baseName()+'_瘦身_'+dpi+'dpi.pdf';
+    shareOrDl(new Blob([bytes],{type:'application/pdf'}), nm, 'application/pdf');
+    var pct=orig?Math.round((1-bytes.length/orig)*100):0;
+    toast('完成：'+list.length+' 頁　'+(orig?(fmtSize(orig)+' → '):'')+fmtSize(bytes.length)+
+          (orig?('　省 '+pct+'%'):'')+'　耗時 '+Math.round((Date.now()-t0)/1000)+' 秒', 6000);
+  }).catch(function(e){
+    spin(false); toast('瘦身失敗：'+(e&&e.message||e),5000);
+  });
+}
+
 function askPages(){
   if(!PDV.doc){ toast('請先開啟 PDF'); return; }
   var n=PDV.n;
@@ -1504,6 +1604,7 @@ $('pdvSheetMore').addEventListener('click',function(e){
     try{localStorage.setItem('pdv_night',PDV.night?'1':'0');}catch(e){} }
   else if(a==='export'){ sheet(null,false); exportPdf(); }
   else if(a==='png'){ sheet(null,false); exportPng(); }
+  else if(a==='slim'){ sheet(null,false); askSlim(); }
   else if(a==='shot'){ sheet(null,false); askShot(); }
   else if(a==='pages'){ sheet(null,false); askPages(); }
   else if(a==='toann'){ sheet(null,false); sendTo('ann'); }
