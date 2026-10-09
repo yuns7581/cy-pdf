@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="現場工具箱">
-<title>現場PDF檢視器 C2.7</title>
+<title>現場PDF檢視器 C2.8</title>
 <style>
 :root{--pdv-brand:#0d6b6e;--pdv-brand-d:#095053;--pdv-bg:#eceff1;--pdv-panel:#fff;--pdv-line:#d5dbde;--pdv-txt:#1d2528;--pdv-dim:#6b7a80;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -118,6 +118,57 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:var(--pdv-bg
 #pdvSpin{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,.62);z-index:70;
   font-size:14px;color:var(--pdv-brand);font-weight:600}
 #pdvSpin.on{display:flex}
+
+/* ===== C2.8 PDF 工具組 ===== */
+#pdvSheetTool .btn{background:#f1f5f5;color:var(--pdv-brand);border:1px solid var(--pdv-line);font-size:14px;padding:9px 6px;line-height:1.3}
+#pdvSheetTool .btn.on{background:var(--pdv-brand);color:#fff;border-color:var(--pdv-brand)}
+#pdvSheetTool .btn:disabled{opacity:.4}
+#pdvSheetTool .body{overflow:auto}
+.kfld{flex:1;min-width:0;font-size:15px;padding:9px 10px;border-radius:8px;border:1px solid var(--pdv-line);background:#fff;color:var(--pdv-txt);font-family:inherit}
+.kgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 14px}
+.ktile{border:1px solid var(--pdv-line);border-radius:10px;padding:11px 4px 9px;text-align:center;cursor:pointer;background:#fff;user-select:none}
+.ktile:active,.ktile:hover{background:#eef5f5;border-color:var(--pdv-brand)}
+.ktile b{display:block;font-size:22px;line-height:1.2;font-weight:400}
+.ktile span{display:block;font-size:12.5px;color:var(--pdv-txt);margin-top:3px}
+.khd{padding:10px 16px 2px;font-size:12px;color:var(--pdv-dim);font-weight:600;letter-spacing:.04em}
+
+#pdvOrg{position:fixed;inset:0;z-index:65;background:var(--pdv-bg);display:none;flex-direction:column}
+#pdvOrg.on{display:flex}
+#pdvOrg .obar{background:var(--pdv-brand);color:#fff;display:flex;align-items:center;gap:6px;padding:8px 10px;flex-wrap:wrap}
+#pdvOrg .obar b{font-size:15px;margin-right:auto}
+#pdvOrg .obar button{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:8px;padding:7px 10px;font-size:13.5px;font-family:inherit;cursor:pointer}
+#pdvOrg .obar button.pri{background:#fff;color:var(--pdv-brand);font-weight:700}
+#pdvOrg .ohint{font-size:12px;color:var(--pdv-dim);padding:6px 12px 0}
+#pdvOrg .ogrid{flex:1;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:10px 12px 40px;align-content:start}
+.otile{background:#fff;border:2px solid transparent;border-radius:10px;padding:6px;box-shadow:0 1px 3px rgba(0,0,0,.15);display:flex;flex-direction:column;gap:5px}
+.otile.drag{opacity:.4}
+.otile.over{border-color:var(--pdv-brand)}
+.othumb{height:170px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f4f6f7;border-radius:6px;cursor:grab}
+.othumb canvas{max-width:100%;max-height:100%;box-shadow:0 0 0 1px #d5dbde;transition:transform .15s}
+.othumb .blank{width:70%;height:85%;background:#fff;box-shadow:0 0 0 1px #d5dbde;display:flex;align-items:center;justify-content:center;color:#a5b0b4;font-size:12px}
+.ometa{display:flex;justify-content:space-between;font-size:12px;color:var(--pdv-dim)}
+.ometa b{color:var(--pdv-txt)}
+.oacts{display:flex;gap:3px}
+.oacts button{flex:1;border:1px solid var(--pdv-line);background:#f6f8f8;border-radius:6px;padding:5px 0;font-size:13px;cursor:pointer;color:var(--pdv-txt);font-family:inherit}
+.oacts button.del{color:#c62828}
+
+#pdvFloat{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:62;background:rgba(20,26,28,.94);color:#fff;border-radius:14px;padding:9px 12px;display:none;align-items:center;gap:8px;flex-wrap:wrap;max-width:94vw;font-size:13px;box-shadow:0 4px 18px rgba(0,0,0,.35)}
+#pdvFloat.on{display:flex}
+#pdvFloat button{border:0;border-radius:8px;padding:7px 12px;font-size:13.5px;font-family:inherit;cursor:pointer;background:#3a4549;color:#fff}
+#pdvFloat button.pri{background:#2bb0a4;color:#06201d;font-weight:700}
+.kovl{position:absolute;inset:0;z-index:6;cursor:crosshair;touch-action:none}
+.kovl .rd{position:absolute;background:#000;opacity:.82;outline:1.5px dashed #ff5252}
+.ksig{position:absolute;z-index:7;border:1.5px dashed var(--pdv-brand);cursor:move;touch-action:none;background:rgba(13,107,110,.06)}
+.ksig img{width:100%;height:100%;display:block;pointer-events:none}
+.ksig i{position:absolute;right:-10px;bottom:-10px;width:20px;height:20px;border-radius:50%;background:var(--pdv-brand);border:2px solid #fff;cursor:nwse-resize}
+.kpad{width:100%;height:170px;background:#fff;border:1px dashed #9fb0b5;border-radius:8px;touch-action:none;display:block}
+.ksigs{display:flex;gap:8px;flex-wrap:wrap;padding:8px 16px}
+.ksigs div{border:1px solid var(--pdv-line);border-radius:8px;padding:6px;cursor:pointer;background:#fff;position:relative}
+.ksigs img{height:46px;display:block}
+.ksigs u{position:absolute;top:-8px;right:-8px;background:#c62828;color:#fff;border-radius:50%;width:18px;height:18px;font-size:12px;line-height:18px;text-align:center;text-decoration:none}
+.kform{padding:4px 16px 8px}
+.kform label{display:block;font-size:12.5px;color:var(--pdv-dim);margin:9px 0 3px}
+
 </style>
 </head>
 <body>
@@ -130,6 +181,7 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:var(--pdv-bg
     <div class="ttl" id="pdvTitle">現場PDF檢視器</div>
     <button class="btn" id="pdvBtnFind" title="搜尋">🔍</button>
     <button class="btn" id="pdvBtnAnn" title="標註">✏️</button>
+    <button class="btn" id="pdvBtnKit" title="PDF 工具組">🧰</button>
     <button class="btn" id="pdvBtnMore" title="更多">⋯</button>
   </div>
 
@@ -205,6 +257,7 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:var(--pdv-bg
   <div class="sheet" id="pdvSheetMore">
     <h3><span>更多</span><button data-close>✕</button></h3>
     <div class="body">
+      <div class="row" data-act="kit"><div class="g"><b>🧰 PDF 工具組</b><small>頁面管理・合併・分割・轉圖片・頁碼・浮水印・簽名・裁切・塗黑・表單</small></div></div>
       <div class="row" data-act="outline"><div class="g"><b>目錄</b><small>PDF 內建書籤</small></div></div>
       <div class="row" data-act="fitw"><div class="g"><b>符合寬度</b><small>手機直式閱讀最順</small></div></div>
       <div class="row" data-act="fitp"><div class="g"><b>符合整頁</b><small>一次看完整頁版面</small></div></div>
@@ -446,10 +499,20 @@ function openDoc(u8, name, key, gotoPage, ann){
   });
 }
 function getDoc(u8){
-  var o={ data:u8.slice(0), CMapReaderFactory:InlineCMapFactory, cMapPacked:true };
-  return pdfjsLib.getDocument(o).promise.catch(function(e){
-    if(PDV.workerMode==='worker'){ useFake();
-      return pdfjsLib.getDocument({data:u8.slice(0),CMapReaderFactory:InlineCMapFactory,cMapPacked:true}).promise; }
+  var cancelled=false;
+  function mk(){
+    var t=pdfjsLib.getDocument({data:u8.slice(0),CMapReaderFactory:InlineCMapFactory,cMapPacked:true});
+    t.onPassword=function(update,reason){
+      spin(false);
+      var pw=window.prompt(reason===2?'密碼錯誤，請重新輸入：':'這份 PDF 有開啟密碼，請輸入：','');
+      if(pw===null){ cancelled=true; t.destroy(); return; }
+      spin(true,'開啟中…'); update(pw);
+    };
+    return t.promise;
+  }
+  return mk().catch(function(e){
+    if(cancelled) throw new Error('已取消輸入密碼');
+    if(PDV.workerMode==='worker'){ useFake(); return mk(); }
     throw e;
   });
 }
@@ -507,7 +570,7 @@ function renderPage(p){
     var b=PDV.base[p-1], v1=pg.getViewport({scale:1});
     if(b&&b.est){ b.w=v1.width; b.h=v1.height; b.est=false;
       var d=pageDim(p); el.style.width=Math.floor(d.w*s)+'px'; el.style.height=Math.floor(d.h*s)+'px'; }
-    var vp=pg.getViewport({scale:s, rotation:PDV.rot});
+    var vp=pg.getViewport({scale:s, rotation:((pg.rotate||0)+PDV.rot)%360});
     var cv=document.createElement('canvas'); cv.className='bc';
     cv.width=Math.floor(vp.width*dpr); cv.height=Math.floor(vp.height*dpr);
     var ctx=cv.getContext('2d',{alpha:false});
@@ -1076,8 +1139,8 @@ function doSlim(dpi,q,list){
       return chain.then(function(){
         spin(true,'重繪第 '+p+' 頁（'+(i+1)+'/'+list.length+'）…');
         return PDV.doc.getPage(p).then(function(pg){
-          var vp1=pg.getViewport({scale:1, rotation:PDV.rot});
-          var vp=pg.getViewport({scale:sc, rotation:PDV.rot});
+          var vp1=pg.getViewport({scale:1, rotation:((pg.rotate||0)+PDV.rot)%360});
+          var vp=pg.getViewport({scale:sc, rotation:((pg.rotate||0)+PDV.rot)%360});
           var w=Math.max(1,Math.round(vp.width)), h=Math.max(1,Math.round(vp.height));
           if(w*h>40e6) throw new Error('第 '+p+' 頁在 '+dpi+' dpi 下太大，請降低解析度');
           var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
@@ -1112,6 +1175,878 @@ function doSlim(dpi,q,list){
   }).catch(function(e){
     spin(false); toast('瘦身失敗：'+(e&&e.message||e),5000);
   });
+}
+
+
+/* ==================== C2.8 PDF 工具組 ====================
+   全部在本機以 pdf-lib（寫）＋ pdf.js（讀、渲染）完成，不上傳。
+   座標規則：畫面上的「顯示方向」＝頁面 /Rotate 再疊加檢視旋轉。
+   寫入 PDF 時用 kitP() 換回頁面原始座標，與既有「匯出含標註」同一套。 */
+
+function kitHas(){ if(!PDV.doc){ toast('請先開啟 PDF'); return false; } return true; }
+function kitFail(e){ spin(false); console.error(e); toast('失敗：'+(e&&e.message?e.message:e),4600); }
+
+/* 來源位元組：有標註就先燒進去，讓後續所有工具都帶著標註 */
+function kitSrc(){
+  return new Promise(function(res,rej){
+    if(annCount()>0){ exportPdf({cb:res, err:rej}); return; }
+    dbGet(PDV.key).then(function(r){ res((r&&r.data)||PDV.bytes); })
+      .catch(function(){ res(PDV.bytes); });
+  });
+}
+function kitLoad(u8){
+  return PDFLib.PDFDocument.load(u8,{ignoreEncryption:true}).then(function(d){
+    if(d.isEncrypted) throw new Error('這份 PDF 有加密保護，請改用「PDF 瘦身（整頁重繪）」產生未加密副本後再處理');
+    return d;
+  });
+}
+function kitSave(doc){ return doc.save({useObjectStreams:false}); }
+
+/* 完成：下載 或 直接在檢視器打開接著處理 */
+function kitDone(bytes,suffix,msg){
+  spin(false);
+  var nm=baseName()+'_'+suffix+'.pdf', blob=new Blob([bytes],{type:'application/pdf'});
+  toolSheet('完成',
+    '<div class="row"><div class="g"><b>'+nm+'</b><small>'+(msg?msg+'　':'')+fmtSize(bytes.length)+'</small></div></div>'+
+    '<div class="row"><button class="btn on" id="kdDl" style="flex:1">下載</button>'+
+    '<button class="btn" id="kdOpen" style="flex:1">在檢視器開啟，接著處理</button></div>',
+    function(){
+      $('kdDl').onclick=function(){ sheet(null,false); shareOrDl(blob,nm,'application/pdf'); };
+      $('kdOpen').onclick=function(){ sheet(null,false); loadFile(new File([blob],nm,{type:'application/pdf'})); };
+    });
+}
+function kitDoneBlob(blob,nm,msg){
+  spin(false);
+  toolSheet('完成',
+    '<div class="row"><div class="g"><b>'+nm+'</b><small>'+(msg?msg+'　':'')+fmtSize(blob.size)+'</small></div></div>'+
+    '<div class="row"><button class="btn on" id="kdDl" style="flex:1">下載</button></div>',
+    function(){ $('kdDl').onclick=function(){ sheet(null,false); shareOrDl(blob,nm,blob.type); }; });
+}
+
+/* ---- 頁面幾何 ---- */
+function kitR(page){ return ((page.getRotation().angle%360)+360)%360; }
+function kitBox(page){ return page.getCropBox(); }
+function kitDisp(page){
+  var b=kitBox(page), R=kitR(page);
+  return (R%180===90)?{W:b.height,H:b.width}:{W:b.width,H:b.height};
+}
+/* 顯示座標（左上原點，pt）→ 頁面原始座標 */
+function kitP(page,dx,dy){
+  var b=kitBox(page), R=kitR(page), w0=b.width, h0=b.height, q;
+  if(R===90)       q={x:dy,       y:dx};
+  else if(R===180) q={x:w0-dx,    y:dy};
+  else if(R===270) q={x:w0-dy,    y:h0-dx};
+  else             q={x:dx,       y:h0-dy};
+  return {x:b.x+q.x, y:b.y+q.y};
+}
+/* 把影像放在顯示座標 (dx,dy) 左上、大小 w×h，且在顯示方向上是正的 */
+function kitPlace(page,img,dx,dy,w,h){
+  var R=kitR(page), q=kitP(page,dx,dy), x=q.x, y=q.y-h;
+  if(R===90){ x=q.x+h; y=q.y; }
+  else if(R===180){ x=q.x; y=q.y+h; }
+  else if(R===270){ x=q.x-h; y=q.y; }
+  page.drawImage(img,{x:x,y:y,width:w,height:h,rotate:PDFLib.degrees(R)});
+}
+/* 中文字轉透明 PNG（PDF 內建字型沒有中文） */
+function kitTxt(str,pt,color,alpha,angle,bold){
+  var k=4, fs=pt*k, font=(bold?'700 ':'600 ')+fs+'px "Microsoft JhengHei","Noto Sans TC","PingFang TC",sans-serif';
+  var m=document.createElement('canvas').getContext('2d'); m.font=font;
+  var tw=Math.ceil(m.measureText(str).width)+fs*0.2, th=Math.ceil(fs*1.35);
+  var a=(angle||0)*Math.PI/180;
+  var cw=Math.ceil(Math.abs(tw*Math.cos(a))+Math.abs(th*Math.sin(a)))+4;
+  var ch=Math.ceil(Math.abs(tw*Math.sin(a))+Math.abs(th*Math.cos(a)))+4;
+  var cv=document.createElement('canvas'); cv.width=cw; cv.height=ch;
+  var c=cv.getContext('2d');
+  c.translate(cw/2,ch/2); c.rotate(a); c.globalAlpha=(alpha==null?1:alpha);
+  c.font=font; c.fillStyle=color||'#333'; c.textAlign='center'; c.textBaseline='middle';
+  c.fillText(str,0,0);
+  return {png:b64ToU8(cv.toDataURL('image/png').split(',')[1]), w:cw/k, h:ch/k};
+}
+function kitRangeRow(id,ph){
+  return '<div class="row"><div class="g"><b>頁面範圍</b><small>留空＝全部，可填 1-3,7</small></div></div>'+
+    '<div class="row"><input class="kfld" id="'+id+'" placeholder="'+(ph||'全部')+'"></div>';
+}
+function kitRange(id,n){
+  var raw=($(id).value||'').trim();
+  if(!raw){ var a=[]; for(var i=1;i<=n;i++) a.push(i); return a; }
+  var l=parseRange(raw,n);
+  if(!l.length){ toast('頁碼看不懂，例：1-3,7'); return null; }
+  return l;
+}
+function kitSeg(ids,on){ ids.forEach(function(i){ $(i).classList.toggle('on',i===on); }); }
+
+/* ---- ZIP（只打包不壓縮；JPEG/PDF 本身已壓縮） ---- */
+var KCRC=(function(){ var t=new Uint32Array(256);
+  for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); t[n]=c>>>0; } return t; })();
+function kitCrc(u){ var c=0xFFFFFFFF; for(var i=0;i<u.length;i++) c=KCRC[(c^u[i])&255]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
+function kitZip(files){
+  var enc=new TextEncoder(), parts=[], cd=[], off=0;
+  files.forEach(function(f){
+    var nm=enc.encode(f.name), crc=kitCrc(f.data), sz=f.data.length;
+    var h=new DataView(new ArrayBuffer(30));
+    h.setUint32(0,0x04034b50,true); h.setUint16(4,20,true); h.setUint16(6,0x0800,true);
+    h.setUint16(12,0x21,true); h.setUint32(14,crc,true); h.setUint32(18,sz,true); h.setUint32(22,sz,true);
+    h.setUint16(26,nm.length,true);
+    parts.push(new Uint8Array(h.buffer),nm,f.data);
+    var c=new DataView(new ArrayBuffer(46));
+    c.setUint32(0,0x02014b50,true); c.setUint16(4,20,true); c.setUint16(6,20,true); c.setUint16(8,0x0800,true);
+    c.setUint16(14,0x21,true); c.setUint32(16,crc,true); c.setUint32(20,sz,true); c.setUint32(24,sz,true);
+    c.setUint16(28,nm.length,true); c.setUint32(42,off,true);
+    cd.push(new Uint8Array(c.buffer),nm);
+    off+=30+nm.length+sz;
+  });
+  var cs=0; cd.forEach(function(x){ cs+=x.length; });
+  var e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true); e.setUint16(8,files.length,true); e.setUint16(10,files.length,true);
+  e.setUint32(12,cs,true); e.setUint32(16,off,true);
+  return new Blob(parts.concat(cd,[new Uint8Array(e.buffer)]),{type:'application/zip'});
+}
+function pad3(n){ return ('00'+n).slice(-3); }
+
+/* ==================== 入口 ==================== */
+function openKit(){
+  if(!kitHas()) return;
+  function t(id,ic,lb){ return '<div class="ktile" data-k="'+id+'"><b>'+ic+'</b><span>'+lb+'</span></div>'; }
+  toolSheet('PDF 工具組',
+    '<div class="khd">頁面</div><div class="kgrid">'+
+      t('org','▦','頁面管理')+t('split','✂','分割 PDF')+t('pages','⎘','擷取頁面')+
+    '</div><div class="khd">轉換</div><div class="kgrid">'+
+      t('imgs','🖼','PDF 轉圖片')+t('shot','🔍','高解析截圖')+t('slim','🗜','PDF 瘦身')+
+    '</div><div class="khd">編修</div><div class="kgrid">'+
+      t('num','#','加頁碼')+t('wm','💧','浮水印')+t('sig','✍','簽名')+
+      t('crop','⛶','裁切／去白邊')+t('red','▬','塗黑遮蔽')+t('form','☑','表單填寫')+
+    '</div><div class="khd" style="padding-bottom:12px">需要合併多份 PDF 或插入空白頁 → 頁面管理</div>',
+    function(){
+      Array.prototype.forEach.call($('pdvToolBody').querySelectorAll('[data-k]'),function(el){
+        el.onclick=function(){
+          var k=el.dataset.k; sheet(null,false);
+          ({org:openOrg, split:askSplit, pages:askPages, imgs:askImgs, shot:askShot, slim:askSlim,
+            num:askNum, wm:askWm, sig:askSig, crop:askCrop, red:startRedact, form:askForm})[k]();
+        };
+      });
+    });
+}
+
+/* ==================== 1. 頁面管理 ==================== */
+var ORG=null;
+function openOrg(){
+  if(!kitHas()) return;
+  ORG={srcs:[{name:PDV.name, js:PDV.doc, bytes:null, main:true}], items:[], thumbs:{}, q:[], busy:false, dragI:-1};
+  for(var i=0;i<PDV.n;i++) ORG.items.push({s:0,p:i,rot:0});
+  if(!$('pdvOrg')){
+    var d=document.createElement('div'); d.id='pdvOrg';
+    d.innerHTML='<div class="obar"><b id="orgTt">頁面管理</b>'+
+      '<button id="orgAdd">＋ 合併 PDF</button><button id="orgBlank">＋ 空白頁</button>'+
+      '<button id="orgRotAll">全部 ↻</button><button id="orgRev">反轉順序</button>'+
+      '<button id="orgOut" class="pri">輸出 PDF</button><button id="orgX">✕ 關閉</button></div>'+
+      '<div class="ohint">拖曳縮圖可排序；↺ ↻ 旋轉、⧉ 複製、✕ 刪除。合併的 PDF 會接在最後，可再拖到想要的位置。</div>'+
+      '<div class="ogrid" id="orgGrid"></div>'+
+      '<input type="file" id="orgFi" accept="application/pdf,.pdf" multiple style="display:none">';
+    $('pdvRoot').appendChild(d);
+    $('orgX').onclick=function(){ $('pdvOrg').classList.remove('on'); ORG=null; };
+    $('orgAdd').onclick=function(){ $('orgFi').click(); };
+    $('orgFi').onchange=function(e){
+      var fs=Array.prototype.slice.call(e.target.files||[]); e.target.value='';
+      fs.reduce(function(pm,f){ return pm.then(function(){ return orgAddPdf(f); }); },Promise.resolve())
+        .then(function(){ spin(false); orgDraw(); }).catch(kitFail);
+    };
+    $('orgBlank').onclick=function(){ ORG.items.push({blank:true,rot:0}); orgDraw(); };
+    $('orgRotAll').onclick=function(){ ORG.items.forEach(function(it){ it.rot=(it.rot+90)%360; }); orgDraw(); };
+    $('orgRev').onclick=function(){ ORG.items.reverse(); orgDraw(); };
+    $('orgOut').onclick=orgOut;
+  }
+  $('pdvOrg').classList.add('on');
+  orgDraw();
+}
+function orgAddPdf(f){
+  spin(true,'讀取 '+f.name+'…');
+  return f.arrayBuffer().then(function(ab){
+    var u8=new Uint8Array(ab);
+    return getDoc(u8).then(function(js){
+      var si=ORG.srcs.length;
+      ORG.srcs.push({name:f.name, js:js, bytes:u8});
+      for(var i=0;i<js.numPages;i++) ORG.items.push({s:si,p:i,rot:0});
+      toast('已加入 '+f.name+'（'+js.numPages+' 頁）',2600);
+    });
+  });
+}
+function orgThumb(s,p,cb){
+  var key=s+':'+p;
+  if(ORG.thumbs[key]){ cb(ORG.thumbs[key]); return; }
+  ORG.q.push({s:s,p:p,cb:cb});
+  if(ORG.busy) return;
+  ORG.busy=true;
+  (function next(){
+    if(!ORG||!ORG.q.length){ if(ORG) ORG.busy=false; return; }
+    var j=ORG.q.shift(), k2=j.s+':'+j.p;
+    if(ORG.thumbs[k2]){ j.cb(ORG.thumbs[k2]); next(); return; }
+    ORG.srcs[j.s].js.getPage(j.p+1).then(function(pg){
+      var v=pg.getViewport({scale:1}), sc=Math.min(150/v.width,160/v.height);
+      var vp=pg.getViewport({scale:sc*1.5});
+      var cv=document.createElement('canvas'); cv.width=Math.round(vp.width); cv.height=Math.round(vp.height);
+      var c=cv.getContext('2d',{alpha:false}); c.fillStyle='#fff'; c.fillRect(0,0,cv.width,cv.height);
+      return pg.render({canvasContext:c, viewport:vp}).promise.then(function(){
+        if(!ORG) return;
+        ORG.thumbs[k2]=cv; j.cb(cv);
+      });
+    }).catch(function(){}).then(function(){ setTimeout(next,0); });
+  })();
+}
+function orgDraw(){
+  var g=$('orgGrid'); g.innerHTML='';
+  $('orgTt').textContent='頁面管理　'+ORG.items.length+' 頁'+(ORG.srcs.length>1?('（'+ORG.srcs.length+' 份 PDF）'):'');
+  ORG.items.forEach(function(it,i){
+    var t=document.createElement('div'); t.className='otile'; t.draggable=true;
+    var th=document.createElement('div'); th.className='othumb';
+    if(it.blank){ th.innerHTML='<div class="blank">空白頁</div>'; }
+    else{
+      orgThumb(it.s,it.p,function(src){
+        var c=document.createElement('canvas'); c.width=src.width; c.height=src.height;
+        c.getContext('2d').drawImage(src,0,0);
+        c.style.transform='rotate('+it.rot+'deg)';
+        if(it.rot%180===90){ c.style.maxWidth='160px'; c.style.maxHeight='150px'; }
+        th.innerHTML=''; th.appendChild(c);
+      });
+    }
+    var src=it.blank?'空白':(ORG.srcs.length>1?('檔'+(it.s+1)+'・'):'')+'原 P'+(it.p+1);
+    var m=document.createElement('div'); m.className='ometa';
+    m.innerHTML='<b>'+(i+1)+'</b><span>'+src+(it.rot?('　'+it.rot+'°'):'')+'</span>';
+    var a=document.createElement('div'); a.className='oacts';
+    a.innerHTML='<button data-a="l">↺</button><button data-a="r">↻</button><button data-a="d">⧉</button><button data-a="x" class="del">✕</button>';
+    a.onclick=function(e){
+      var b=e.target.closest('button'); if(!b) return;
+      var A=b.dataset.a;
+      if(A==='l') it.rot=(it.rot+270)%360;
+      else if(A==='r') it.rot=(it.rot+90)%360;
+      else if(A==='d') ORG.items.splice(i+1,0,{s:it.s,p:it.p,rot:it.rot,blank:it.blank});
+      else if(A==='x'){ if(ORG.items.length<=1){ toast('至少要留一頁'); return; } ORG.items.splice(i,1); }
+      orgDraw();
+    };
+    t.appendChild(th); t.appendChild(m); t.appendChild(a);
+    t.addEventListener('dragstart',function(e){ ORG.dragI=i; t.classList.add('drag'); try{ e.dataTransfer.setData('text/plain',String(i)); }catch(x){} });
+    t.addEventListener('dragend',function(){ t.classList.remove('drag'); });
+    t.addEventListener('dragover',function(e){ e.preventDefault(); t.classList.add('over'); });
+    t.addEventListener('dragleave',function(){ t.classList.remove('over'); });
+    t.addEventListener('drop',function(e){
+      e.preventDefault(); t.classList.remove('over');
+      var from=ORG.dragI; if(from<0||from===i) return;
+      var mv=ORG.items.splice(from,1)[0];
+      ORG.items.splice(i,0,mv);
+      ORG.dragI=-1; orgDraw();
+    });
+    g.appendChild(t);
+  });
+}
+function orgOut(){
+  var items=ORG.items.slice(), srcs=ORG.srcs;
+  spin(true,'組合中…');
+  var libs=[];
+  srcs.reduce(function(pm,s,i){
+    return pm.then(function(){
+      return (s.main?kitSrc():Promise.resolve(s.bytes)).then(kitLoad).then(function(d){ libs[i]=d; });
+    });
+  },Promise.resolve()).then(function(){
+    return PDFLib.PDFDocument.create();
+  }).then(function(out){
+    var lastSize=[595.28,841.89];
+    return items.reduce(function(pm,it){
+      return pm.then(function(){
+        if(it.blank){
+          var pg=out.addPage(lastSize);
+          if(it.rot) pg.setRotation(PDFLib.degrees(it.rot));
+          return;
+        }
+        return out.copyPages(libs[it.s],[it.p]).then(function(cp){
+          var pg=cp[0], r0=kitR(pg);
+          pg.setRotation(PDFLib.degrees((r0+it.rot)%360));
+          out.addPage(pg);
+          var b=pg.getMediaBox(); lastSize=[b.width,b.height];
+        });
+      });
+    },Promise.resolve()).then(function(){ return kitSave(out); });
+  }).then(function(bytes){
+    $('pdvOrg').classList.remove('on'); ORG=null;
+    kitDone(bytes,'整理',items.length+' 頁');
+  }).catch(kitFail);
+}
+
+/* ==================== 2. 分割 ==================== */
+function askSplit(){
+  if(!kitHas()) return;
+  var n=PDV.n;
+  toolSheet('分割 PDF',
+    '<div class="row"><div class="g"><b>分割方式</b><small>共 '+n+' 頁。結果打包成一個 ZIP</small></div></div>'+
+    '<div class="row"><button class="btn on" id="spN" style="flex:1">每 N 頁一份</button>'+
+      '<button class="btn" id="spEach" style="flex:1">每頁一份</button>'+
+      '<button class="btn" id="spR" style="flex:1">自訂範圍</button></div>'+
+    '<div class="row" id="spNrow"><div class="g"><b>每份頁數</b></div><input class="kfld" id="spNv" type="number" min="1" value="2" style="max-width:90px"></div>'+
+    '<div class="row" id="spRrow" style="display:none"><div class="g" style="flex-basis:100%"><b>範圍</b><small>用分號隔開每一份，例：1-3; 4-6; 7,9</small>'+
+      '<input class="kfld" id="spRv" placeholder="1-3; 4-6" style="width:100%;margin-top:6px"></div></div>'+
+    '<div class="row"><button class="btn on" id="spGo" style="flex:1">開始分割</button></div>',
+    function(){
+      var mode='n';
+      function m(x){ mode=x; kitSeg(['spN','spEach','spR'],{n:'spN',each:'spEach',r:'spR'}[x]);
+        $('spNrow').style.display=x==='n'?'':'none'; $('spRrow').style.display=x==='r'?'':'none'; }
+      $('spN').onclick=function(){m('n');}; $('spEach').onclick=function(){m('each');}; $('spR').onclick=function(){m('r');};
+      $('spGo').onclick=function(){
+        var groups=[];
+        if(mode==='each'){ for(var i=1;i<=n;i++) groups.push([i]); }
+        else if(mode==='n'){
+          var k=Math.max(1,parseInt($('spNv').value,10)||1);
+          for(var s=1;s<=n;s+=k){ var g=[]; for(var j=s;j<s+k&&j<=n;j++) g.push(j); groups.push(g); }
+        }else{
+          ($('spRv').value||'').split(/[;；\n]+/).forEach(function(t){ var l=parseRange(t,n); if(l.length) groups.push(l); });
+          if(!groups.length){ toast('範圍看不懂，例：1-3; 4-6'); return; }
+        }
+        sheet(null,false); doSplit(groups);
+      };
+    });
+}
+function doSplit(groups){
+  spin(true,'分割中…');
+  var src, files=[];
+  kitSrc().then(kitLoad).then(function(d){ src=d;
+    return groups.reduce(function(pm,g,gi){
+      return pm.then(function(){
+        spin(true,'分割中… '+(gi+1)+'/'+groups.length);
+        return PDFLib.PDFDocument.create().then(function(nd){
+          return nd.copyPages(src,g.map(function(x){return x-1;})).then(function(cp){
+            cp.forEach(function(p){ nd.addPage(p); });
+            return kitSave(nd);
+          }).then(function(b){
+            var lab=g.length===1?('P'+g[0]):('P'+g[0]+'-'+g[g.length-1]);
+            files.push({name:'part'+('0'+(gi+1)).slice(-2)+'_'+lab+'.pdf', data:new Uint8Array(b)});
+          });
+        });
+      });
+    },Promise.resolve());
+  }).then(function(){
+    if(files.length===1){ kitDone(files[0].data,'分割',''); return; }
+    kitDoneBlob(kitZip(files), baseName()+'_分割'+files.length+'份.zip', files.length+' 份 PDF');
+  }).catch(kitFail);
+}
+
+/* ==================== 3. PDF 轉圖片（多頁） ==================== */
+function askImgs(){
+  if(!kitHas()) return;
+  toolSheet('PDF 轉圖片',
+    '<div class="row"><div class="g"><b>解析度</b><small id="imInfo"></small></div></div>'+
+    '<div class="row"><button class="btn" id="i100" style="flex:1">100</button><button class="btn on" id="i150" style="flex:1">150</button>'+
+      '<button class="btn" id="i200" style="flex:1">200</button><button class="btn" id="i300" style="flex:1">300 dpi</button></div>'+
+    '<div class="row"><div class="g"><b>格式</b><small>JPEG 檔小；PNG 無損適合圖面線稿</small></div>'+
+      '<button class="btn on" id="iJ">JPEG</button><button class="btn" id="iP">PNG</button></div>'+
+    kitRangeRow('imR')+
+    '<div class="row"><button class="btn on" id="imGo" style="flex:1">開始轉換</button></div>'+
+    '<div class="row"><div class="g"><small>多頁會打包成 ZIP，檔名 P001、P002…；標註一起畫上去。</small></div></div>',
+    function(){
+      var dpi=150, fmt='image/jpeg';
+      function info(){ var b=PDV.base[PDV.cur-1]||{w:595,h:842};
+        $('imInfo').textContent='A4 約 '+Math.round(b.w*dpi/72)+' × '+Math.round(b.h*dpi/72)+' 像素'; }
+      [100,150,200,300].forEach(function(v){ $('i'+v).onclick=function(){ dpi=v; kitSeg(['i100','i150','i200','i300'],'i'+v); info(); }; });
+      $('iJ').onclick=function(){ fmt='image/jpeg'; kitSeg(['iJ','iP'],'iJ'); };
+      $('iP').onclick=function(){ fmt='image/png'; kitSeg(['iJ','iP'],'iP'); };
+      info();
+      $('imGo').onclick=function(){ var l=kitRange('imR',PDV.n); if(!l) return; sheet(null,false); doImgs(l,dpi,fmt); };
+    });
+}
+function kitRender(p,dpi,fmt,q,extra){
+  return PDV.doc.getPage(p).then(function(pg){
+    var vp=pg.getViewport({scale:dpi/72, rotation:((pg.rotate||0)+PDV.rot)%360});
+    var w=Math.round(vp.width), h=Math.round(vp.height);
+    if(w*h>45e6) throw new Error('第 '+p+' 頁太大，請降低解析度');
+    var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+    var ctx=cv.getContext('2d',{alpha:fmt==='image/png'});
+    if(fmt!=='image/png'){ ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h); }
+    return pg.render({canvasContext:ctx, viewport:vp}).promise.then(function(){
+      try{ paintAnn(ctx,p,vp.width,vp.height,0,0); }catch(e){}
+      if(extra) extra(ctx,vp.width,vp.height);
+      return new Promise(function(r){ cv.toBlob(r,fmt,fmt==='image/jpeg'?(q||0.9):undefined); });
+    }).then(function(b){ return b.arrayBuffer(); }).then(function(ab){
+      var u=new Uint8Array(ab);
+      if(fmt==='image/jpeg'&&typeof jpegSetDpi==='function') u=jpegSetDpi(u,dpi);
+      cv.width=1; cv.height=1;
+      return {data:u, w:w, h:h, pw:vp.width*72/dpi, ph:vp.height*72/dpi};
+    });
+  });
+}
+function doImgs(list,dpi,fmt){
+  var files=[], ext=fmt==='image/png'?'png':'jpg';
+  list.reduce(function(pm,p,i){
+    return pm.then(function(){
+      spin(true,'轉換第 '+p+' 頁（'+(i+1)+'/'+list.length+'）…');
+      return kitRender(p,dpi,fmt,0.9).then(function(r){ files.push({name:'P'+pad3(p)+'.'+ext, data:r.data}); });
+    });
+  },Promise.resolve()).then(function(){
+    if(files.length===1){
+      kitDoneBlob(new Blob([files[0].data],{type:fmt}), baseName()+'_P'+list[0]+'_'+dpi+'dpi.'+ext, dpi+' dpi');
+      return;
+    }
+    kitDoneBlob(kitZip(files), baseName()+'_圖片_'+dpi+'dpi.zip', files.length+' 張 '+ext.toUpperCase());
+  }).catch(kitFail);
+}
+
+/* ==================== 4. 加頁碼 ==================== */
+function askNum(){
+  if(!kitHas()) return;
+  toolSheet('加頁碼',
+    '<div class="row"><div class="g"><b>位置</b></div></div>'+
+    '<div class="row"><button class="btn" id="nbl" style="flex:1">左下</button><button class="btn on" id="nbc" style="flex:1">下方置中</button>'+
+      '<button class="btn" id="nbr" style="flex:1">右下</button><button class="btn" id="ntr" style="flex:1">右上</button></div>'+
+    '<div class="row"><div class="g"><b>格式</b></div><select class="kfld" id="nFmt" style="max-width:62%">'+
+      '<option value="n">1</option><option value="nN" selected>1 / 10</option><option value="dash">- 1 -</option>'+
+      '<option value="zh">第 1 頁</option><option value="zhN">第 1 頁，共 10 頁</option></select></div>'+
+    '<div class="row"><div class="g"><b>起始號碼</b></div><input class="kfld" id="nStart" type="number" value="1" style="max-width:90px"></div>'+
+    '<div class="row"><div class="g"><b>字級</b><small>pt</small></div><input class="kfld" id="nSz" type="number" value="10" style="max-width:90px"></div>'+
+    '<div class="row"><div class="g"><b>邊距</b><small>mm，距紙邊</small></div><input class="kfld" id="nMg" type="number" value="8" style="max-width:90px"></div>'+
+    '<div class="row"><label style="display:flex;gap:8px;align-items:center;flex:1"><input type="checkbox" id="nSkip">'+
+      '第一頁（封面）不加，從第二頁開始編號</label></div>'+
+    '<div class="row"><button class="btn on" id="nGo" style="flex:1">加上頁碼</button></div>',
+    function(){
+      var pos='bc';
+      ['bl','bc','br','tr'].forEach(function(k){ $('n'+k).onclick=function(){ pos=k; kitSeg(['nbl','nbc','nbr','ntr'],'n'+k); }; });
+      $('nGo').onclick=function(){
+        var o={pos:pos, fmt:$('nFmt').value, start:parseInt($('nStart').value,10)||1,
+               sz:Math.max(5,parseFloat($('nSz').value)||10), mg:Math.max(0,parseFloat($('nMg').value)||0)*72/25.4,
+               skip:$('nSkip').checked};
+        sheet(null,false); doNum(o);
+      };
+    });
+}
+function doNum(o){
+  spin(true,'加頁碼…');
+  kitSrc().then(kitLoad).then(function(doc){
+    var pages=doc.getPages(), first=o.skip?1:0, N=pages.length-first, jobs=[];
+    pages.forEach(function(pg,i){
+      if(i<first) return;
+      var n=o.start+(i-first), NN=o.start+N-1, s;
+      s={n:String(n), nN:n+' / '+NN, dash:'- '+n+' -', zh:'第 '+n+' 頁', zhN:'第 '+n+' 頁，共 '+NN+' 頁'}[o.fmt];
+      var t=kitTxt(s,o.sz,'#333333',1,0,false);
+      jobs.push(doc.embedPng(t.png).then(function(img){
+        var D=kitDisp(pg), x, y;
+        if(o.pos==='bl') x=o.mg; else if(o.pos==='br'||o.pos==='tr') x=D.W-o.mg-t.w; else x=(D.W-t.w)/2;
+        y=(o.pos==='tr')?o.mg:(D.H-o.mg-t.h);
+        kitPlace(pg,img,x,y,t.w,t.h);
+      }));
+    });
+    return Promise.all(jobs).then(function(){ return kitSave(doc); });
+  }).then(function(b){ kitDone(b,'頁碼'); }).catch(kitFail);
+}
+
+/* ==================== 5. 浮水印 ==================== */
+function askWm(){
+  if(!kitHas()) return;
+  toolSheet('浮水印',
+    '<div class="row"><div class="g"><b>文字</b></div><input class="kfld" id="wT" value="僅供內部參考" style="max-width:62%"></div>'+
+    '<div class="row"><div class="g"><b>排列</b></div><button class="btn on" id="wOne">置中一個</button><button class="btn" id="wTile">滿版平鋪</button></div>'+
+    '<div class="row"><div class="g"><b>角度</b></div><button class="btn on" id="wA45">斜 45°</button><button class="btn" id="wA0">水平</button></div>'+
+    '<div class="row"><div class="g"><b>深淺</b></div><button class="btn" id="wO1">淡</button><button class="btn on" id="wO2">中</button><button class="btn" id="wO3">深</button></div>'+
+    '<div class="row"><div class="g"><b>顏色</b></div><button class="btn on" id="wCg">灰</button><button class="btn" id="wCr">紅</button><button class="btn" id="wCb">品牌綠</button></div>'+
+    '<div class="row"><div class="g"><b>字級</b><small>pt；平鋪建議 28–36</small></div><input class="kfld" id="wSz" type="number" value="54" style="max-width:90px"></div>'+
+    kitRangeRow('wR')+
+    '<div class="row"><button class="btn on" id="wGo" style="flex:1">加上浮水印</button></div>',
+    function(){
+      var o={tile:false, ang:45, op:0.22, col:'#7a7a7a'};
+      $('wOne').onclick=function(){ o.tile=false; kitSeg(['wOne','wTile'],'wOne'); $('wSz').value=54; };
+      $('wTile').onclick=function(){ o.tile=true; kitSeg(['wOne','wTile'],'wTile'); $('wSz').value=32; };
+      $('wA45').onclick=function(){ o.ang=45; kitSeg(['wA45','wA0'],'wA45'); };
+      $('wA0').onclick=function(){ o.ang=0; kitSeg(['wA45','wA0'],'wA0'); };
+      [['wO1',.12],['wO2',.22],['wO3',.38]].forEach(function(a){ $(a[0]).onclick=function(){ o.op=a[1]; kitSeg(['wO1','wO2','wO3'],a[0]); }; });
+      [['wCg','#7a7a7a'],['wCr','#c62828'],['wCb','#0d6b6e']].forEach(function(a){ $(a[0]).onclick=function(){ o.col=a[1]; kitSeg(['wCg','wCr','wCb'],a[0]); }; });
+      $('wGo').onclick=function(){
+        o.txt=($('wT').value||'').trim(); if(!o.txt){ toast('請輸入浮水印文字'); return; }
+        o.sz=Math.max(8,parseFloat($('wSz').value)||48);
+        var l=kitRange('wR',PDV.n); if(!l) return;
+        o.list=l; sheet(null,false); doWm(o);
+      };
+    });
+}
+function doWm(o){
+  spin(true,'加浮水印…');
+  kitSrc().then(kitLoad).then(function(doc){
+    var t=kitTxt(o.txt,o.sz,o.col,o.op,-o.ang,true);
+    return doc.embedPng(t.png).then(function(img){
+      var pages=doc.getPages();
+      o.list.forEach(function(p){
+        var pg=pages[p-1]; if(!pg) return;
+        var D=kitDisp(pg);
+        if(!o.tile){ kitPlace(pg,img,(D.W-t.w)/2,(D.H-t.h)/2,t.w,t.h); return; }
+        var sx=t.w*1.15, sy=t.h*1.6, row=0;
+        for(var y=-t.h*0.5; y<D.H; y+=sy, row++){
+          for(var x=-t.w*0.5+(row%2?sx/2:0); x<D.W; x+=sx) kitPlace(pg,img,x,y,t.w,t.h);
+        }
+      });
+      return kitSave(doc);
+    });
+  }).then(function(b){ kitDone(b,'浮水印'); }).catch(kitFail);
+}
+
+/* ==================== 6. 簽名 ==================== */
+var SIGK='pdv_sigs';
+function sigList(){ try{ return JSON.parse(localStorage.getItem(SIGK)||'[]')||[]; }catch(e){ return []; } }
+function sigSave(l){ try{ localStorage.setItem(SIGK,JSON.stringify(l.slice(0,6))); }catch(e){} }
+/* 去白底＋裁到筆跡外框 */
+function sigClean(srcCv,dropWhite){
+  var w=srcCv.width, h=srcCv.height, c=srcCv.getContext('2d'), d=c.getImageData(0,0,w,h), a=d.data;
+  var x0=w,y0=h,x1=-1,y1=-1;
+  for(var y=0;y<h;y++) for(var x=0;x<w;x++){
+    var i=(y*w+x)*4;
+    if(dropWhite){ var L=(a[i]*299+a[i+1]*587+a[i+2]*114)/1000; if(L>200) a[i+3]=0; else if(L>150) a[i+3]=Math.round(a[i+3]*(200-L)/50); }
+    if(a[i+3]>20){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+  }
+  if(x1<0) return null;
+  c.putImageData(d,0,0);
+  var p=6; x0=Math.max(0,x0-p); y0=Math.max(0,y0-p); x1=Math.min(w-1,x1+p); y1=Math.min(h-1,y1+p);
+  var o=document.createElement('canvas'); o.width=x1-x0+1; o.height=y1-y0+1;
+  o.getContext('2d').drawImage(srcCv,x0,y0,o.width,o.height,0,0,o.width,o.height);
+  return o.toDataURL('image/png');
+}
+function askSig(){
+  if(!kitHas()) return;
+  var l=sigList();
+  toolSheet('簽名',
+    (l.length?'<div class="khd">已存的簽名（點一下使用）</div><div class="ksigs" id="sgL"></div>':'')+
+    '<div class="khd">手寫新簽名</div>'+
+    '<div style="padding:4px 16px"><canvas class="kpad" id="sgPad"></canvas></div>'+
+    '<div class="row"><button class="btn" id="sgClr" style="flex:1">清除</button>'+
+      '<button class="btn" id="sgUse" style="flex:1">使用</button>'+
+      '<button class="btn on" id="sgKeep" style="flex:1">存起來並使用</button></div>'+
+    '<div class="khd">或上傳簽名／印章圖片</div>'+
+    '<div class="row"><button class="btn" id="sgUp" style="flex:1">選擇圖片（白底自動去除）</button>'+
+      '<input type="file" id="sgFi" accept="image/*" style="display:none"></div>'+
+    '<div class="row"><div class="g"><small>簽名會放在目前這一頁（第 '+PDV.cur+' 頁）。簽名只存在這台電腦的這個瀏覽器。</small></div></div>',
+    function(){
+      if(l.length){
+        var box=$('sgL');
+        l.forEach(function(u,i){
+          var d=document.createElement('div'); d.innerHTML='<img src="'+u+'"><u>×</u>';
+          d.onclick=function(e){
+            if(e.target.tagName==='U'){ l.splice(i,1); sigSave(l); askSig(); return; }
+            sheet(null,false); sigPlace(u);
+          };
+          box.appendChild(d);
+        });
+      }
+      var pad=$('sgPad'), dpr=2, drawing=false, any=false;
+      pad.width=pad.clientWidth*dpr; pad.height=pad.clientHeight*dpr;
+      var c=pad.getContext('2d'); c.lineCap='round'; c.lineJoin='round'; c.strokeStyle='#111'; c.lineWidth=3.2*dpr;
+      function pt(e){ var r=pad.getBoundingClientRect(); return [(e.clientX-r.left)*dpr,(e.clientY-r.top)*dpr]; }
+      pad.onpointerdown=function(e){ drawing=true; any=true; pad.setPointerCapture(e.pointerId); var p=pt(e); c.beginPath(); c.moveTo(p[0],p[1]); };
+      pad.onpointermove=function(e){ if(!drawing) return; var p=pt(e); c.lineTo(p[0],p[1]); c.stroke(); };
+      pad.onpointerup=pad.onpointercancel=function(){ drawing=false; };
+      $('sgClr').onclick=function(){ c.clearRect(0,0,pad.width,pad.height); any=false; };
+      function use(keep){
+        if(!any){ toast('請先在框內簽名'); return; }
+        var u=sigClean(pad,false); if(!u){ toast('請先在框內簽名'); return; }
+        if(keep){ var L=sigList(); L.unshift(u); sigSave(L); }
+        sheet(null,false); sigPlace(u);
+      }
+      $('sgUse').onclick=function(){ use(false); };
+      $('sgKeep').onclick=function(){ use(true); };
+      $('sgUp').onclick=function(){ $('sgFi').click(); };
+      $('sgFi').onchange=function(e){
+        var f=e.target.files&&e.target.files[0]; e.target.value=''; if(!f) return;
+        var im=new Image(), u=URL.createObjectURL(f);
+        im.onload=function(){
+          var s=Math.min(1,1400/Math.max(im.width,im.height));
+          var cv=document.createElement('canvas'); cv.width=Math.round(im.width*s); cv.height=Math.round(im.height*s);
+          cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height); URL.revokeObjectURL(u);
+          var d=sigClean(cv,true); if(!d){ toast('圖片看不到內容'); return; }
+          var L=sigList(); L.unshift(d); sigSave(L);
+          sheet(null,false); sigPlace(d);
+        };
+        im.src=u;
+      };
+    });
+}
+var SIGP=null;
+function kitFloat(html){
+  var f=$('pdvFloat');
+  if(!f){ f=document.createElement('div'); f.id='pdvFloat'; $('pdvRoot').appendChild(f); }
+  if(html===null){ f.classList.remove('on'); f.innerHTML=''; return null; }
+  f.innerHTML=html; f.classList.add('on'); return f;
+}
+function sigPlace(url){
+  if(PDV.rot!==0){ toast('請先把檢視旋轉轉回 0°（更多 → 旋轉 90°）再放簽名',4200); return; }
+  if(PDV.annOn) $('pdvAnnDone').click();
+  var p=PDV.cur, el=PAGES.querySelector('.pg[data-p="'+p+'"]');
+  if(!el){ toast('這一頁還沒載入'); return; }
+  var im=new Image();
+  im.onload=function(){
+    var W=el.clientWidth, H=el.clientHeight, bw=W*0.28, bh=bw*im.height/im.width;
+    var b=document.createElement('div'); b.className='ksig';
+    b.style.left=(W-bw)*0.72+'px'; b.style.top=(H*0.8-bh/2)+'px'; b.style.width=bw+'px'; b.style.height=bh+'px';
+    b.innerHTML='<img src="'+url+'"><i></i>';
+    el.appendChild(b);
+    SIGP={el:el,box:b,url:url,p:p,ar:im.height/im.width};
+    var mode=null, sx, sy, ox, oy, ow;
+    b.onpointerdown=function(e){
+      e.preventDefault(); e.stopPropagation(); b.setPointerCapture(e.pointerId);
+      mode=(e.target.tagName==='I')?'rs':'mv'; sx=e.clientX; sy=e.clientY;
+      ox=b.offsetLeft; oy=b.offsetTop; ow=b.offsetWidth;
+    };
+    b.onpointermove=function(e){
+      if(!mode) return;
+      var sc=el.getBoundingClientRect().width/el.clientWidth, dx=(e.clientX-sx)/sc, dy=(e.clientY-sy)/sc;
+      if(mode==='mv'){ b.style.left=(ox+dx)+'px'; b.style.top=(oy+dy)+'px'; }
+      else{ var nw=Math.max(24,ow+dx); b.style.width=nw+'px'; b.style.height=(nw*SIGP.ar)+'px'; }
+    };
+    b.onpointerup=b.onpointercancel=function(){ mode=null; };
+    kitFloat('<span>第 '+p+' 頁：拖曳簽名到位置，右下圓點調大小</span>'+
+      '<button id="sgCancel">取消</button><button class="pri" id="sgApply">套用到 PDF</button>');
+    $('sgCancel').onclick=sigEnd;
+    $('sgApply').onclick=sigApply;
+  };
+  im.src=url;
+}
+function sigEnd(){ if(SIGP&&SIGP.box) SIGP.box.remove(); SIGP=null; kitFloat(null); }
+function sigApply(){
+  var S=SIGP, el=S.el, b=S.box, W=el.clientWidth, H=el.clientHeight;
+  var fx=b.offsetLeft/W, fy=b.offsetTop/H, fw=b.offsetWidth/W, fh=b.offsetHeight/H;
+  sigEnd(); spin(true,'寫入簽名…');
+  kitSrc().then(kitLoad).then(function(doc){
+    var pg=doc.getPage(S.p-1), D=kitDisp(pg);
+    return doc.embedPng(b64ToU8(S.url.split(',')[1])).then(function(img){
+      kitPlace(pg,img,fx*D.W,fy*D.H,fw*D.W,fh*D.H);
+      return kitSave(doc);
+    });
+  }).then(function(bytes){ kitDone(bytes,'已簽名','第 '+S.p+' 頁'); }).catch(kitFail);
+}
+
+/* ==================== 7. 裁切／去白邊 ==================== */
+function askCrop(){
+  if(!kitHas()) return;
+  toolSheet('裁切／去白邊',
+    '<div class="row"><button class="btn on" id="cAuto" style="flex:1">自動去白邊</button><button class="btn" id="cMan" style="flex:1">手動指定邊界</button></div>'+
+    '<div id="cAutoBox"><div class="row"><div class="g"><b>保留邊距</b><small>mm，裁到內容外再留一點</small></div>'+
+      '<input class="kfld" id="cKeep" type="number" value="3" style="max-width:90px"></div>'+
+      '<div class="row"><div class="g"><small>逐頁偵測非白色內容的範圍。掃描件四周若是灰色陰影，偵測會把陰影當內容，請改用手動。</small></div></div></div>'+
+    '<div id="cManBox" style="display:none">'+
+      '<div class="row"><div class="g"><b>上</b></div><input class="kfld" id="cT" type="number" value="10" style="max-width:80px">'+
+        '<div class="g" style="text-align:right"><b>下</b></div><input class="kfld" id="cB" type="number" value="10" style="max-width:80px"></div>'+
+      '<div class="row"><div class="g"><b>左</b></div><input class="kfld" id="cL" type="number" value="10" style="max-width:80px">'+
+        '<div class="g" style="text-align:right"><b>右</b></div><input class="kfld" id="cRr" type="number" value="10" style="max-width:80px"></div>'+
+      '<div class="row"><div class="g"><small>單位 mm，以畫面上看到的方向為準，各頁裁同樣的量。</small></div></div></div>'+
+    kitRangeRow('cR')+
+    '<div class="row"><button class="btn on" id="cGo" style="flex:1">開始裁切</button></div>',
+    function(){
+      var auto=true;
+      $('cAuto').onclick=function(){ auto=true; kitSeg(['cAuto','cMan'],'cAuto'); $('cAutoBox').style.display=''; $('cManBox').style.display='none'; };
+      $('cMan').onclick=function(){ auto=false; kitSeg(['cAuto','cMan'],'cMan'); $('cAutoBox').style.display='none'; $('cManBox').style.display=''; };
+      $('cGo').onclick=function(){
+        var l=kitRange('cR',PDV.n); if(!l) return;
+        var mm=function(id){ return Math.max(0,parseFloat($(id).value)||0)*72/25.4; };
+        var o={auto:auto, keep:mm('cKeep'), t:mm('cT'), b:mm('cB'), l:mm('cL'), r:mm('cRr'), list:l};
+        sheet(null,false); doCrop(o);
+      };
+    });
+}
+/* 以 72dpi（1px＝1pt）渲染顯示方向的頁面，找非白內容外框 → 回傳四邊留白量（pt） */
+function cropDetect(p){
+  return PDV.doc.getPage(p).then(function(pg){
+    var vp=pg.getViewport({scale:1, rotation:(pg.rotate||0)%360});
+    var w=Math.max(1,Math.round(vp.width)), h=Math.max(1,Math.round(vp.height));
+    var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+    var c=cv.getContext('2d',{alpha:false}); c.fillStyle='#fff'; c.fillRect(0,0,w,h);
+    return pg.render({canvasContext:c, viewport:vp}).promise.then(function(){
+      var a=c.getImageData(0,0,w,h).data, rows=new Uint16Array(h), cols=new Uint16Array(w);
+      for(var y=0;y<h;y++) for(var x=0;x<w;x++){
+        var i=(y*w+x)*4;
+        if(a[i]<238||a[i+1]<238||a[i+2]<238){ rows[y]++; cols[x]++; }
+      }
+      var t=0,b=h-1,l=0,r=w-1;
+      while(t<h&&rows[t]<2) t++; while(b>t&&rows[b]<2) b--;
+      while(l<w&&cols[l]<2) l++; while(r>l&&cols[r]<2) r--;
+      if(t>=h) return null;
+      return {t:t, b:h-1-b, l:l, r:w-1-r};
+    });
+  });
+}
+function doCrop(o){
+  spin(true,'裁切中…');
+  var det={};
+  (o.auto?o.list.reduce(function(pm,p,i){
+    return pm.then(function(){ spin(true,'偵測內容範圍 '+(i+1)+'/'+o.list.length+'…');
+      return cropDetect(p).then(function(m){ det[p]=m; }); });
+  },Promise.resolve()):Promise.resolve()).then(kitSrc).then(kitLoad).then(function(doc){
+    var pages=doc.getPages(), done=0;
+    o.list.forEach(function(p){
+      var pg=pages[p-1]; if(!pg) return;
+      var m;
+      if(o.auto){ m=det[p]; if(!m) return;
+        m={t:Math.max(0,m.t-o.keep), b:Math.max(0,m.b-o.keep), l:Math.max(0,m.l-o.keep), r:Math.max(0,m.r-o.keep)}; }
+      else m={t:o.t, b:o.b, l:o.l, r:o.r};
+      var R=kitR(pg), E;   /* 顯示邊 → 頁面原始邊 */
+      if(R===90)       E={L:m.t, T:m.r, R:m.b, B:m.l};
+      else if(R===180) E={L:m.r, T:m.b, R:m.l, B:m.t};
+      else if(R===270) E={L:m.b, T:m.l, R:m.t, B:m.r};
+      else             E={L:m.l, T:m.t, R:m.r, B:m.b};
+      var bx=kitBox(pg), nw=bx.width-E.L-E.R, nh=bx.height-E.T-E.B;
+      if(nw<20||nh<20) return;
+      pg.setMediaBox(bx.x+E.L, bx.y+E.B, nw, nh);
+      pg.setCropBox(bx.x+E.L, bx.y+E.B, nw, nh);
+      done++;
+    });
+    if(!done) throw new Error('沒有可裁切的頁面（邊界太大或偵測不到內容）');
+    return kitSave(doc).then(function(b){ return {b:b,n:done}; });
+  }).then(function(r){ kitDone(r.b,'裁切',r.n+' 頁'); }).catch(kitFail);
+}
+
+/* ==================== 8. 塗黑遮蔽（真正移除） ==================== */
+var RED=null;
+function startRedact(){
+  if(!kitHas()) return;
+  if(PDV.annOn) $('pdvAnnDone').click();
+  RED={rects:{}, timer:null, hist:[]};
+  redBar();
+  RED.timer=setInterval(redAttach,500); redAttach();
+  toast('在頁面上拖曳框出要遮蔽的地方，可跨多頁',3200);
+}
+function redCount(){ var n=0; for(var k in RED.rects) n+=RED.rects[k].length; return n; }
+function redBar(){
+  kitFloat('<span>塗黑模式　已框 <b>'+redCount()+'</b> 處</span>'+
+    '<button id="rdUndo">復原</button><button id="rdCancel">取消</button><button class="pri" id="rdGo">完成並輸出</button>');
+  $('rdUndo').onclick=function(){ var h=RED.hist.pop(); if(h){ RED.rects[h].pop(); redAttach(true); redBar(); } };
+  $('rdCancel').onclick=redEnd;
+  $('rdGo').onclick=redApply;
+}
+function redEnd(){
+  if(!RED) return;
+  clearInterval(RED.timer);
+  Array.prototype.forEach.call(PAGES.querySelectorAll('.kovl'),function(o){ o.remove(); });
+  RED=null; kitFloat(null);
+}
+function redAttach(force){
+  if(!RED) return;
+  Array.prototype.forEach.call(PAGES.querySelectorAll('.pg'),function(el){
+    var p=+el.dataset.p, o=el.querySelector('.kovl');
+    if(!o){ o=document.createElement('div'); o.className='kovl'; el.appendChild(o); redBind(o,p); force=true; }
+    if(force) redPaint(o,p);
+  });
+}
+function redPaint(o,p){
+  Array.prototype.forEach.call(o.querySelectorAll('.rd'),function(x){ x.remove(); });
+  var W=o.clientWidth, H=o.clientHeight;
+  (RED.rects[p]||[]).forEach(function(r){
+    var a=toPx(r[0],r[1],W,H), b=toPx(r[2],r[3],W,H), d=document.createElement('div'); d.className='rd';
+    d.style.left=Math.min(a[0],b[0])+'px'; d.style.top=Math.min(a[1],b[1])+'px';
+    d.style.width=Math.abs(b[0]-a[0])+'px'; d.style.height=Math.abs(b[1]-a[1])+'px';
+    o.appendChild(d);
+  });
+}
+function redBind(o,p){
+  var st=null, tmp=null;
+  function pos(e){ var r=o.getBoundingClientRect(); return [(e.clientX-r.left)*o.clientWidth/r.width,(e.clientY-r.top)*o.clientHeight/r.height]; }
+  o.onpointerdown=function(e){
+    e.preventDefault(); e.stopPropagation(); o.setPointerCapture(e.pointerId);
+    st=pos(e); tmp=document.createElement('div'); tmp.className='rd'; o.appendChild(tmp);
+  };
+  o.onpointermove=function(e){
+    if(!st) return; var q=pos(e);
+    tmp.style.left=Math.min(st[0],q[0])+'px'; tmp.style.top=Math.min(st[1],q[1])+'px';
+    tmp.style.width=Math.abs(q[0]-st[0])+'px'; tmp.style.height=Math.abs(q[1]-st[1])+'px';
+  };
+  o.onpointerup=function(e){
+    if(!st) return; var q=pos(e), W=o.clientWidth, H=o.clientHeight;
+    if(Math.abs(q[0]-st[0])>4&&Math.abs(q[1]-st[1])>4){
+      var a=toFrac(st[0],st[1],W,H), b=toFrac(q[0],q[1],W,H);
+      (RED.rects[p]=RED.rects[p]||[]).push([Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[0],b[0]),Math.max(a[1],b[1])]);
+      RED.hist.push(p); redBar();
+    }
+    st=null; redPaint(o,p);
+  };
+  o.onpointercancel=function(){ st=null; redPaint(o,p); };
+}
+function redApply(){
+  if(!redCount()){ toast('還沒有框選任何區域'); return; }
+  var rects=RED.rects; redEnd();
+  spin(true,'套用遮蔽…');
+  var src, out;
+  kitSrc().then(kitLoad).then(function(d){ src=d; return PDFLib.PDFDocument.create(); }).then(function(o){
+    out=o;
+    var seq=[]; for(var i=1;i<=PDV.n;i++) seq.push(i);
+    return seq.reduce(function(pm,p){
+      return pm.then(function(){
+        var rs=rects[p];
+        if(!rs||!rs.length){
+          return out.copyPages(src,[p-1]).then(function(cp){ out.addPage(cp[0]); });
+        }
+        spin(true,'重繪第 '+p+' 頁…');
+        return kitRender(p,200,'image/jpeg',0.88,function(ctx,W,H){
+          ctx.fillStyle='#000';
+          rs.forEach(function(r){
+            var a=toPx(r[0],r[1],W,H), b=toPx(r[2],r[3],W,H);
+            ctx.fillRect(Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1]));
+          });
+        }).then(function(r){
+          return out.embedJpg(r.data).then(function(img){
+            var pg=out.addPage([r.pw,r.ph]);
+            pg.drawImage(img,{x:0,y:0,width:r.pw,height:r.ph});
+          });
+        });
+      });
+    },Promise.resolve()).then(function(){ return kitSave(out); });
+  }).then(function(b){
+    var n=0; for(var k in rects) if(rects[k].length) n++;
+    kitDone(b,'遮蔽',n+' 頁已整頁轉影像，底下文字確實移除');
+  }).catch(kitFail);
+}
+
+/* ==================== 9. 表單填寫 ==================== */
+var FORM=null;
+function askForm(){
+  if(!kitHas()) return;
+  spin(true,'讀取表單欄位…');
+  kitSrc().then(kitLoad).then(function(doc){
+    spin(false);
+    var form=doc.getForm(), fields=form.getFields();
+    if(!fields.length){ toast('這份 PDF 沒有可填寫的表單欄位。一般文件請用「標註」的文字工具',4200); return; }
+    FORM={doc:doc, form:form, fields:fields};
+    var h='<div class="kform">';
+    fields.forEach(function(f,i){
+      var nm=f.getName(), lb='<label>'+nm.replace(/</g,'&lt;')+'</label>';
+      if(f instanceof PDFLib.PDFTextField){
+        var v=''; try{ v=f.getText()||''; }catch(e){}
+        h+=lb+'<input class="kfld" style="width:100%" data-f="'+i+'" value="'+String(v).replace(/"/g,'&quot;')+'">';
+      }else if(f instanceof PDFLib.PDFCheckBox){
+        h+='<label style="display:flex;gap:8px;align-items:center;color:var(--pdv-txt)"><input type="checkbox" data-f="'+i+'"'+(f.isChecked()?' checked':'')+'>'+nm+'</label>';
+      }else if(f instanceof PDFLib.PDFDropdown||f instanceof PDFLib.PDFRadioGroup||f instanceof PDFLib.PDFOptionList){
+        var ops=f.getOptions(), sel=[]; try{ sel=f.getSelected?[].concat(f.getSelected()):[]; }catch(e){}
+        h+=lb+'<select class="kfld" style="width:100%" data-f="'+i+'"><option value="">（不選）</option>'+
+          ops.map(function(o){ return '<option'+(sel.indexOf(o)>=0?' selected':'')+'>'+o+'</option>'; }).join('')+'</select>';
+      }
+    });
+    h+='</div><div class="row"><label style="display:flex;gap:8px;align-items:center;flex:1"><input type="checkbox" id="fmFlat">'+
+       '填完後平面化（欄位不能再改）</label></div>'+
+       '<div class="row"><button class="btn on" id="fmGo" style="flex:1">填入並輸出</button></div>';
+    toolSheet('表單填寫　'+fields.length+' 個欄位',h,function(){ $('fmGo').onclick=formApply; });
+  }).catch(kitFail);
+}
+function formApply(){
+  var F=FORM, flat=$('fmFlat').checked;
+  Array.prototype.forEach.call($('pdvToolBody').querySelectorAll('[data-f]'),function(el){
+    var f=F.fields[+el.dataset.f];
+    try{
+      if(f instanceof PDFLib.PDFTextField) f.setText(el.value||'');
+      else if(f instanceof PDFLib.PDFCheckBox){ if(el.checked) f.check(); else f.uncheck(); }
+      else if(el.value) f.select(el.value);
+      else if(f.clear) f.clear();
+    }catch(e){}
+  });
+  sheet(null,false); spin(true,'寫入表單…');
+  var cjk=false;
+  Promise.resolve().then(function(){
+    if(flat) F.form.flatten();
+    return F.doc.save({useObjectStreams:false});
+  }).catch(function(e){
+    /* 中文值無法用 PDF 內建字型產生外觀 → 改由閱讀器自行繪製 */
+    if(flat) throw new Error('含中文的表單無法直接平面化。請先不勾平面化輸出，開啟結果後用「PDF 瘦身（整頁重繪）」固定內容');
+    cjk=true;
+    F.form.acroForm.dict.set(PDFLib.PDFName.of('NeedAppearances'), PDFLib.PDFBool.True);
+    return F.doc.save({useObjectStreams:false, updateFieldAppearances:false});
+  }).then(function(b){
+    FORM=null;
+    kitDone(b,'已填寫',cjk?'含中文：在 Chrome／Acrobat 開啟會正確顯示':'');
+  }).catch(kitFail);
 }
 
 function askPages(){
@@ -1236,7 +2171,7 @@ function doShot(p,frac,dpi,fmt){
   spin(true,'渲染中…');
   PDV.doc.getPage(p).then(function(pg){
     var sc=dpi/72;
-    var vp=pg.getViewport({scale:sc, rotation:PDV.rot});
+    var vp=pg.getViewport({scale:sc, rotation:((pg.rotate||0)+PDV.rot)%360});
     var ox=Math.round(frac[0]*vp.width), oy=Math.round(frac[1]*vp.height);
     var w=Math.max(1,Math.round((frac[2]-frac[0])*vp.width));
     var h=Math.max(1,Math.round((frac[3]-frac[1])*vp.height));
@@ -1332,11 +2267,13 @@ function exportPdf(opts){
       return out.save({useObjectStreams:false});
     });
   }).then(function(bytes){
+    if(opts&&opts.cb){ opts.cb(bytes); return; }
     spin(false);
     var nm=baseName()+(opts&&opts.pages?('_P'+opts.label):'_標註')+'.pdf';
     shareOrDl(new Blob([bytes],{type:'application/pdf'}), nm,'application/pdf');
     toast('已產生：'+nm+(opts&&opts.pages?('　'+opts.pages.length+' 頁'):''), 2600);
   }).catch(function(e){
+    if(opts&&opts.err){ opts.err(e); return; }
     spin(false); console.error(e);
     toast('匯出失敗：'+(e&&e.message?e.message:'未知錯誤'),3400);
   });
@@ -1587,6 +2524,7 @@ function resolveDest(dest){
     return PDV.doc.getPageIndex(d[0]).then(function(i){ gotoPg(i+1,true); }); }).catch(function(){});
 }
 
+$('pdvBtnKit').onclick=function(){ openKit(); };
 $('pdvBtnMore').onclick=function(){
   $('pdvAnnCnt').textContent=PDV.doc?('目前 '+annCount()+' 個標註'):'';
   sheet('pdvSheetMore',true);
@@ -1604,6 +2542,7 @@ $('pdvSheetMore').addEventListener('click',function(e){
     try{localStorage.setItem('pdv_night',PDV.night?'1':'0');}catch(e){} }
   else if(a==='export'){ sheet(null,false); exportPdf(); }
   else if(a==='png'){ sheet(null,false); exportPng(); }
+  else if(a==='kit'){ sheet(null,false); openKit(); }
   else if(a==='slim'){ sheet(null,false); askSlim(); }
   else if(a==='shot'){ sheet(null,false); askShot(); }
   else if(a==='pages'){ sheet(null,false); askPages(); }
