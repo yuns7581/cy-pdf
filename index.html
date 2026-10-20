@@ -351,16 +351,43 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
     font-family:inherit;font-size:13px;font-weight:600;padding:11px 4px;border-radius:8px;cursor:pointer;}
 #tPDF #vGrab{flex:1.7 !important;background:#FFA463 !important;color:#16202B !important;border-color:#FFA463 !important;font-size:14px !important}
 @media (prefers-reduced-motion:no-preference){#tPDF #go{transition:background .12s ease}}
+/* C2.10：抓格影片佇列 */
+#tPDF #vNav{display:none;align-items:center;gap:8px;padding:0 14px 10px}
+#tPDF #vNav.on{display:flex}
+#tPDF #vNav select{flex:1;min-width:0;height:40px;border:1px solid #2C3B48;background:#1B2733;color:#DCE4EA;border-radius:8px;font-family:inherit;font-size:14px;padding:0 8px}
+#tPDF #vNav button{width:44px;height:40px;border:1px solid #2C3B48;background:#1B2733;color:#DCE4EA;border-radius:8px;font-size:20px;font-weight:700;cursor:pointer;font-family:inherit}
+#tPDF #vNav button:disabled{opacity:.35}
+/* C2.9：照片處理（壓縮＋轉 PDF 合併） */
+#tCMP > .tabs{display:none}
+#tCMP #btnZip{display:none}
+#tPDF label.pick.third{flex:1;min-width:0;padding:0 4px;font-size:13.5px}
+#tPDF button.pick{font-family:inherit;cursor:pointer}
+#tPDF details.lay{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:12px}
+#tPDF details.lay>summary{list-style:none;cursor:pointer;padding:14px;font-size:14px;font-weight:700;color:var(--ink-2);display:flex;justify-content:space-between;align-items:center}
+#tPDF details.lay>summary::-webkit-details-marker{display:none}
+#tPDF details.lay>summary::after{content:'展開 ▾';font-size:12.5px;font-weight:600;color:var(--signal)}
+#tPDF details.lay[open]>summary::after{content:'收合 ▴'}
+#tPDF details.lay>.card{border:0;border-top:1px solid var(--line);border-radius:0;margin:0}
+#tPDF details.lay>.card:last-child{border-radius:0 0 10px 10px}
+#tPDF input[type=range]{flex:1;max-width:62%;accent-color:var(--signal)}
+#tPDF input[type=number]{font-family:inherit;font-size:15px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;width:96px}
+#tPDF .zsub{display:flex;align-items:center;gap:6px}
+#tPDF .btns{display:flex;gap:8px}
+#tPDF .btns button{border:0;border-radius:9px;font-family:inherit;font-size:15px;font-weight:700;padding:14px 6px;cursor:pointer;background:var(--steel);color:#fff;flex:1}
+#tPDF .btns button:disabled{background:#B9C3CB;cursor:default}
+#tPDF .btns #go{width:auto;flex:1.25;font-size:16px;padding:14px 6px}
+#tPDF{padding-bottom:128px}
+#tPDF #toAnn{border:1px solid var(--line);background:#fff;color:var(--ink-2);font-family:inherit;font-size:13px;font-weight:600;padding:8px 12px;border-radius:8px;cursor:pointer}
 </style>
 </head>
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">現場工具箱</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C2.8</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C2.11</span></header>
 <nav id="shellTabs">
-  <button data-t="CMP" class="on">壓縮</button>
+  <button data-t="PDF" class="on">照片</button>
+  <button data-t="CMP">影片</button>
   <button data-t="ANN">標註</button>
-  <button data-t="PDF">轉 PDF</button>
   <button data-t="VIEW">PDF 工具</button>
 </nav>
 <div id="tbToast"></div>
@@ -368,7 +395,7 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
   <h4 id="tbPickT"></h4><p id="tbPickS"></p><div id="tbPickB"></div>
 </div></div>
 
-<div class="pane on" id="tCMP">
+<div class="pane" id="tCMP">
 
 
 
@@ -531,6 +558,7 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
     </div>
     <p class="hint" id="vTrimInfo" style="margin:8px 0 0"></p>
     <button class="btn wide" id="vCut" style="margin-top:10px">✂ 無損裁剪（不重新編碼）</button>
+    <button class="btn sec wide" id="vToGrab" style="margin-top:8px">▷ 抓這支影片的畫面 → 照片處理</button>
     <p class="hint" style="margin:8px 0 0">無損裁剪直接複製原始畫格位元組，畫質與原檔<b>完全相同</b>，幾秒內完成。起點會自動往前對齊到最近的關鍵幀（可能早 0～2 秒），這是不重編碼的物理限制。<br>只支援 MP4／MOV；其他格式或需要改解析度時，請改用下方的轉檔（會重新編碼）。</p>
     <div id="vCutOut"></div>
   </div>
@@ -639,7 +667,7 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 
 </div>
 
-<div class="pane" id="tPDF">
+<div class="pane on" id="tPDF">
 
 
 
@@ -653,17 +681,21 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
       </label>
       <label class="pick alt" for="vfile">
         <span>▷ 影片抓格</span>
-        <input type="file" id="vfile" accept="video/*">
+        <input type="file" id="vfile" accept="video/*,.zip,application/zip" multiple>
       </label>
     </div>
     <div class="picks">
-      <button type="button" class="pick wide" id="camBtn" style="border-style:solid">● 連續拍照</button>
-      <label class="pick wide" for="dfiles">
+      <button type="button" class="pick wide third" id="camBtn" style="border-style:solid">● 連續拍照</button>
+      <label class="pick wide third" for="dfiles">
         <span>＋ PDF 或 zip</span>
         <input type="file" id="dfiles" accept="application/pdf,.pdf,.zip,application/zip,image/*" multiple>
       </label>
+      <label class="pick wide third" for="afiles">
+        <span>📁 檔案瀏覽</span>
+        <input type="file" id="afiles" multiple>
+      </label>
     </div>
-    <p class="empty" id="empty">還沒有內容。「選擇照片」會叫出相片選擇器，可從 Google 相簿或本機圖庫多選；PDF 和 zip 走下面那顆。</p>
+    <p class="empty" id="empty">還沒有內容。「選擇照片」叫出相片選擇器；「影片抓格」挑影片後逐格擷取畫面；PDF 會問你要整份附加還是拆出照片。<br>加好之後，下方可以<b>下載／分享壓縮後的照片</b>，或<b>排版成 PDF</b>，同一份清單。</p>
     <div class="grid" id="grid"></div>
     <div class="row" id="sortRow" style="margin-top:12px;display:none">
       <span>排序</span>
@@ -683,9 +715,82 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
         <button type="button" data-r="180">180°</button>
       </div>
     </div>
+    <div class="row" id="annRow" style="margin-top:8px;display:none">
+      <span>其他工具</span>
+      <button type="button" id="toAnn">→ 送到標註量測</button>
+    </div>
     <p class="hint" id="thumbHint" style="display:none">滑鼠停在圖片上放大預覽，點一下開全螢幕。下方：‹ › 調順序，「編輯」裁切旋轉，✕ 移除。</p>
   </div>
 
+  <div class="card" id="zCard">
+    <h2>壓縮設定（下載照片與產生 PDF 共用）</h2>
+    <div class="rows">
+      <div class="row">
+        <span>長邊上限</span>
+        <select id="zMax" class="sel">
+          <option value="orig">原始直通（不重新編碼）</option>
+          <option value="0" selected>原尺寸（C2.8 壓縮預設・文件推薦）</option>
+          <option value="3000">3000 px</option>
+          <option value="2400">2400 px（列印夠用）</option>
+          <option value="1920">1920 px</option>
+          <option value="1600">1600 px</option>
+          <option value="1280">1280 px（LINE／回報）</option>
+          <option value="1100">1100 px（Ragic 省容量）</option>
+          <option value="800">800 px（縮圖）</option>
+        </select>
+      </div>
+      <div class="row" id="zModeRow">
+        <span>壓縮方式</span>
+        <div class="seg" id="zMode">
+          <button type="button" data-v="q" aria-pressed="true">指定品質</button>
+          <button type="button" data-v="s">指定大小</button>
+        </div>
+      </div>
+      <div class="row" id="zQRow">
+        <span>品質 <b id="zQv">30</b></span>
+        <input type="range" id="zQ" min="30" max="95" value="30">
+      </div>
+      <div class="row" id="zKBRow" style="display:none">
+        <span>每張上限</span>
+        <span class="zsub"><input type="number" id="zKB" value="500" min="50" step="50"> KB</span>
+      </div>
+      <div class="row" id="zFmtRow">
+        <span>照片格式</span>
+        <div class="seg" id="zFmt">
+          <button type="button" data-v="image/jpeg" aria-pressed="true">JPEG</button>
+          <button type="button" data-v="image/webp">WebP</button>
+        </div>
+      </div>
+      <div class="row">
+        <span>輸出尺寸</span>
+        <select id="zFit" class="sel">
+          <option value="" selected>不指定</option>
+          <option value="85.6x53.98">卡片 85.6×54 mm</option>
+          <option value="91x55">名片 91×55 mm</option>
+          <option value="35x45">2 吋證件照</option>
+          <option value="28x35">1 吋證件照</option>
+          <option value="210x297">A4 直式</option>
+          <option value="297x210">A4 橫式</option>
+          <option value="mm">自訂（mm）</option>
+        </select>
+      </div>
+      <div class="row" id="zFitMM" style="display:none">
+        <span>寬 × 高 mm</span>
+        <span class="zsub"><input type="number" id="zW" value="85.6" step="0.1" min="1"> × <input type="number" id="zH" value="54" step="0.1" min="1"></span>
+      </div>
+      <div class="row" id="zFillRow" style="display:none">
+        <span>比例不合時</span>
+        <div class="seg" id="zFill">
+          <button type="button" data-v="contain" aria-pressed="true">完整補白</button>
+          <button type="button" data-v="cover">裁切填滿</button>
+        </div>
+      </div>
+    </div>
+    <p class="hint" id="qHint"></p>
+  </div>
+
+  <details class="lay" id="layBox">
+  <summary>PDF 版面與封面</summary>
   <div class="card">
     <h2>版面（只影響照片頁，PDF 維持原樣）</h2>
     <div class="rows">
@@ -723,29 +828,6 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
         </div>
       </div>
       <p class="hint" id="fullHint" style="margin:-4px 0 10px"></p>
-      <div class="row">
-        <span>長邊上限</span>
-        <select id="imgMax" class="sel">
-          <option value="orig">原始直通（不重新編碼）</option>
-          <option value="0">不縮放（原尺寸）</option>
-          <option value="3000">3000 px</option>
-          <option value="2400">2400 px</option>
-          <option value="1600">1600 px</option>
-          <option value="1100" selected>1100 px（Ragic 省容量）</option>
-        </select>
-      </div>
-      <div class="row">
-        <span>影像品質</span>
-        <select id="imgQ" class="sel">
-          <option value="90">90（近無損）</option>
-          <option value="80">80</option>
-          <option value="70">70</option>
-          <option value="60" selected>60（推薦）</option>
-          <option value="50">50</option>
-          <option value="40">40（極省）</option>
-        </select>
-      </div>
-      <p class="hint" id="qHint"></p>
       <div class="row">
         <span>頁尾日期頁碼</span>
         <div class="seg" id="footerOpt">
@@ -789,10 +871,12 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
     </div>
   </div>
 
+  </details>
+
   <div class="card">
     <h2>檔名</h2>
     <input type="text" id="fname" spellcheck="false">
-    <p class="hint">自動補上 .pdf。日期帶入今天，版次 C1.x 每次匯出自動 +1，隔天歸零回 C1.0。想固定檔名就把 <b>_C1.n</b> 拿掉，跳號機制不會動它。</p>
+    <p class="hint">PDF 與照片 ZIP 共用這個檔名，自動補上副檔名。日期帶入今天，版次 C1.x 每次匯出自動 +1，隔天歸零回 C1.0。想固定檔名就把 <b>_C1.n</b> 拿掉，跳號機制不會動它。</p>
   </div>
 </main>
 
@@ -802,7 +886,11 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 
 <div class="bar">
   <div class="bar-inner">
-    <button id="go" disabled>產生 PDF</button>
+    <div class="btns">
+      <button type="button" id="goShare" disabled>分享照片</button>
+      <button type="button" id="goZip" disabled>下載照片</button>
+      <button type="button" id="go" disabled>產生 PDF</button>
+    </div>
     <div id="status"></div>
   </div>
 </div>
@@ -865,6 +953,11 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
     <b id="vTitle">影片抓格</b>
     <span id="vCount">已擷取 0 張</span>
   </div>
+  <div id="vNav">
+    <button type="button" id="vPrev" aria-label="上一部">‹</button>
+    <select id="vPick" aria-label="選擇影片"></select>
+    <button type="button" id="vNext" aria-label="下一部">›</button>
+  </div>
   <div id="vWrap"><video id="vEl" playsinline preload="auto"></video></div>
   <div id="vBot">
     <input type="range" id="vSeek" min="0" max="10000" value="0" step="1">
@@ -887,8 +980,8 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 
 /* ==================== 外殼：分頁切換 + 跨工具交接 ==================== */
 window.TB = (function(){
-  var NAME={CMP:'圖片影片壓縮',ANN:'圖片標註',PDF:'照片轉 PDF'};
-  var cur='CMP';
+  var NAME={CMP:'影片壓縮剪輯',ANN:'圖片標註',PDF:'照片處理（壓縮・轉 PDF）'};
+  var cur='PDF';
   /* ---- 共用檔名流水號：YYYYMMDD_名稱_C1.n，每天自動歸零 ---- */
   function p2(n){ return n<10?'0'+n:''+n; }
   function tday(){ var d=new Date(); return d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate()); }
@@ -987,6 +1080,7 @@ window.TB = (function(){
   function isPdf(f){ return f.type==='application/pdf'||/\.pdf$/i.test(f.name||''); }
   function isZip(f){ return /zip/.test(f.type||'')||/\.zip$/i.test(f.name||''); }
   function isImg(f){ return /^image\//.test(f.type||'')||/\.(jpe?g|png|webp|heic|heif|bmp|gif|avif)$/i.test(f.name||''); }
+  function isVid(f){ return /^video\//.test(f.type||'')||/\.(mp4|mov|m4v|webm|3gp|mkv)$/i.test(f.name||''); }
 
   function pick(title,sub,opts){
     var box=document.getElementById('tbPick'), body=document.getElementById('tbPickB');
@@ -1016,12 +1110,10 @@ window.TB = (function(){
   function sendImgs(fs,dest){
     toImgs(fs).then(function(imgs){
       if(!imgs.length){ toast('這些檔案裡沒有可用的照片',3600); return; }
-      if(dest==='cmp'){ go('CMP'); if(window.CMP&&CMP.addImages) CMP.addImages(imgs); }
-      else if(dest==='ann'){ go('ANN'); if(window.ANN&&ANN.push) ANN.push(imgs); }
+      if(dest==='ann'){ go('ANN'); if(window.ANN&&ANN.push) ANN.push(imgs); }
       else{
         if(window.PDF&&PDF.push){
           imgs.forEach(function(f){ PDF.push(f,f.name); });
-          if(PDF.passthrough) PDF.passthrough();
           PDF.render();
         }
         go('PDF');
@@ -1037,10 +1129,15 @@ window.TB = (function(){
     if(pdfs.length) opts.push({t:'用 PDF 檢視器開啟',fn:function(){
       hoPut(pdfs).then(function(){ location.href='./viewer.html#open=1'; });
     }});
-    if(packs.length) opts.push({t:'抽出裡面的照片 → 壓縮',fn:function(){ sendImgs(fs,'cmp'); }});
-    opts.push({t:'壓縮',fn:function(){ sendImgs(fs,'cmp'); }});
-    opts.push({t:'標註量測',fn:function(){ sendImgs(fs,'ann'); }});
-    opts.push({t:'轉 PDF 排版',fn:function(){ sendImgs(fs,'pdf'); }});
+    var vids=fs.filter(isVid), rest=fs.filter(function(f){ return !isVid(f); });
+    if(rest.length) opts.push({t:'照片處理（壓縮・轉 PDF）',fn:function(){
+      go('PDF'); if(window.PDF&&PDF.addFiles) PDF.addFiles(rest);
+    }});
+    if(rest.length) opts.push({t:'標註量測',fn:function(){ sendImgs(rest,'ann'); }});
+    if(vids.length){
+      opts.push({t:'影片抓格 → 照片處理',fn:function(){ go('PDF'); if(window.PDF&&PDF.openVideo) PDF.openVideo(vids); }});
+      opts.push({t:'影片壓縮／剪輯',fn:function(){ go('CMP'); if(window.CMP&&CMP.setVideo) CMP.setVideo(vids[0]); }});
+    }
     opts.push({t:'取消',ghost:true,fn:function(){}});
     pick('收到 '+fs.length+' 個檔案', sub, opts);
   }
@@ -1070,11 +1167,12 @@ window.TB = (function(){
       else if(m[1]==='pdf'){
         if(window.PDF&&PDF.push){
           fs.forEach(function(f){ PDF.push(f,f.name); });
-          if(PDF.passthrough) PDF.passthrough();
           PDF.render();
         }
         go('PDF');
-      }else{ go('CMP'); }
+      }else{
+        go('PDF'); if(window.PDF&&PDF.addFiles) PDF.addFiles(fs);
+      }
       toast('已接收 '+fs.length+' 張來自 PDF 檢視器的頁面',3600);
     });
   }
@@ -1130,7 +1228,7 @@ window.TB = (function(){
   });
 
   var exports = {
-    go:go, toast:toast, cur:function(){return cur;}, intake:intake,
+    go:go, toast:toast, cur:function(){return cur;}, intake:intake, pick:pick,
     seqName:seqName, seqBump:seqBump, seqGet:seqGet, today:tday,
     /* PDF／zip → 圖片檔陣列，三個分頁共用 */
     importPack:function(file){
@@ -1156,16 +1254,15 @@ window.TB = (function(){
     toPDF:function(files,opt){
       if(!files||!files.length){ toast('沒有可送出的檔案'); return; }
       if(!window.PDF||!PDF.push){ toast('轉 PDF 模組未就緒'); return; }
-      files.forEach(function(f){ PDF.push(f,f.name); });
-      if(PDF.passthrough) PDF.passthrough();
+      files.forEach(function(f){ PDF.push(f,f.name,{keep:1}); });
       if(opt&&opt.perPage&&PDF.setPerPage) PDF.setPerPage(opt.perPage);
       if(opt&&opt.full&&PDF.setFull) PDF.setFull(1);
       if(opt&&opt.name&&PDF.setName) PDF.setName(opt.name);
       PDF.render();
       go('PDF');
       toast(opt&&opt.perPage===1
-        ? ('已送入 '+files.length+' 頁，版面已設為<b>貼合影像、無白邊</b>、原始直通<br>按最下方「產生 PDF」即可')
-        : ('已送入 '+files.length+' 張到「轉 PDF」<br>影像品質已自動切成「原始直通」，不會二次壓縮'),4600);
+        ? ('已送入 '+files.length+' 頁，版面已設為<b>貼合影像、無白邊</b><br>按最下方「產生 PDF」即可')
+        : ('已送入 '+files.length+' 張（標註圖保持原樣，不二次壓縮）'),4600);
     },
     /* 由壓縮呼叫，把檔案送進標註 */
     toANN:function(files){
@@ -2123,9 +2220,14 @@ $('hoPdf1').onclick=function(){
 };
 $('hoAnn').onclick=function(){ window.TB.toANN(outFiles()); };
 
+$('vToGrab').onclick=function(){
+  if(!vFile){ window.TB.toast('請先選影片'); return; }
+  if(window.PDF&&PDF.openVideo){ window.TB.go('PDF'); PDF.openVideo(vFile); }
+};
 window.CMP={addImages:addImages,clearAll:clearAll,downloadZip:downloadZip,runImages:runImages,
   runVideo:runVideo,setMode:setMode,stopVideo:stopVideo,switchTab:switchTab,
-  outFiles:outFiles};
+  outFiles:outFiles,makeZip:makeZip,setVideo:setVideo};
+switchTab('V');
 
 })();
 </script>
@@ -3660,12 +3762,29 @@ setTool(S.tool);resize();
 "use strict";
 
 var items=[];   // {kind:'img'|'pdf', ...}
-var cfg={perPage:6, orient:'p', fit:'contain', full:0, imgMax:'1100', imgQ:60, footer:1, cover:false, cvOrg:true};
-/* 兩段式：長邊上限 × JPEG 品質。imgMax==='orig' 走原檔直通 */
+var cfg={perPage:6, orient:'p', fit:'contain', full:0, footer:1, cover:false, cvOrg:true};
+/* C2.9 共用壓縮設定：長邊上限 × 品質（或每張 KB 上限） */
+function segVal(id){
+  var b=document.querySelector('#'+id+' button[aria-pressed="true"]');
+  return b?b.dataset.v:null;
+}
 function imgSpec(){
-  if(cfg.imgMax==='orig') return {max:100000,q:.95,pass:true};
-  var m=parseInt(cfg.imgMax,10);
-  return {max:(m>0?m:100000), q:cfg.imgQ/100, pass:false};
+  var mv=document.getElementById('zMax').value;
+  if(mv==='orig') return {max:100000,q:.95,pass:true,mode:'q'};
+  var m=parseInt(mv,10);
+  var mode=segVal('zMode')||'q';
+  return {max:(m>0?m:100000), q:parseInt(document.getElementById('zQ').value,10)/100,
+          pass:false, mode:mode, target:Math.max(20,parseInt(document.getElementById('zKB').value,10)||500)*1024};
+}
+function fitSpec(){
+  var v=document.getElementById('zFit').value;
+  if(!v) return null;
+  var w,hh;
+  if(v==='mm'){ w=parseFloat(document.getElementById('zW').value); hh=parseFloat(document.getElementById('zH').value); }
+  else { var t=v.split('x'); w=parseFloat(t[0]); hh=parseFloat(t[1]); }
+  if(!(w>0)||!(hh>0)) return null;
+  var dpi=300;
+  return {w:Math.round(w/25.4*dpi), h:Math.round(hh/25.4*dpi), dpi:dpi, mode:segVal('zFill')||'contain', mmW:w, mmH:hh};
 }
 var seqNo=0;
 var $=function(id){ return document.getElementById(id); };
@@ -4030,11 +4149,17 @@ function renderItem(it,maxDim){
     var cx=c?Math.round(c.x*rw):0, cy=c?Math.round(c.y*rh):0;
     var cw=c?Math.max(1,Math.round(c.w*rw)):rw, ch=c?Math.max(1,Math.round(c.h*rh)):rh;
     var s=Math.min(1,maxDim/Math.max(cw,ch));
-    var ow=Math.max(1,Math.round(cw*s)), oh=Math.max(1,Math.round(ch*s));
-    var oc=document.createElement('canvas'); oc.width=ow; oc.height=oh;
+    if(s>=1&&!c) return rc;
+    if(s<1){
+      var src=rc;
+      if(c){ src=document.createElement('canvas'); src.width=cw; src.height=ch;
+             src.getContext('2d').drawImage(rc,cx,cy,cw,ch,0,0,cw,ch); }
+      return stepDown(src,Math.max(1,Math.round(cw*s)),Math.max(1,Math.round(ch*s)));
+    }
+    var oc=document.createElement('canvas'); oc.width=cw; oc.height=ch;
     var ox=oc.getContext('2d');
-    ox.fillStyle='#FFFFFF'; ox.fillRect(0,0,ow,oh);
-    ox.drawImage(rc,cx,cy,cw,ch,0,0,ow,oh);
+    ox.fillStyle='#FFFFFF'; ox.fillRect(0,0,cw,ch);
+    ox.drawImage(rc,cx,cy,cw,ch,0,0,cw,ch);
     return oc;
   });
 }
@@ -4067,8 +4192,8 @@ function exifOrientation(b){
   }
   return 1;
 }
-function passthrough(it){
-  if(!imgSpec().pass||it.rot||it.crop) return Promise.resolve(null);
+function passthrough(it,force){
+  if((!force&&!imgSpec().pass)||it.rot||it.crop) return Promise.resolve(null);
   var f=it.file;
   if(f.type!=='image/jpeg'&&!/\.jpe?g$/i.test(f.name||'')) return Promise.resolve(null);
   return f.arrayBuffer().then(function(buf){
@@ -4090,20 +4215,152 @@ function passthrough(it){
     return {bytes:b, w:w, h:h, cs:(nc===1?'DeviceGray':'DeviceRGB'), raw:true};
   }).catch(function(){ return null; });
 }
-function toJpeg(it){
-  return passthrough(it).then(function(p){
-    if(p) return p;
-    var Q=imgSpec();
-    return renderItem(it,Q.max).then(function(c){
-      return new Promise(function(res,rej){
-        c.toBlob(function(b){
-          if(!b){ rej(new Error('轉檔失敗')); return; }
-          b.arrayBuffer().then(function(buf){ res({bytes:new Uint8Array(buf),w:c.width,h:c.height}); });
-        },'image/jpeg',Q.q);
+/* ==================== C2.9 共用壓縮引擎 ====================
+   1. 逐次減半縮圖＋高品質平滑（避免一次縮太多產生鋸齒與摩爾紋）
+   2. 指定品質：一次編碼；指定大小：品質二分搜尋，品質見底再縮尺寸
+   3. 壓出來比原檔大就用原檔（JPEG 且未旋轉裁切時）               */
+function stepDown(src,w,hh){
+  var cur=src, sw=src.width, sh=src.height;
+  while(sw>=w*2&&sh>=hh*2){
+    var nw=Math.round(sw/2), nh=Math.round(sh/2);
+    var t=document.createElement('canvas'); t.width=nw; t.height=nh;
+    var tx=t.getContext('2d'); tx.imageSmoothingEnabled=true; tx.imageSmoothingQuality='high';
+    tx.drawImage(cur,0,0,nw,nh); cur=t; sw=nw; sh=nh;
+  }
+  var o=document.createElement('canvas'); o.width=w; o.height=hh;
+  var ox=o.getContext('2d'); ox.fillStyle='#FFFFFF'; ox.fillRect(0,0,w,hh);
+  ox.imageSmoothingEnabled=true; ox.imageSmoothingQuality='high';
+  ox.drawImage(cur,0,0,w,hh);
+  return o;
+}
+function cvBlob(c,type,q){ return new Promise(function(r){ c.toBlob(r,type,q); }); }
+function drawFit(src,FS){
+  var o=document.createElement('canvas'); o.width=FS.w; o.height=FS.h;
+  var ox=o.getContext('2d'); ox.fillStyle='#FFFFFF'; ox.fillRect(0,0,FS.w,FS.h);
+  var k=FS.mode==='cover'?Math.max(FS.w/src.width,FS.h/src.height):Math.min(FS.w/src.width,FS.h/src.height);
+  var dw=Math.max(1,Math.round(src.width*k)), dh=Math.max(1,Math.round(src.height*k));
+  var sc=(k<1)?stepDown(src,dw,dh):src;
+  ox.imageSmoothingEnabled=true; ox.imageSmoothingQuality='high';
+  ox.drawImage(sc,Math.round((FS.w-dw)/2),Math.round((FS.h-dh)/2),dw,dh);
+  return o;
+}
+/* src：已套用旋轉裁切的原尺寸畫布 */
+function encodeImg(src,S,type,FS){
+  var big=Math.max(src.width,src.height);
+  var scale=(S.max&&S.max<100000)?Math.min(1,S.max/big):1;
+  var make=function(s){
+    if(FS) return drawFit(src,FS);
+    var w=Math.max(1,Math.round(src.width*s)), hh=Math.max(1,Math.round(src.height*s));
+    return (s<1)?stepDown(src,w,hh):src;
+  };
+  var finish=function(c,b){
+    if(!b) throw new Error('轉檔失敗');
+    if(FS&&FS.dpi&&type==='image/jpeg'&&typeof jpegSetDpi==='function'){
+      return b.arrayBuffer().then(function(buf){
+        return {blob:new Blob([jpegSetDpi(new Uint8Array(buf),FS.dpi)],{type:type}),w:c.width,h:c.height};
       });
-    });
+    }
+    return {blob:b,w:c.width,h:c.height};
+  };
+  if(S.mode!=='s'){
+    var c0=make(scale);
+    return cvBlob(c0,type,S.q).then(function(b){ return finish(c0,b); });
+  }
+  var round=0;
+  var tryRound=function(s){
+    var c=make(s), lo=0.30, hi=0.95, best=null, k=0;
+    var probe=function(){
+      if(k++>=7){
+        if(best) return finish(c,best);
+        return cvBlob(c,type,0.30).then(function(b){
+          if(b.size<=S.target*1.05||FS||++round>=4) return finish(c,b);
+          return tryRound(s*0.8);
+        });
+      }
+      var q=(lo+hi)/2;
+      return cvBlob(c,type,q).then(function(b){
+        if(b&&b.size<=S.target){ best=b; lo=q; } else hi=q;
+        return probe();
+      });
+    };
+    return probe();
+  };
+  return tryRound(scale);
+}
+function toJpeg(it){
+  return passthrough(it,!!it.keep).then(function(p){
+    if(p) return p;
+    var S=it.keep?{max:100000,q:.92,mode:'q'}:imgSpec();
+    var srcMax=0;
+    return renderItem(it,1e9).then(function(c){ srcMax=Math.max(c.width,c.height); return encodeImg(c,S,'image/jpeg',null); })
+      .then(function(r){
+        var useRaw=(it.file&&it.file.size<=r.blob.size&&!it.rot&&!it.crop&&S.mode!=='s'&&
+                    Math.max(r.w,r.h)===srcMax);
+        var enc=function(){ return r.blob.arrayBuffer().then(function(buf){ return {bytes:new Uint8Array(buf),w:r.w,h:r.h}; }); };
+        if(!useRaw) return enc();
+        return passthrough(it,true).then(function(raw){ return raw||enc(); });
+      });
   });
 }
+/* ---- 下載／分享壓縮後的照片 ---- */
+var zCache=null;
+function zKey(){
+  return JSON.stringify([imgSpec(),segVal('zFmt'),fitSpec(),items.map(function(it){
+    return [it.seq,it.rot||0,it.crop||0];
+  })]);
+}
+function baseOf(n){ var i=(n||'').lastIndexOf('.'); return i>0?n.slice(0,i):(n||'photo'); }
+function fmtSz(b){ return b<1048576?Math.max(1,Math.round(b/1024))+' KB':(b/1048576).toFixed(1)+' MB'; }
+function buildPhotos(){
+  var key=zKey();
+  if(zCache&&zCache.key===key) return Promise.resolve(zCache);
+  var S=imgSpec(), FS=fitSpec(), type=segVal('zFmt')||'image/jpeg';
+  var ext=(type==='image/webp')?'.webp':'.jpg';
+  var list=[], before=0, after=0, used={};
+  var addOut=function(name,blob){
+    var n=name;
+    if(used[n]){ used[n]++; n=baseOf(n)+'_'+used[n]+n.slice(n.lastIndexOf('.')); } else used[n]=1;
+    list.push(new File([blob],n,{type:blob.type||type})); after+=blob.size;
+  };
+  var srcs=[];
+  return items.reduce(function(pm,it){
+    return pm.then(function(){
+      if(it.kind==='img'){ srcs.push(it); return; }  /* it.keep：標註圖，原樣輸出 */
+      if(!it.file) return;
+      return pdfImages(it.file).then(function(r){
+        r.files.forEach(function(f){ srcs.push({kind:'img',file:f,name:f.name,rot:0,crop:null}); });
+      }).catch(function(){});
+    });
+  },Promise.resolve()).then(function(){
+    var i=0;
+    var next=function(){
+      if(i>=srcs.length) return;
+      var it=srcs[i++];
+      $('status').textContent='壓縮照片 '+i+' / '+srcs.length+'…';
+      before+=it.file.size||0;
+      if((S.pass||it.keep)&&!it.rot&&!it.crop&&!FS){ addOut(it.name||it.file.name,it.file); return next(); }
+      return renderItem(it,1e9).then(function(c){
+        return encodeImg(c,S.pass?{max:100000,q:.95,mode:'q'}:S,type,FS);
+      }).then(function(r){
+        var nm=baseOf(it.name||it.file.name)+(FS?('_'+r.w+'x'+r.h):'_min')+ext;
+        if(!FS&&!it.rot&&!it.crop&&it.file.size<=r.blob.size&&S.mode!=='s'&&it.file.type===type)
+          addOut(it.name||it.file.name,it.file);
+        else addOut(nm,r.blob);
+        return new Promise(function(res){ setTimeout(res,0); }).then(next);
+      });
+    };
+    return next();
+  }).then(function(){
+    zCache={key:key,files:list,before:before,after:after};
+    return zCache;
+  });
+}
+function zDone(z){
+  var pct=z.before?Math.round((1-z.after/z.before)*100):0;
+  return z.files.length+' 張　'+fmtSz(z.before)+' → '+fmtSz(z.after)+(pct>0?'（省 '+pct+'%）':'');
+}
+function zipName(){ return ($('fname').value||today()+'_匯出_C1.0').trim().replace(/\.(pdf|zip)$/i,''); }
+function zBusy(on){ ['go','goZip','goShare'].forEach(function(id){ $(id).disabled=on||!items.length; }); }
 function refreshThumb(it){
   it.big=null;
   return renderItem(it,260).then(function(c){ it.thumb=c.toDataURL('image/jpeg',.75); render(); });
@@ -4245,6 +4502,7 @@ var IMG_RE=/\.(jpe?g|png|webp|gif|bmp)$/i;
 function isImage(f){ return /^image\//.test(f.type||'')||IMG_RE.test(f.name||''); }
 function isZip(f){ return /\.zip$/i.test(f.name||'')||f.type==='application/zip'||f.type==='application/x-zip-compressed'; }
 function isPdf(f){ return /\.pdf$/i.test(f.name||'')||f.type==='application/pdf'; }
+function isVideo(f){ return /^video\//.test(f.type||'')||/\.(mp4|mov|m4v|webm|3gp|mkv)$/i.test(f.name||''); }
 
 function pushImage(f,name){
   items.push({kind:'img', file:f, url:URL.createObjectURL(f), name:name||f.name,
@@ -4256,7 +4514,7 @@ function addPdf(f){
   }).then(function(src){
     return src.getPages().then(function(pages){
       if(!pages.length) throw new Error('沒有可讀取的頁面');
-      items.push({kind:'pdf', name:f.name, time:f.lastModified||0, seq:++seqNo, src:src, pages:pages});
+      items.push({kind:'pdf', name:f.name, file:f, time:f.lastModified||0, seq:++seqNo, src:src, pages:pages});
       render();
     });
   });
@@ -4268,7 +4526,34 @@ function addFiles(list){
   var zips=arr.filter(isZip);
   var pdfs=arr.filter(function(f){ return !isZip(f)&&isPdf(f); });
   var pics=arr.filter(function(f){ return !isZip(f)&&!isPdf(f)&&isImage(f); });
-  var skip=arr.length-zips.length-pdfs.length-pics.length;
+  var vids=arr.filter(function(f){ return !isZip(f)&&!isPdf(f)&&!isImage(f)&&isVideo(f); });
+  var skip=arr.length-zips.length-pdfs.length-pics.length-vids.length;
+  if(vids.length) setTimeout(function(){ openVideo(vids); },0);
+  if(pdfs.length&&!(list&&list._mode)&&window.TB&&TB.pick){
+    var wasEmpty=!items.length;
+    var run=function(mode){ var rest=pics.concat(zips); rest._mode=1; if(rest.length) addFiles(rest);
+      if(mode==='pages'){ var p=pdfs.slice(); p._mode=1; addFiles(p); return; }
+      pdfs.reduce(function(pm,f){ return pm.then(function(){
+        $('status').textContent='拆出 '+f.name+' 的照片…';
+        return pdfImages(f).then(function(r){
+          r.files.forEach(function(o){ pushImage(o,o.name); });
+          $('status').textContent=f.name+'：拆出 '+r.files.length+' 張'+(r.skipped?'（'+r.skipped+' 個非 JPEG 影像略過）':'');
+        }).catch(function(e){ $('status').textContent=f.name+'：'+e.message; });
+      }); },Promise.resolve()).then(function(){
+        render();
+        if(wasEmpty&&pdfs.length===1&&items.length){
+          window.PDF.setPerPage(1); window.PDF.setFull(1); window.PDF.setName(pdfs[0].name.replace(/\.[^.]+$/,'')+'_壓縮');
+          TB.toast('已拆出照片，版面設為<b>每頁 1 張、貼合影像</b><br>按「產生 PDF」即可重組成壓縮後的 PDF',5200);
+        }
+      });
+    };
+    TB.pick('收到 '+pdfs.length+' 個 PDF', pdfs.map(function(f){ return f.name; }).join('、'), [
+      {t:'拆出裡面的照片（可壓縮、重排）',fn:function(){ run('img'); }},
+      {t:'整份附加成 PDF 頁面（原樣保留）',fn:function(){ run('pages'); }},
+      {t:'取消',ghost:true,fn:function(){ var rest=pics.concat(zips); rest._mode=1; if(rest.length) addFiles(rest); }}
+    ]);
+    return;
+  }
 
   pics.forEach(function(f){ pushImage(f); });
   render();
@@ -4287,56 +4572,73 @@ function addFiles(list){
       return unzip(z).then(function(r){
         r.files.forEach(function(o){ pushImage(o.file,o.name); });
         render();
-        $('status').textContent=z.name+'：取出 '+r.files.length+' 張'+(r.skipped?'，略過 '+r.skipped+' 個':'');
+        if(r.videos.length) openVideo(r.videos);
+        $('status').textContent=z.name+'：取出 '+r.files.length+' 張'+(r.videos.length?'、影片 '+r.videos.length+' 部（已排入抓格）':'')+(r.skipped?'，略過 '+r.skipped+' 個':'');
       }).catch(function(e){ $('status').textContent=z.name+' 讀取失敗：'+e.message; });
     });
   });
 
   if(!queue.length){
-    $('status').textContent='已加入 '+pics.length+' 張'+(skip?'，略過 '+skip+' 個非支援檔案':'');
+    if(pics.length||skip) $('status').textContent='已加入 '+pics.length+' 張'+(skip?'，略過 '+skip+' 個非支援檔案':'');
     return;
   }
   queue.reduce(function(p,fn){ return p.then(fn); }, Promise.resolve()).then(render);
 }
 
+var VID_RE=/\.(mp4|mov|m4v|webm|3gp|mkv)$/i;
+function vidMime(n){ return /\.webm$/i.test(n)?'video/webm':/\.mov$/i.test(n)?'video/quicktime':/\.3gp$/i.test(n)?'video/3gpp':/\.mkv$/i.test(n)?'video/x-matroska':'video/mp4'; }
+function rd(file,a,b){ return file.slice(a,b).arrayBuffer().then(function(x){ return new DataView(x); }); }
+/* 只讀目錄與需要的片段（File.slice），大型影片 zip 不會整包載入記憶體 */
 function unzip(file){
-  return file.arrayBuffer().then(function(buf){
-    var u8=new Uint8Array(buf), dv=new DataView(buf);
-    var eocd=-1, lo=Math.max(0,u8.length-66000);
-    for(var i=u8.length-22;i>=lo;i--){ if(dv.getUint32(i,true)===0x06054b50){ eocd=i; break; } }
+  var size=file.size, tail=Math.min(size,66000);
+  return rd(file,size-tail,size).then(function(dv){
+    var eocd=-1;
+    for(var i=dv.byteLength-22;i>=0;i--){ if(dv.getUint32(i,true)===0x06054b50){ eocd=i; break; } }
     if(eocd<0) throw new Error('不是有效的 zip');
-    var count=dv.getUint16(eocd+10,true), cdOff=dv.getUint32(eocd+16,true);
-    if(cdOff===0xFFFFFFFF) throw new Error('zip64 格式，請先手動解壓縮');
-    var p=cdOff, list=[], skipped=0, dec=new TextDecoder('utf-8');
-    for(var k=0;k<count;k++){
-      if(dv.getUint32(p,true)!==0x02014b50) break;
-      var flag=dv.getUint16(p+8,true), method=dv.getUint16(p+10,true);
-      var csize=dv.getUint32(p+20,true);
-      var nlen=dv.getUint16(p+28,true), elen=dv.getUint16(p+30,true), clen=dv.getUint16(p+32,true);
-      var lho=dv.getUint32(p+42,true);
-      var full=dec.decode(u8.subarray(p+46,p+46+nlen));
-      p+=46+nlen+elen+clen;
-      var base=full.split('/').pop();
-      if(!base||!IMG_RE.test(base)||(flag&1)||(method!==0&&method!==8)){
-        if(base&&!/\/$/.test(full)) skipped++;
-        continue;
+    var count=dv.getUint16(eocd+10,true), cdSize=dv.getUint32(eocd+12,true), cdOff=dv.getUint32(eocd+16,true);
+    if(cdOff===0xFFFFFFFF||count===0xFFFF) throw new Error('zip64 格式（超過 4GB），請先手動解壓縮');
+    return rd(file,cdOff,cdOff+cdSize).then(function(cd){
+      var p=0, ents=[], skipped=0, dec=new TextDecoder('utf-8');
+      for(var k=0;k<count;k++){
+        if(p+46>cd.byteLength||cd.getUint32(p,true)!==0x02014b50) break;
+        var flag=cd.getUint16(p+8,true), method=cd.getUint16(p+10,true);
+        var csize=cd.getUint32(p+20,true), usize=cd.getUint32(p+24,true);
+        var nlen=cd.getUint16(p+28,true), elen=cd.getUint16(p+30,true), clen=cd.getUint16(p+32,true);
+        var lho=cd.getUint32(p+42,true);
+        var full=dec.decode(new Uint8Array(cd.buffer,cd.byteOffset+p+46,nlen));
+        p+=46+nlen+elen+clen;
+        var base=full.split('/').pop();
+        if(!base||/\/$/.test(full)) continue;
+        if(/^\._/.test(base)||/__MACOSX\//.test(full)) continue;
+        var kind=IMG_RE.test(base)?'img':VID_RE.test(base)?'vid':'';
+        if(!kind||(flag&1)||(method!==0&&method!==8)){ skipped++; continue; }
+        ents.push({name:base,kind:kind,method:method,csize:csize,usize:usize,lho:lho});
       }
-      var lnlen=dv.getUint16(lho+26,true), lelen=dv.getUint16(lho+28,true);
-      var st=lho+30+lnlen+lelen;
-      list.push({name:base,method:method,data:u8.subarray(st,st+csize)});
-    }
-    list.sort(function(a,b){ return byName(a.name,b.name); });
-    var out=[], j=0;
-    return (function step(){
-      if(j>=list.length) return Promise.resolve({files:out,skipped:skipped});
-      var e=list[j++];
-      var mime=/\.png$/i.test(e.name)?'image/png':/\.webp$/i.test(e.name)?'image/webp':'image/jpeg';
-      var done=function(d){ out.push({name:e.name,file:new File([d],e.name,{type:mime})}); return step(); };
-      if(e.method===0) return done(e.data.slice());
-      if(!window.DecompressionStream) return Promise.reject(new Error('瀏覽器不支援解壓縮'));
-      return new Response(new Blob([e.data]).stream().pipeThrough(new DecompressionStream('deflate-raw')))
-        .blob().then(done);
-    })();
+      ents.sort(function(a,b){ return byName(a.name,b.name); });
+      function getFile(e){
+        return rd(file,e.lho,e.lho+30).then(function(h){
+          if(h.getUint32(0,true)!==0x04034b50) throw new Error(e.name+' 標頭錯誤');
+          var st=e.lho+30+h.getUint16(26,true)+h.getUint16(28,true);
+          var mime=e.kind==='vid'?vidMime(e.name):/\.png$/i.test(e.name)?'image/png':/\.webp$/i.test(e.name)?'image/webp':/\.gif$/i.test(e.name)?'image/gif':/\.bmp$/i.test(e.name)?'image/bmp':'image/jpeg';
+          var part=file.slice(st,st+e.csize);
+          if(e.method===0) return new File([part],e.name,{type:mime,lastModified:file.lastModified});
+          if(!window.DecompressionStream) throw new Error('瀏覽器不支援解壓縮');
+          return new Response(part.stream().pipeThrough(new DecompressionStream('deflate-raw'))).blob()
+            .then(function(d){ return new File([d],e.name,{type:mime,lastModified:file.lastModified}); });
+        });
+      }
+      var imgs=ents.filter(function(e){ return e.kind==='img'; });
+      var videos=ents.filter(function(e){ return e.kind==='vid'; }).map(function(e){
+        return {name:e.name,size:e.usize,get:function(){ return getFile(e); }};
+      });
+      var out=[], j=0;
+      return (function step(){
+        if(j>=imgs.length) return Promise.resolve({files:out,videos:videos,skipped:skipped});
+        var e=imgs[j++];
+        return getFile(e).then(function(f){ out.push({name:e.name,file:f}); return step(); },
+                               function(){ skipped++; return step(); });
+      })();
+    });
   });
 }
 
@@ -4402,6 +4704,7 @@ function walkAll(entries){
 
 $('files').addEventListener('change',function(e){ addFiles(e.target.files); e.target.value=''; });
 $('dfiles').addEventListener('change',function(e){ addFiles(e.target.files); e.target.value=''; });
+$('afiles').addEventListener('change',function(e){ addFiles(e.target.files); e.target.value=''; });
 
 /* ==================== 清單 ==================== */
 function render(){
@@ -4477,7 +4780,9 @@ function render(){
   $('batchRow').style.display=items.some(function(x){ return x.kind==='img'; })?'flex':'none';
   $('thumbHint').style.display=has?'block':'none';
   $('pickLabel').textContent=has?'再加入照片':'選擇照片';
-  $('go').disabled=!has;
+  $('go').disabled=!has; $('goZip').disabled=!has; $('goShare').disabled=!has;
+  $('annRow').style.display=items.some(function(x){ return x.kind==='img'; })?'flex':'none';
+  zCache=null;
   if(has) $('status').textContent=summary();
 }
 function summary(){
@@ -4670,22 +4975,78 @@ $('edApply').addEventListener('click',function(){
 
 /* ==================== 影片抓格 ==================== */
 var vURL=null, vBase='', vGrabbed=0;
+var vQ=[], vI=-1, vLoad=0;
 $('vfile').addEventListener('change',function(e){
-  var f=e.target.files&&e.target.files[0];
+  var fs=Array.prototype.slice.call(e.target.files||[]);
   e.target.value='';
-  if(!f) return;
-  if(vURL) URL.revokeObjectURL(vURL);
-  vURL=URL.createObjectURL(f);
-  vBase=f.name.replace(/\.[^.]+$/,'');
-  vGrabbed=0;
-  $('vCount').textContent='已擷取 0 張';
-  $('vTitle').textContent=f.name.length>22?f.name.slice(0,20)+'…':f.name;
-  var v=$('vEl');
-  v.src=vURL;
-  $('vov').classList.add('on');
-  v.onloadedmetadata=function(){ $('vSeek').value=0; updTime(); };
-  v.onerror=function(){ $('status').textContent='這個影片格式瀏覽器無法解碼（HEVC 等），請先轉成 H.264 MP4'; };
+  if(!fs.length) return;
+  var vids=fs.filter(isVideo), zips=fs.filter(isZip);
+  if(vids.length) openVideo(vids);
+  zips.reduce(function(pm,z){ return pm.then(function(){
+    $('status').textContent='讀取 '+z.name+'…';
+    return unzip(z).then(function(r){
+      r.files.forEach(function(o){ pushImage(o.file,o.name); });
+      if(r.files.length) render();
+      if(r.videos.length) openVideo(r.videos);
+      else TB.toast(z.name+' 裡沒有影片'+(r.files.length?'，已加入 '+r.files.length+' 張照片':''),3600);
+      $('status').textContent=z.name+'：影片 '+r.videos.length+' 部'+(r.files.length?'、照片 '+r.files.length+' 張已加入清單':'');
+    }).catch(function(err){ $('status').textContent=z.name+' 讀取失敗：'+err.message; });
+  }); },Promise.resolve());
 });
+function fmtMB(n){ return n?(n/1048576<10?(n/1048576).toFixed(1):Math.round(n/1048576))+'MB':''; }
+/* 收進佇列：File 或 {name,size,get()}；抓格畫面開著就附加 */
+function openVideo(list){
+  if(!list) return;
+  if(!Array.isArray(list)) list=[list];
+  if(!list.length) return;
+  var open=$('vov').classList.contains('on');
+  if(!open){ vQ=[]; vI=-1; vGrabbed=0; $('vCount').textContent='已擷取 0 張'; }
+  var start=vQ.length;
+  list.forEach(function(f){
+    vQ.push(f instanceof Blob ? {name:f.name||'video',size:f.size,get:function(){ return Promise.resolve(f); },n:0}
+                              : {name:f.name,size:f.size,get:f.get,n:0});
+  });
+  vNav();
+  $('vov').classList.add('on');
+  if(!open) loadVid(0);
+  else TB.toast('已加入 '+list.length+' 部影片到抓格清單',2600);
+  return start;
+}
+function vNav(){
+  var sel=$('vPick');
+  sel.innerHTML='';
+  vQ.forEach(function(q,i){
+    var o=document.createElement('option');
+    o.value=i;
+    var nm=q.name.length>26?q.name.slice(0,24)+'…':q.name;
+    o.textContent=(i+1)+'. '+nm+(q.n?'（✓'+q.n+'）':(q.size?'　'+fmtMB(q.size):''));
+    sel.appendChild(o);
+  });
+  if(vI>=0) sel.value=vI;
+  $('vNav').classList.toggle('on',vQ.length>1);
+  $('vPrev').disabled=vI<=0;
+  $('vNext').disabled=vI>=vQ.length-1;
+}
+function loadVid(i){
+  if(i<0||i>=vQ.length) return;
+  var q=vQ[i], tk=++vLoad, v=$('vEl');
+  v.pause(); $('vPlay').textContent='▶ 播放';
+  vI=i; vNav();
+  vBase=q.name.replace(/\.[^.]+$/,'');
+  $('vTitle').textContent=vQ.length>1?('影片 '+(i+1)+' / '+vQ.length):(q.name.length>22?q.name.slice(0,20)+'…':q.name);
+  $('vTime').textContent='載入中…';
+  q.get().then(function(f){
+    if(tk!==vLoad) return;
+    if(vURL) URL.revokeObjectURL(vURL);
+    vURL=URL.createObjectURL(f);
+    v.onloadedmetadata=function(){ $('vSeek').value=0; updTime(); };
+    v.onerror=function(){ $('vTime').textContent='無法解碼'; $('status').textContent=q.name+'：這個影片格式瀏覽器無法解碼（HEVC 等），請先到「影片」分頁轉成 H.264 MP4'; };
+    v.src=vURL;
+  }).catch(function(e){ if(tk===vLoad){ $('vTime').textContent='讀取失敗'; $('status').textContent=q.name+'：'+e.message; } });
+}
+$('vPick').addEventListener('change',function(){ loadVid(+this.value); });
+$('vPrev').addEventListener('click',function(){ loadVid(vI-1); });
+$('vNext').addEventListener('click',function(){ loadVid(vI+1); });
 function fmtT(s){
   if(!isFinite(s)) s=0;
   var m=Math.floor(s/60), r=s-m*60;
@@ -4729,6 +5090,7 @@ $('vGrab').addEventListener('click',function(){
     if(!b) return;
     pushImage(new File([b],nm,{type:'image/jpeg'}),nm);
     vGrabbed++;
+    if(vQ[vI]){ vQ[vI].n++; vNav(); }
     $('vCount').textContent='已擷取 '+vGrabbed+' 張';
     render();
   },'image/jpeg',.92);
@@ -4736,7 +5098,10 @@ $('vGrab').addEventListener('click',function(){
 $('vClose').addEventListener('click',function(){
   var v=$('vEl'); v.pause(); v.removeAttribute('src'); v.load();
   $('vov').classList.remove('on');
-  if(vGrabbed) $('status').textContent='已從影片加入 '+vGrabbed+' 張畫面';
+  if(vURL){ URL.revokeObjectURL(vURL); vURL=null; }
+  var nv=vQ.filter(function(q){ return q.n; }).length;
+  if(vGrabbed) $('status').textContent='已從 '+(nv>1?nv+' 部':'')+'影片加入 '+vGrabbed+' 張畫面';
+  vQ=[]; vI=-1; vLoad++;
 });
 
 /* ==================== 連續拍照 ==================== */
@@ -5257,35 +5622,115 @@ function fullHint(){
     : '固定 A4 版面，照片依每頁張數排格子，四周留白並可加頁尾。現場照片報告用這個。';
 }
 function qHint(){
-  var s=imgSpec(), t;
-  if(s.pass) t='原始直通：相機原檔位元組直接嵌入，零損失。檔案最大，適合要留存原始證據的報告。';
+  var s=imgSpec(), t, q=Math.round(s.q*100), FS=fitSpec();
+  if(s.pass) t='原始直通：相機原檔位元組直接放進 PDF／ZIP，零損失。檔案最大，適合留存原始證據。';
   else {
     var px=(s.max>=100000)?'原尺寸':(s.max+' px');
-    var est=(s.max>=100000?12000:(s.max*s.max*0.5625/1000))*(0.075+0.0016*(cfg.imgQ-40));
-    t='長邊 '+px+'／品質 '+cfg.imgQ+'　→　單張約 '+(est<1000?Math.round(est)+' KB':(est/1024).toFixed(1)+' MB')
-      +'（12MP 原圖估算，實際依內容而定）';
-    if(cfg.imgQ<=50) t+='　※ 品質 50 以下放大到 100% 會看到方塊，量測用途請留在 60 以上';
-    if(s.max>=3000) t+='　※ 大尺寸會讓手機開啟 PDF 變慢，20 張以上建議降到 2400';
+    if(s.mode==='s') t='長邊 '+px+'，每張壓到 '+Math.round(s.target/1024)+' KB 以內（品質自動找，見底再縮尺寸）';
+    else {
+      var est=(s.max>=100000?12000:(s.max*s.max*0.5625/1000))*(0.075+0.0016*(q-40));
+      t='長邊 '+px+'／品質 '+q+'　→　單張約 '+(est<1000?Math.round(est)+' KB':(est/1024).toFixed(1)+' MB')+'（12MP 原圖估算）';
+      if(q<=50&&s.max<100000) t+='　※ 縮小尺寸又用低品質，放大會看到方塊；文件建議用「原尺寸＋品質 30」';
+      else if(q<=50) t+='　※ 原尺寸保留文字筆畫，低品質主要壓背景，文件、合約最划算';
+    }
+    if(s.max>=3000) t+='　※ 大尺寸會讓手機開 PDF 變慢，20 張以上建議 2400 以下';
   }
+  if(FS) t+='<br>輸出尺寸 '+FS.w+'×'+FS.h+' px（'+FS.mmW+'×'+FS.mmH+' mm @ 300 dpi）<b>只套用在下載／分享照片</b>，產生 PDF 時依版面排。';
+  if(segVal('zFmt')==='image/webp') t+='<br>WebP 只用在下載／分享照片；PDF 一律用 JPEG。';
+  t+='<br>縮圖採逐次減半＋高品質平滑；壓出來比原檔大就自動沿用原檔。';
   $('qHint').innerHTML=t;
 }
-$('imgMax').addEventListener('change',function(){
-  cfg.imgMax=this.value;
-  $('imgQ').disabled=(cfg.imgMax==='orig');
-  qHint(); render();
+function zSync(){
+  var orig=$('zMax').value==='orig', mode=segVal('zMode')||'q', fit=$('zFit').value;
+  $('zModeRow').style.display=orig?'none':'flex';
+  $('zQRow').style.display=(orig||mode!=='q')?'none':'flex';
+  $('zKBRow').style.display=(!orig&&mode==='s')?'flex':'none';
+  $('zFitMM').style.display=(fit==='mm')?'flex':'none';
+  $('zFillRow').style.display=fit?'flex':'none';
+  $('zQv').textContent=$('zQ').value;
+  zCache=null; qHint();
+}
+['zMode','zFmt','zFill'].forEach(function(id){
+  $(id).addEventListener('click',function(e){
+    var b=e.target.closest('button[data-v]'); if(!b) return;
+    Array.prototype.forEach.call(this.querySelectorAll('button'),function(x){ x.setAttribute('aria-pressed',x===b?'true':'false'); });
+    zSync();
+  });
 });
-$('imgQ').addEventListener('change',function(){ cfg.imgQ=parseInt(this.value,10); qHint(); render(); });
-qHint(); fullHint();
+['zMax','zQ','zKB','zFit','zW','zH'].forEach(function(id){
+  $(id).addEventListener('input',zSync); $(id).addEventListener('change',zSync);
+});
+$('goZip').addEventListener('click',function(){
+  if(!items.length) return;
+  zBusy(true);
+  buildPhotos().then(function(z){
+    if(!z.files.length){ $('status').textContent='沒有可輸出的照片（PDF 裡若不是 JPEG 影像會被略過）'; return; }
+    var save=function(blob,name){
+      var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
+    };
+    if(z.files.length===1){ save(z.files[0],z.files[0].name); $('status').textContent='完成：'+zDone(z); return; }
+    if(!window.CMP||!CMP.makeZip) throw new Error('打包模組未就緒');
+    $('status').textContent='打包中…';
+    return CMP.makeZip(z.files.map(function(f){ return {name:f.name,blob:f}; })).then(function(zb){
+      var nm=zipName()+'.zip';
+      save(zb,nm);
+      $('status').textContent='完成：'+nm+'　'+zDone(z);
+      if(window.TB&&TB.seqBump) TB.seqBump();
+    });
+  }).catch(function(err){ $('status').textContent='出錯了：'+(err&&err.message||err); })
+    .then(function(){ zBusy(false); });
+});
+$('goShare').addEventListener('click',function(){
+  if(!items.length) return;
+  zBusy(true);
+  buildPhotos().then(function(z){
+    if(!z.files.length){ $('status').textContent='沒有可分享的照片'; return; }
+    if(!(navigator.canShare&&navigator.canShare({files:z.files}))){
+      $('status').textContent='這個瀏覽器不支援直接分享檔案，請改用「下載照片」';
+      return;
+    }
+    $('status').textContent='壓縮完成：'+zDone(z)+'　開啟分享…';
+    return navigator.share({files:z.files}).then(function(){
+      $('status').textContent='已分享：'+zDone(z);
+    }).catch(function(e){
+      $('status').textContent=(e&&e.name==='AbortError')?'已取消分享（壓縮結果保留，再按一次不用重算）':'分享失敗：'+(e&&e.message||e);
+    });
+  }).catch(function(err){ $('status').textContent='出錯了：'+(err&&err.message||err); })
+    .then(function(){ zBusy(false); });
+});
+if(!navigator.canShare) $('goShare').style.display='none';
+$('toAnn').addEventListener('click',function(){
+  var imgs=items.filter(function(x){ return x.kind==='img'; });
+  if(!imgs.length){ $('status').textContent='清單裡沒有照片'; return; }
+  Promise.all(imgs.map(function(it){
+    if(!it.rot&&!it.crop) return Promise.resolve(it.file);
+    return renderItem(it,1e9).then(function(c){ return cvBlob(c,'image/jpeg',.92); })
+      .then(function(b){ return new File([b],baseOf(it.name)+'_編輯.jpg',{type:'image/jpeg'}); });
+  })).then(function(fs){ if(window.TB&&TB.toANN) TB.toANN(fs); });
+});
+(function(){ try{
+  var P=JSON.parse(localStorage.getItem('cyZip1')||'null'); if(!P) return;
+  if(P.max!=null&&$('zMax').querySelector('option[value="'+P.max+'"]')) $('zMax').value=P.max;
+  if(P.q) $('zQ').value=P.q; if(P.kb) $('zKB').value=P.kb;
+  [['zMode',P.mode],['zFmt',P.fmt]].forEach(function(a){ if(!a[1]) return;
+    Array.prototype.forEach.call($(a[0]).querySelectorAll('button'),function(x){ x.setAttribute('aria-pressed',x.dataset.v===a[1]?'true':'false'); }); });
+}catch(e){} })();
+function zSave(){ try{ localStorage.setItem('cyZip1',JSON.stringify({max:$('zMax').value,q:$('zQ').value,kb:$('zKB').value,mode:segVal('zMode'),fmt:segVal('zFmt')})); }catch(e){} }
+['zMax','zQ','zKB'].forEach(function(id){ $(id).addEventListener('change',zSave); });
+['zMode','zFmt'].forEach(function(id){ $(id).addEventListener('click',function(){ setTimeout(zSave,0); }); });
+zSync(); fullHint();
 
 /* ==================== 對外交接介面 ==================== */
 window.PDF={
-  push:function(f,nm){ pushImage(f,nm); },
+  push:function(f,nm,o){ pushImage(f,nm); if(o&&o.keep) items[items.length-1].keep=1; },
   render:render,
   pdfImages:pdfImages,
   readZip:unzip,
-  passthrough:function(){
-    cfg.imgMax='orig'; $('imgMax').value='orig'; $('imgQ').disabled=true; qHint();
-  },
+  passthrough:function(){ $('zMax').value='orig'; zSync(); },
+  addFiles:function(fs){ addFiles(fs); },
+  openVideo:function(f){ openVideo(f); },
   setPerPage:function(n){
     cfg.perPage=n;
     Array.prototype.forEach.call($('perPage').querySelectorAll('button'),function(b){
