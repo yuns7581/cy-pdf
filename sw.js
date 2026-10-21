@@ -1,8 +1,8 @@
-/* 現場工具箱 Service Worker  C2.13
+/* 圖影轉PDF.HTML報告 Service Worker  C2.15
    ─────────────────────────────────────────────
    改版流程：改完 index.html 之後，把下面 CACHE 的版本號一起改掉。
    不改的話舊快取不會失效，你會以為更新沒生效。            */
-const CACHE = 'cy-toolbox-C2.13';
+const CACHE = 'cy-toolbox-C2.15';
 
 const ASSETS = [
   './',
