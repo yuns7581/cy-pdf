@@ -383,7 +383,7 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">現場工具箱</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C2.11</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C2.12</span></header>
 <nav id="shellTabs">
   <button data-t="PDF" class="on">照片</button>
   <button data-t="CMP">影片</button>
@@ -4555,8 +4555,11 @@ function addFiles(list){
     return;
   }
 
+  var gEmpty=!items.length&&!pdfs.length&&!zips.length;
+  var gifs=pics.filter(isGif); pics=pics.filter(function(f){ return !isGif(f); });
   pics.forEach(function(f){ pushImage(f); });
   render();
+  if(gifs.length) setTimeout(function(){ takeGifs(gifs,gEmpty&&!pics.length); },0);
 
   var queue=[];
   pdfs.sort(function(a,b){ return byName(a.name,b.name); });
@@ -4570,7 +4573,7 @@ function addFiles(list){
     queue.push(function(){
       $('status').textContent='解壓縮 '+z.name+'…';
       return unzip(z).then(function(r){
-        r.files.forEach(function(o){ pushImage(o.file,o.name); });
+        pushImgs(r.files);
         render();
         if(r.videos.length) openVideo(r.videos);
         $('status').textContent=z.name+'：取出 '+r.files.length+' 張'+(r.videos.length?'、影片 '+r.videos.length+' 部（已排入抓格）':'')+(r.skipped?'，略過 '+r.skipped+' 個':'');
@@ -4583,6 +4586,85 @@ function addFiles(list){
     return;
   }
   queue.reduce(function(p,fn){ return p.then(fn); }, Promise.resolve()).then(render);
+}
+
+/* ==================== C2.12 GIF 動畫 → 分鏡＋附件 ====================
+   PDF 規格沒有動畫圖片；手機、Chrome、LINE 只會顯示靜態畫面。
+   做法：拆成分鏡格排進 PDF（任何閱讀器都看得到、可列印），
+         原始 GIF 嵌入成 PDF 附件（電腦版 Acrobat／Foxit 點開即播放）。 */
+function isGif(f){ return f.type==='image/gif'||/\.gif$/i.test(f.name||''); }
+function pushImgs(arr){
+  var g=[];
+  arr.forEach(function(o){ if(isGif(o.file)) g.push(o.file); else pushImage(o.file,o.name); });
+  if(g.length) setTimeout(function(){ takeGifs(g,false); },0);
+}
+function gifInfo(f){
+  if(!window.ImageDecoder) return Promise.resolve({f:f,n:1});
+  var d;
+  try{ d=new ImageDecoder({data:f.stream(),type:'image/gif'}); }catch(e){ return Promise.resolve({f:f,n:1}); }
+  return d.completed.then(function(){ return d.tracks.ready; }).then(function(){
+    var t=d.tracks.selectedTrack;
+    return {f:f,n:(t&&t.frameCount)||1,d:d};
+  }).catch(function(){ try{ d.close(); }catch(e){} return {f:f,n:1}; });
+}
+function gifFrames(x,want){
+  var n=x.n, idx=[];
+  if(want>=n) for(var i=0;i<n;i++) idx.push(i);
+  else if(want===1) idx=[0];
+  else for(var k=0;k<want;k++) idx.push(Math.round(k*(n-1)/(want-1)));
+  var base=x.f.name.replace(/\.[^.]+$/,''), k2=0;
+  return idx.reduce(function(pm,fi){ return pm.then(function(){
+    return x.d.decode({frameIndex:fi}).then(function(r){
+      var vf=r.image, w=vf.displayWidth, h=vf.displayHeight, ts=vf.timestamp||0;
+      var c=document.createElement('canvas'); c.width=w; c.height=h;
+      var cx=c.getContext('2d'); cx.fillStyle='#FFFFFF'; cx.fillRect(0,0,w,h); cx.drawImage(vf,0,0,w,h);
+      vf.close();
+      return cvBlob(c,'image/jpeg',.92).then(function(b){
+        k2++;
+        var nm=base+'_f'+String(fi+1).padStart(3,'0')+'.jpg';
+        pushImage(new File([b],nm,{type:'image/jpeg'}),nm);
+        var it=items[items.length-1]; it.gif=x.f;
+        if(idx.length>1) it.cap=k2+' / '+idx.length+(ts>0?'　'+(ts/1e6).toFixed(1)+' 秒':'');
+      });
+    });
+  }); },Promise.resolve()).then(function(){ try{ x.d.close(); }catch(e){} return idx.length; });
+}
+function takeGifs(files,wasEmpty){
+  if(!window.ImageDecoder){
+    files.forEach(function(f){ pushImage(f); }); render();
+    TB.toast('這個瀏覽器無法拆 GIF 動畫，只放第一格',3600); return;
+  }
+  $('status').textContent='讀取 GIF…';
+  Promise.all(files.map(gifInfo)).then(function(infos){
+    var anim=infos.filter(function(x){ return x.n>1; });
+    infos.filter(function(x){ return x.n<=1; }).forEach(function(x){ if(x.d) try{ x.d.close(); }catch(e){} pushImage(x.f); });
+    if(!anim.length){ render(); $('status').textContent=''; return; }
+    var tot=0, maxN=0; anim.forEach(function(x){ tot+=x.n; maxN=Math.max(maxN,x.n); });
+    var run=function(want){
+      var got=0;
+      anim.reduce(function(pm,x){ return pm.then(function(){
+        $('status').textContent='拆 '+x.f.name+' …';
+        return gifFrames(x,want).then(function(n){ got+=n; });
+      }); },Promise.resolve()).then(function(){
+        render();
+        if(wasEmpty&&anim.length===1){
+          if(want===6||want===12) window.PDF.setPerPage(want);
+          window.PDF.setName(anim[0].f.name.replace(/\.[^.]+$/,'')+'_分鏡');
+        }
+        $('status').textContent='GIF 拆出 '+got+' 格，原始 GIF 會附在 PDF 附件';
+        TB.toast('已拆出 '+got+' 格'+(want>1?'（下方說明欄已填格數與秒數，可改）':'')+'<br>產生 PDF 時，原始 GIF 會一併嵌入成<b>附件</b>',5200);
+      }).catch(function(e){ $('status').textContent='GIF 拆格失敗：'+e.message; });
+    };
+    var opts=[
+      {t:'拆成 6 格分鏡（每頁 6 格）',fn:function(){ run(6); }},
+      {t:'拆成 12 格分鏡（每頁 12 格）',fn:function(){ run(12); }}
+    ];
+    if(maxN>12) opts.push({t:'全部 '+(maxN>120?'（取 120 格）':maxN+' 格'),fn:function(){ run(Math.min(maxN,120)); }});
+    opts.push({t:'只放第一格',fn:function(){ run(1); }});
+    opts.push({t:'取消',ghost:true,fn:function(){ anim.forEach(function(x){ try{ x.d.close(); }catch(e){} }); $('status').textContent=''; }});
+    TB.pick('GIF 動畫 '+anim.length+' 個，共 '+tot+' 格',
+      'PDF 無法播放動畫（手機、Chrome、LINE 都只顯示靜態）。改排成分鏡圖，原始 GIF 嵌入 PDF 附件，電腦版 Acrobat 點開即播放。',opts);
+  });
 }
 
 var VID_RE=/\.(mp4|mov|m4v|webm|3gp|mkv)$/i;
@@ -4985,7 +5067,7 @@ $('vfile').addEventListener('change',function(e){
   zips.reduce(function(pm,z){ return pm.then(function(){
     $('status').textContent='讀取 '+z.name+'…';
     return unzip(z).then(function(r){
-      r.files.forEach(function(o){ pushImage(o.file,o.name); });
+      pushImgs(r.files);
       if(r.files.length) render();
       if(r.videos.length) openVideo(r.videos);
       else TB.toast(z.name+' 裡沒有影片'+(r.files.length?'，已加入 '+r.files.length+' 張照片':''),3600);
@@ -5450,7 +5532,19 @@ function buildDoc(seq,opts){
   }
 
   return tasks.reduce(function(p,fn){ return p.then(fn); },Promise.resolve()).then(function(){
-    setP(CAT,['<< /Type /Catalog /Pages '+PAGES+' 0 R >>']);
+    var names='';
+    if(opts&&opts.attach&&opts.attach.length){
+      var u16=function(t){ var h='FEFF'; for(var i=0;i<t.length;i++) h+=t.charCodeAt(i).toString(16).toUpperCase().padStart(4,'0'); return '<'+h+'>'; };
+      var nt=[];
+      opts.attach.forEach(function(a,i){
+        var ef=alloc(), fsId=alloc(), key='GIF'+String(i+1).padStart(2,'0')+'.gif';
+        setP(ef,['<< /Type /EmbeddedFile /Subtype /image#2Fgif /Params << /Size '+a.bytes.length+' >> /Length '+a.bytes.length+' >>\nstream\n',a.bytes,'\nendstream']);
+        setP(fsId,['<< /Type /Filespec /F ('+key+') /UF '+u16(a.name)+' /Desc '+u16('原始 GIF 動畫（點開即播放）')+' /EF << /F '+ef+' 0 R /UF '+ef+' 0 R >> >>']);
+        nt.push('('+key+') '+fsId+' 0 R');
+      });
+      names=' /Names << /EmbeddedFiles << /Names ['+nt.join(' ')+'] >> >> /PageMode /UseAttachments';
+    }
+    setP(CAT,['<< /Type /Catalog /Pages '+PAGES+' 0 R'+names+' >>']);
     setP(PAGES,['<< /Type /Pages /Count '+kids.length+' /Kids ['+kids.map(function(k){ return k+' 0 R'; }).join(' ')+'] >>']);
     // 頁碼回填：長度必須一致，故以固定寬度標記取代
     var total=kids.length, dateStr=isoToday();
@@ -5522,6 +5616,11 @@ $('go').addEventListener('click',function(){
       });
       var opts={};
       var pre=Promise.resolve();
+      var gl=[]; items.forEach(function(it){ if(it.gif&&gl.indexOf(it.gif)<0) gl.push(it.gif); });
+      if(gl.length) pre=pre.then(function(){
+        return Promise.all(gl.map(function(f){ return f.arrayBuffer().then(function(b){ return {name:f.name,bytes:new Uint8Array(b)}; }); }))
+          .then(function(a){ opts.attach=a; });
+      });
       if(cfg.cover){
         pre=pre.then(function(){
           return makeCover(Math.round(areaWpt*3), nPhotoPages+nPdfPages+1, total);
@@ -5537,7 +5636,7 @@ $('go').addEventListener('click',function(){
           a.href=url; a.download=name+'.pdf';
           document.body.appendChild(a); a.click(); a.remove();
           setTimeout(function(){ URL.revokeObjectURL(url); },4000);
-          $('status').textContent='完成：'+name+'.pdf（'+(blob.size/1048576).toFixed(1)+' MB）';
+          $('status').textContent='完成：'+name+'.pdf（'+(blob.size/1048576).toFixed(1)+' MB）'+(opts.attach?'　含 '+opts.attach.length+' 個 GIF 附件':'');
           if(window.TB&&TB.seqBump)TB.seqBump();
         });
     }
