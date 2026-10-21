@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="現場工具箱">
 <meta name="mobile-web-app-capable" content="yes">
-<title>現場工具箱 C2.8</title>
+<title>現場工具箱 C2.13</title>
 <style>
 /* ===== 外殼 ===== */
 
@@ -383,7 +383,7 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">現場工具箱</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C2.12</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C2.13</span></header>
 <nav id="shellTabs">
   <button data-t="PDF" class="on">照片</button>
   <button data-t="CMP">影片</button>
@@ -979,6 +979,7 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 <script>
 
 /* ==================== 外殼：分頁切換 + 跨工具交接 ==================== */
+try{ var _v=document.querySelector('header .ver'); if(_v) document.title='現場工具箱 '+_v.textContent.trim(); }catch(e){}
 window.TB = (function(){
   var NAME={CMP:'影片壓縮剪輯',ANN:'圖片標註',PDF:'照片處理（壓縮・轉 PDF）'};
   var cur='PDF';
