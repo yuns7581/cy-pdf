@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="圖影轉PDF.HTML報告">
 <meta name="mobile-web-app-capable" content="yes">
-<title>圖影轉PDF.HTML報告 C2.19</title>
+<title>圖影轉PDF.HTML報告 C2.20</title>
 <style>
 /* ===== 外殼 ===== */
 
@@ -438,7 +438,7 @@ body.imgOpen{overflow:hidden}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">圖影轉PDF.HTML報告</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C2.19</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C2.20</span></header>
 <nav id="shellTabs">
   <button data-t="PDF" class="on">照片</button>
   <button data-t="CMP">影片</button>
@@ -686,7 +686,7 @@ body.imgOpen{overflow:hidden}
   <div id="annEmpty">按下方「圖片」載入現場照片<br>單指畫．雙指縮放平移<br>畫完尺寸線直接按「改數字」輸入實際公分<br><span style="font-size:13px">全程離線，照片不離開這台裝置</span></div>
 </div>
 
-<button id="annBack" type="button">‹ 工具箱</button>
+<button id="annBack" type="button">‹ 返回照片</button>
 <div class="chip" id="chipPage" style="display:none"></div>
 <div class="chip" id="chipInfo" style="display:none"></div>
 
@@ -3997,7 +3997,7 @@ window.addEventListener('pagehide',function(){if(S.dirty)doSave();});
 
 
 /* ==================== 外殼整合 ==================== */
-$('annBack').onclick=function(){ if(S.dirty)doSave(); window.TB.go('CMP'); };
+$('annBack').onclick=function(){ if(S.dirty)doSave(); window.TB.go('PDF'); };
 
 function toPDFHandoff(){
   if(!S.imgs.length){toast('先載入圖片');return;}
@@ -6188,7 +6188,7 @@ function buildHtml(name){
       'document.getElementById("pr").onclick=function(){window.print();};})();';
       var html='<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">'+
         '<meta name="viewport" content="width=device-width,initial-scale=1">'+
-        '<meta name="generator" content="圖影轉PDF.HTML報告 C2.19">'+
+        '<meta name="generator" content="圖影轉PDF.HTML報告 C2.20">'+
         '<title>'+escH(name)+'</title><style>'+css+'</style></head><body>'+
         '<div class="top"><b>'+escH(name)+'</b><span>'+total+' 頁</span><button id="pr" type="button">列印／存 PDF</button></div>'+
         '<main class="doc">'+body.join('\n')+'</main>'+

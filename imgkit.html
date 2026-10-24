@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d6b6e">
-<title>圖片工具 C1.3</title>
+<title>圖片工具 C1.4</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d6b6e'/%3E%3Crect x='14' y='18' width='36' height='28' rx='3' fill='none' stroke='%23fff' stroke-width='4'/%3E%3Cpath d='M18 42l9-10 7 7 5-5 7 8' fill='none' stroke='%23f2b33d' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
 :root{
@@ -72,6 +72,7 @@ main{max-width:1180px;margin:0 auto;padding:12px 12px 90px}
 .pos9 button{width:30px;height:24px;border:1px solid var(--line);background:#fff;border-radius:4px;cursor:pointer;padding:0}
 .pos9 button[aria-pressed="true"]{background:var(--teal);border-color:var(--teal)}
 #wm-free.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+#p-splice .opts .inl{flex-wrap:wrap}#p-splice .opts .inl .btn{white-space:nowrap}#sp-ang{width:58px!important}
 #splice-stage canvas,#wm-stage canvas{touch-action:none}
 #wm-stage canvas{cursor:crosshair}
 .chk{display:inline-flex;gap:5px;align-items:center;font-size:13px;cursor:pointer}
@@ -125,7 +126,7 @@ video{background:#000;border-radius:6px}
 </head>
 <body>
 <header class="top">
-  <div class="row"><h1>圖片工具</h1><span class="ver">C1.3</span><span class="local">全部在本機處理，不上傳</span></div>
+  <div class="row"><h1>圖片工具</h1><span class="ver">C1.4</span><span class="local">全部在本機處理，不上傳</span></div>
   <nav class="tabs" role="tablist" id="tabs">
     <button role="tab" data-t="conv">格式轉換</button>
     <button role="tab" data-t="splice">拼接</button>
@@ -160,16 +161,18 @@ video{background:#000;border-radius:6px}
 
 <!-- 拼接 -->
 <section class="panel" id="p-splice">
-  <p class="intro">把多張照片拼成一張長圖或格狀圖，適合用 LINE 傳前後對照。用 ↑↓ 調整順序。</p>
+  <p class="intro">把多張照片拼成長圖、格狀或自由排列，適合用 LINE 傳前後對照。點預覽中的照片可選取並旋轉；用 ↑↓ 調整順序。</p>
   <div class="pick" data-pick="splice" data-other="1"></div>
   <div class="grid2">
     <div class="box"><h3>預覽</h3><div class="stage" id="splice-stage"><div class="empty">選擇 2 張以上照片</div></div><div class="hint" id="splice-info"></div></div>
     <div class="box"><h3>排列</h3>
       <div class="opts">
+        <label>選取的照片</label><div class="inl"><button class="btn sm" id="sp-rl" type="button" disabled>↺ 90°</button><button class="btn sm" id="sp-rr" type="button" disabled>↻ 90°</button><input type="number" id="sp-ang" step="1" style="width:68px;display:none" disabled><span id="sp-angu" style="display:none">°</span><button class="btn sm ghost" id="sp-r0" type="button" disabled>歸零</button><button class="btn sm ghost" id="sp-del" type="button" disabled>移除</button></div>
+        <label></label><span class="hint" id="sp-hint">先點預覽中的照片</span>
         <label>方向</label><div class="seg" data-k="splice.dir" data-v="v"><button data-v="v">直向長圖</button><button data-v="h">橫向並排</button><button data-v="g">格狀</button><button data-v="f">自由排列</button></div>
         <label class="f-only">畫布 px</label><div class="inl f-only"><input type="number" min="100" max="20000" value="2000" data-k="splice.fw" style="width:90px"> × <input type="number" min="100" max="20000" value="1500" data-k="splice.fh" style="width:90px"></div>
         <label class="f-only">排列</label><div class="inl f-only"><button class="btn sm" id="splice-reset" type="button">重新排好</button><button class="btn sm ghost" id="splice-fitc" type="button">畫布貼齊內容</button></div>
-        <label class="f-only"></label><span class="hint f-only">在預覽上拖曳照片移動；拖右下角圓點縮放；點一下移到最上層；電腦可用滾輪縮放選取的照片</span>
+        <label class="f-only"></label><span class="hint f-only">拖曳照片移動；拖右下角橘點縮放；拖上緣的綠點自由旋轉（接近 0°／90° 會自動對齊）；點一下移到最上層。電腦：滾輪縮放、Shift＋滾輪旋轉</span>
         <label class="g-only">每列張數</label><input class="g-only" type="number" min="1" max="10" value="2" data-k="splice.cols">
         <label class="g-only">格子比例</label><select class="g-only" data-k="splice.ratio"><option value="first">依第一張</option><option value="1">1:1</option><option value="1.3333">4:3</option><option value="0.75">3:4</option><option value="1.7778">16:9</option></select>
         <label class="g-only">格內填法</label><div class="seg g-only" data-k="splice.fit" data-v="contain"><button data-v="contain">完整顯示</button><button data-v="cover">裁切填滿</button></div>
@@ -415,7 +418,9 @@ async function expandZips(files) {
   return out;
 }
 function addTo(t, files, host) {
-  expandZips(files).then(fs => { if (!fs.length) return; if (host) fs.forEach(f => f._host = 1); Tools[t].add(fs); });
+  expandZips(files).then(fs => { if (!fs.length) return;
+    if (host) { fs.forEach(f => f._host = 1); const L = FLS[t]; if (L && !L.single) L.items.filter(i => i.host).forEach(i => L.remove(i)); }
+    Tools[t].add(fs); });
 }
 /* ========== 基礎工具 ========== */
 const $ = (s, r = document) => r.querySelector(s);
@@ -709,7 +714,8 @@ function makePicker(host, onFiles) {
 
 let _id = 0;
 class FileList {
-  constructor(box, { reorder = false, onChange, onSelect, meta, single = false } = {}) {
+  constructor(box, { reorder = false, rotate = false, onChange, onSelect, meta, single = false } = {}) {
+    this.rotate = rotate;
     this.box = box; this.items = []; this.sel = null; this.reorder = reorder; this.onChange = onChange; this.onSelect = onSelect; this.meta = meta; this.single = single;
     FLS[(box && box.id || '').split('-')[0]] = this;
   }
@@ -762,12 +768,13 @@ class FileList {
     for (const it of this.items) this.box.append(this.row(it));
   }
   row(it) {
-    const th = el('div', { class: 'th' }); if (it.thumb) th.style.backgroundImage = `url("${it.thumb}")`;
+    const th = el('div', { class: 'th' }); if (it.thumb) th.style.backgroundImage = `url("${it.thumb}")`; if (it.rot) th.style.transform = `rotate(${it.rot}deg)`;
     const meta = [it.fmt ? it.fmt.toUpperCase() : '讀取中…', it.w ? `${it.w}×${it.h}` : '', fmtBytes(it.size)].filter(Boolean).join('　');
     const extra = this.meta ? this.meta(it) : '';
     const ops = el('div', { class: 'ops' },
       this.reorder ? el('button', { title: '上移', 'aria-label': '上移', onclick: e => { e.stopPropagation(); this.move(it, -1); } }, '↑') : null,
       this.reorder ? el('button', { title: '下移', 'aria-label': '下移', onclick: e => { e.stopPropagation(); this.move(it, 1); } }, '↓') : null,
+      this.rotate ? el('button', { title: '順時針轉 90°', 'aria-label': '旋轉', onclick: e => { e.stopPropagation(); it.rot = ((Math.round((it.rot || 0) / 90) * 90 + 90) % 360); if (it.fp) it.fp.r = it.rot; this.renderItem(it); this.onChange && this.onChange(); } }, '⟳') : null,
       el('button', { title: '移除', 'aria-label': '移除', onclick: e => { e.stopPropagation(); this.remove(it); } }, '✕'));
     const tags = [];
     if (it.err) tags.push(el('span', { class: 'tag bad', title: it.err }, '無法讀取'));
@@ -1447,9 +1454,17 @@ const extName = f => f === 'jpg' ? 'jpg' : f;
 /* ========== 2. 拼接 ========== */
 (() => {
   const stage = $('#splice-stage');
-  const list = new FileList($('#splice-list'), { reorder: true, onChange: () => { Bar.refresh(); upd(); } });
+  const list = new FileList($('#splice-list'), { reorder: true, rotate: true, onChange: () => { Bar.refresh(); upd(); } });
   const res = new Results($('#splice-res'), '拼接結果');
   const O = () => ({ dir: opt('splice.dir'), cols: Math.max(1, opt('splice.cols') | 0), ratio: opt('splice.ratio'), fit: opt('splice.fit'), base: opt('splice.base'), gap: Math.max(0, opt('splice.gap') || 0), pad: Math.max(0, opt('splice.pad') || 0), bg: opt('splice.bg'), max: +opt('splice.max') || 0 });
+  const R90 = it => ((Math.round((it.rot || 0) / 90) * 90) % 360 + 360) % 360;
+  const rdim = it => R90(it) % 180 ? { w: it.h, h: it.w } : { w: it.w, h: it.h };
+  function rotSrc(src, w, h, r) {
+    if (!r) return { src, w, h };
+    const sw = r % 180 ? h : w, sh = r % 180 ? w : h, c = newCanvas(sw, sh), x = c.getContext('2d');
+    x.translate(sw / 2, sh / 2); x.rotate(r * Math.PI / 180); x.drawImage(src, -w / 2, -h / 2, w, h);
+    return { src: c, w: sw, h: sh };
+  }
   function layout(dims, o) {
     const pick = a => o.base === 'min' ? Math.min(...a) : o.base === 'first' ? a[0] : Math.max(...a);
     const { gap, pad } = o;
@@ -1462,90 +1477,144 @@ const extName = f => f === 'jpg' ? 'jpg' : f;
   }
   function scaleFor(L, o) { let s = o.max ? Math.min(1, o.max / Math.max(L.W, L.H)) : 1; return Math.min(s, safeScale(L.W, L.H)); }
   const ready = () => list.items.filter(i => i.w && !i.err);
-  /* ---- 自由排列：每張照片 {x,y,w,h}（輸出像素），zo＝前後順序 ---- */
-  let zo = [], fsel = null, fdrag = null, fps = 1;
+  /* 預覽用 700px 圖（清單縮圖只有 160px，放大會糊） */
+  function srcOf(it) {
+    if (!it._pv && !it._pvP) it._pvP = (async () => {
+      try { const im = await decodeImage(it.file); const s = Math.min(1, 700 / Math.max(im.w, im.h));
+        const c = newCanvas(im.w * s, im.h * s); ctx2d(c).drawImage(im.src, 0, 0, c.width, c.height); im.close(); it._pv = c; upd(); } catch (e) {}
+    })();
+    return it._pv || it.thumbCanvas;
+  }
+  /* ---- 選取＋旋轉；自由排列 fp={cx,cy,w,h,r}（輸出像素、r 角度） ---- */
+  let zo = [], sel = null, drag = null, ps = 1, cells = [];
+  const isF = () => opt('splice.dir') === 'f';
   const setK = (k, v) => { SETS[k] = v; saveSets(); const e = $(`[data-k="${k}"]`); if (e) e.value = v; };
   function seedFree(force) {
     const its = ready(); if (!its.length) return;
-    const need = its.filter(i => force || !i.fp);
-    if (!need.length) return;
     if (force || its.every(i => !i.fp)) {
       const o = Object.assign(O(), { dir: 'g', cols: Math.min(3, Math.ceil(Math.sqrt(its.length))), fit: 'contain', ratio: 'first' });
-      const L = layout(its.map(i => ({ w: i.w, h: i.h })), o);
-      its.forEach((it, i) => { const c = L.cells[i], s = Math.min(c.w / it.w, c.h / it.h); it.fp = { x: c.x + (c.w - it.w * s) / 2, y: c.y + (c.h - it.h * s) / 2, w: it.w * s, h: it.h * s }; });
+      const L = layout(its.map(rdim), o);
+      its.forEach((it, i) => { const c = L.cells[i], d = rdim(it), s = Math.min(c.w / d.w, c.h / d.h);
+        it.fp = { cx: c.x + c.w / 2, cy: c.y + c.h / 2, w: it.w * s, h: it.h * s, r: R90(it) }; });
       setK('splice.fw', Math.round(L.W)); setK('splice.fh', Math.round(L.H)); zo = its.map(i => i.id);
     } else {
       const FW = +opt('splice.fw') || 2000, FH = +opt('splice.fh') || 1500;
-      need.forEach((it, k) => { const w = FW / 3, h = w * it.h / it.w; it.fp = { x: FW / 2 - w / 2 + k * 30, y: FH / 2 - h / 2 + k * 30, w, h }; zo.push(it.id); });
+      its.filter(i => !i.fp).forEach((it, k) => { const w = FW / 3; it.fp = { cx: FW / 2 + k * 30, cy: FH / 2 + k * 30, w, h: w * it.h / it.w, r: R90(it) }; zo.push(it.id); });
     }
   }
   function order() { const its = ready(); zo = zo.filter(id => its.some(i => i.id === id)); its.forEach(i => { if (zo.indexOf(i.id) < 0) zo.push(i.id); }); return zo.map(id => its.find(i => i.id === id)); }
+  const rad = d => d * Math.PI / 180;
+  function toLocal(f, p) { const a = -rad(f.r), dx = p.x - f.cx, dy = p.y - f.cy; return { x: dx * Math.cos(a) - dy * Math.sin(a), y: dx * Math.sin(a) + dy * Math.cos(a) }; }
+  function corners(f) { const a = rad(f.r), c = Math.cos(a), s = Math.sin(a); return [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([u, v]) => ({ x: f.cx + u * f.w / 2 * c - v * f.h / 2 * s, y: f.cy + u * f.w / 2 * s + v * f.h / 2 * c })); }
+  function cssK() { const c = $('canvas', stage); if (!c) return 1; const w = c.getBoundingClientRect().width || c.width; return c.width / w / ps; }
+  function selUI() {
+    const has = !!(sel && list.items.indexOf(sel) >= 0); if (!has) sel = null;
+    ['#sp-rl', '#sp-rr', '#sp-r0', '#sp-del'].forEach(q => $(q).disabled = !has);
+    $('#sp-ang').style.display = isF() ? '' : 'none'; $('#sp-angu').style.display = isF() ? '' : 'none';
+    $('#sp-ang').disabled = !has;
+    if (has && document.activeElement !== $('#sp-ang')) $('#sp-ang').value = Math.round(isF() && sel.fp ? sel.fp.r : R90(sel));
+    $('#sp-hint').textContent = has ? sel.name : '先點預覽中的照片';
+  }
   function drawFree() {
-    const its = ready(); seedFree(false);
+    seedFree(false);
     const FW = Math.max(10, +opt('splice.fw') || 2000), FH = Math.max(10, +opt('splice.fh') || 1500), o = O();
-    fps = Math.min(1, 1000 / Math.max(FW, FH));
-    const c = stageCanvas(stage, FW * fps, FH * fps), x = ctx2d(c);
+    ps = Math.min(1, 1000 / Math.max(FW, FH));
+    const c = stageCanvas(stage, FW * ps, FH * ps), x = ctx2d(c);
     x.fillStyle = o.bg; x.fillRect(0, 0, c.width, c.height);
-    order().forEach(it => { const p = it.fp, t = it.thumbCanvas; if (t && p) x.drawImage(t, p.x * fps, p.y * fps, p.w * fps, p.h * fps); });
-    if (fsel && fsel.fp) {
-      const p = fsel.fp, hr = Math.max(7, 9 * c.width / (c.getBoundingClientRect().width || c.width));
-      x.save(); x.strokeStyle = '#f2b33d'; x.lineWidth = Math.max(2, hr / 3); x.setLineDash([hr, hr * 0.6]);
-      x.strokeRect(p.x * fps, p.y * fps, p.w * fps, p.h * fps); x.setLineDash([]);
-      x.fillStyle = '#f2b33d'; x.beginPath(); x.arc((p.x + p.w) * fps, (p.y + p.h) * fps, hr, 0, 7); x.fill(); x.restore();
+    order().forEach(it => { const f = it.fp, t = srcOf(it); if (!f || !t) return;
+      x.save(); x.translate(f.cx * ps, f.cy * ps); x.rotate(rad(f.r)); x.drawImage(t, -f.w * ps / 2, -f.h * ps / 2, f.w * ps, f.h * ps); x.restore(); });
+    if (sel && sel.fp) {
+      const f = sel.fp, k = cssK() * ps, hr = Math.max(6, 10 * k), W2 = f.w * ps / 2, H2 = f.h * ps / 2, rh = 34 * k;
+      x.save(); x.translate(f.cx * ps, f.cy * ps); x.rotate(rad(f.r));
+      x.strokeStyle = '#f2b33d'; x.lineWidth = Math.max(2, hr / 3); x.setLineDash([hr, hr * 0.6]); x.strokeRect(-W2, -H2, W2 * 2, H2 * 2); x.setLineDash([]);
+      x.beginPath(); x.moveTo(0, -H2); x.lineTo(0, -H2 + rh); x.stroke();
+      x.fillStyle = '#f2b33d'; x.beginPath(); x.arc(W2, H2, hr, 0, 7); x.fill();
+      x.fillStyle = '#0d6b6e'; x.beginPath(); x.arc(0, -H2 + rh, hr * 1.2, 0, 7); x.fill(); x.strokeStyle = '#fff'; x.lineWidth = Math.max(1.5, hr / 4); x.stroke();
+      x.restore();
     }
     const s = scaleFor({ W: FW, H: FH }, o);
-    $('#splice-info').textContent = `輸出 ${Math.round(FW * s)} × ${Math.round(FH * s)} px` + (s < 1 ? '（已依上限縮小）' : '') + '　自由排列';
+    $('#splice-info').textContent = `輸出 ${Math.round(FW * s)} × ${Math.round(FH * s)} px` + (s < 1 ? '（已依上限縮小）' : '') + '　自由排列' + (sel && sel.fp ? `　選取 ${Math.round(sel.fp.r)}°` : '');
+    selUI();
   }
-  function fpt(e) { const c = $('canvas', stage), r = c.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * c.width / fps, y: (e.clientY - r.top) / r.height * c.height / fps, k: c.width / r.width / fps }; }
+  function ptOf(e) { const c = $('canvas', stage), r = c.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * c.width / ps, y: (e.clientY - r.top) / r.height * c.height / ps }; }
   stage.addEventListener('pointerdown', e => {
-    if (opt('splice.dir') !== 'f' || !$('canvas', stage)) return;
-    const p = fpt(e), hr = 16 * p.k;
-    if (fsel && fsel.fp && Math.hypot(p.x - (fsel.fp.x + fsel.fp.w), p.y - (fsel.fp.y + fsel.fp.h)) < hr) {
-      fdrag = { m: 'r', it: fsel }; stage.setPointerCapture(e.pointerId); e.preventDefault(); return; }
-    const hit = order().slice().reverse().find(it => it.fp && p.x >= it.fp.x && p.x <= it.fp.x + it.fp.w && p.y >= it.fp.y && p.y <= it.fp.y + it.fp.h);
-    fsel = hit || null;
-    if (hit) { zo = zo.filter(id => id !== hit.id); zo.push(hit.id); fdrag = { m: 'm', it: hit, dx: p.x - hit.fp.x, dy: p.y - hit.fp.y }; stage.setPointerCapture(e.pointerId); e.preventDefault(); }
-    drawFree();
+    if (!$('canvas', stage)) return;
+    const p = ptOf(e), k = cssK();
+    if (isF()) {
+      if (sel && sel.fp) {
+        const f = sel.fp, L = toLocal(f, p);
+        if (Math.hypot(L.x - f.w / 2, L.y - f.h / 2) < 20 * k) { drag = { m: 's' }; stage.setPointerCapture(e.pointerId); e.preventDefault(); return; }
+        if (Math.hypot(L.x, L.y + f.h / 2 - 34 * k) < 22 * k) { drag = { m: 'r' }; stage.setPointerCapture(e.pointerId); e.preventDefault(); return; }
+      }
+      const hit = order().slice().reverse().find(it => { if (!it.fp) return false; const L = toLocal(it.fp, p); return Math.abs(L.x) <= it.fp.w / 2 && Math.abs(L.y) <= it.fp.h / 2; });
+      sel = hit || null;
+      if (hit) { zo = zo.filter(id => id !== hit.id); zo.push(hit.id); drag = { m: 'm', dx: p.x - hit.fp.cx, dy: p.y - hit.fp.cy }; stage.setPointerCapture(e.pointerId); e.preventDefault(); }
+      drawFree(); return;
+    }
+    const m = cells.find(m => p.x >= m.x && p.x <= m.x + m.w && p.y >= m.y && p.y <= m.y + m.h);
+    sel = m ? m.it : null; drawGrid();
   });
   stage.addEventListener('pointermove', e => {
-    if (!fdrag) return;
-    const p = fpt(e), f = fdrag.it.fp;
-    if (fdrag.m === 'm') { f.x = p.x - fdrag.dx; f.y = p.y - fdrag.dy; }
-    else { const r = f.h / f.w; f.w = Math.max(20, p.x - f.x); f.h = f.w * r; }
+    if (!drag || !sel || !sel.fp) return;
+    const p = ptOf(e), f = sel.fp;
+    if (drag.m === 'm') { f.cx = p.x - drag.dx; f.cy = p.y - drag.dy; }
+    else if (drag.m === 's') { const L = toLocal(f, p), hw = f.w / 2, hh = f.h / 2, s = (L.x * hw + L.y * hh) / (hw * hw + hh * hh); if (s > 0) { const nw = Math.max(20, f.w * s); f.h = f.h * nw / f.w; f.w = nw; } }
+    else { let a = Math.atan2(p.y - f.cy, p.x - f.cx) * 180 / Math.PI + 90; const sn = Math.round(a / 90) * 90; if (Math.abs(a - sn) < 4) a = sn; f.r = (a % 360 + 360) % 360; sel.rot = f.r; }
     drawFree();
   });
-  const fend = () => { fdrag = null; };
+  const fend = () => { drag = null; };
   stage.addEventListener('pointerup', fend); stage.addEventListener('pointercancel', fend);
   stage.addEventListener('wheel', e => {
-    if (opt('splice.dir') !== 'f' || !fsel || !fsel.fp) return;
-    e.preventDefault(); const f = fsel.fp, k = e.deltaY < 0 ? 1.06 : 1 / 1.06, cx = f.x + f.w / 2, cy = f.y + f.h / 2;
-    f.w = Math.max(20, f.w * k); f.h = Math.max(20 * f.h / f.w, f.h * k); f.x = cx - f.w / 2; f.y = cy - f.h / 2; drawFree();
+    if (!isF() || !sel || !sel.fp) return;
+    e.preventDefault(); const f = sel.fp;
+    if (e.shiftKey) { f.r = ((f.r + (e.deltaY < 0 ? -5 : 5)) % 360 + 360) % 360; sel.rot = f.r; }
+    else { const k = e.deltaY < 0 ? 1.06 : 1 / 1.06; f.w = Math.max(20, f.w * k); f.h = f.h * k; }
+    drawFree();
   }, { passive: false });
-  $('#splice-reset').onclick = () => { seedFree(true); fsel = null; drawFree(); };
+  function rotBy(d) {
+    if (!sel) return;
+    if (isF() && sel.fp) { sel.fp.r = ((Math.round(sel.fp.r) + d) % 360 + 360) % 360; sel.rot = sel.fp.r; }
+    else { sel.rot = ((R90(sel) + d) % 360 + 360) % 360; if (sel.fp) sel.fp.r = sel.rot; }
+    list.renderItem(sel); upd();
+  }
+  $('#sp-rl').onclick = () => rotBy(-90);
+  $('#sp-rr').onclick = () => rotBy(90);
+  $('#sp-r0').onclick = () => { if (!sel) return; sel.rot = 0; if (sel.fp) sel.fp.r = 0; list.renderItem(sel); upd(); };
+  $('#sp-del').onclick = () => { if (!sel) return; const it = sel; sel = null; list.remove(it); };
+  $('#sp-ang').oninput = () => { if (!sel || !sel.fp) return; const v = parseFloat($('#sp-ang').value); if (!isFinite(v)) return; sel.fp.r = (v % 360 + 360) % 360; sel.rot = sel.fp.r; drawFree(); };
+  $('#splice-reset').onclick = () => { seedFree(true); sel = null; drawFree(); };
   $('#splice-fitc').onclick = () => {
     const its = ready().filter(i => i.fp); if (!its.length) return;
-    const pad = O().pad, L = Math.min(...its.map(i => i.fp.x)), T = Math.min(...its.map(i => i.fp.y));
-    const R = Math.max(...its.map(i => i.fp.x + i.fp.w)), B = Math.max(...its.map(i => i.fp.y + i.fp.h));
-    its.forEach(i => { i.fp.x += pad - L; i.fp.y += pad - T; });
+    const pad = O().pad, P = [].concat(...its.map(i => corners(i.fp)));
+    const L = Math.min(...P.map(q => q.x)), T = Math.min(...P.map(q => q.y)), R = Math.max(...P.map(q => q.x)), B = Math.max(...P.map(q => q.y));
+    its.forEach(i => { i.fp.cx += pad - L; i.fp.cy += pad - T; });
     setK('splice.fw', Math.round(R - L + pad * 2)); setK('splice.fh', Math.round(B - T + pad * 2)); drawFree();
   };
-  const upd = debounce(() => {
-    showIf('#p-splice .g-only', opt('splice.dir') === 'g');
-    showIf('#p-splice .f-only', opt('splice.dir') === 'f');
-    if (opt('splice.dir') === 'f') { if (ready().length) drawFree(); else { stageEmpty(stage, '選擇照片後可自由擺放'); $('#splice-info').textContent = ''; } return; }
+  function drawGrid() {
     const its = ready();
-    if (its.length < 1) { stageEmpty(stage, '選擇 2 張以上照片'); $('#splice-info').textContent = ''; return; }
-    const o = O(), L = layout(its.map(i => ({ w: i.w, h: i.h })), o), s = scaleFor(L, o);
-    const ps = Math.min(1, 1000 / Math.max(L.W, L.H));
+    if (its.length < 1) { stageEmpty(stage, '選擇 2 張以上照片'); $('#splice-info').textContent = ''; cells = []; selUI(); return; }
+    const o = O(), L = layout(its.map(rdim), o), s = scaleFor(L, o);
+    ps = Math.min(1, 1000 / Math.max(L.W, L.H));
     const c = stageCanvas(stage, L.W * ps, L.H * ps), x = ctx2d(c);
     x.fillStyle = o.bg; x.fillRect(0, 0, c.width, c.height);
-    its.forEach((it, i) => { const cl = L.cells[i]; const t = it.thumbCanvas; if (t) drawFitted(x, t, t.width, t.height, { x: cl.x * ps, y: cl.y * ps, w: cl.w * ps, h: cl.h * ps }, L.fit); });
+    cells = [];
+    its.forEach((it, i) => { const cl = L.cells[i], t = srcOf(it); cells.push(Object.assign({ it }, cl)); if (!t) return;
+      const rs = rotSrc(t, t.width, t.height, R90(it)); drawFitted(x, rs.src, rs.w, rs.h, { x: cl.x * ps, y: cl.y * ps, w: cl.w * ps, h: cl.h * ps }, L.fit); });
+    const m = sel && cells.find(m => m.it === sel);
+    if (m) { const k = cssK() * ps; x.save(); x.strokeStyle = '#f2b33d'; x.lineWidth = Math.max(3, 4 * k); x.setLineDash([10 * k, 6 * k]); x.strokeRect(m.x * ps + 2, m.y * ps + 2, m.w * ps - 4, m.h * ps - 4); x.restore(); }
     $('#splice-info').textContent = `輸出 ${Math.round(L.W * s)} × ${Math.round(L.H * s)} px` + (s < 1 ? '（已依上限縮小）' : '') + (list.items.length > its.length ? `　尚有 ${list.items.length - its.length} 張讀取中或無法讀取` : '');
+    selUI();
+  }
+  const upd = debounce(() => {
+    showIf('#p-splice .g-only', opt('splice.dir') === 'g');
+    showIf('#p-splice .f-only', isF());
+    if (isF()) { if (ready().length) drawFree(); else { stageEmpty(stage, '選擇照片後可自由擺放'); $('#splice-info').textContent = ''; selUI(); } return; }
+    drawGrid();
   }, 80);
   onOpt('splice', upd);
   Tools.splice = {
     add: f => list.add(f), onShow: upd,
-    state() { const f = opt('splice.dir') === 'f', n = ready().length; return { label: '拼接', ok: n >= (f ? 1 : 2) && !Bar.job, msg: n >= (f ? 1 : 2) ? `${n} 張` : (f ? '選擇照片' : '至少需要 2 張') }; },
+    state() { const f = isF(), n = ready().length; return { label: '拼接', ok: n >= (f ? 1 : 2) && !Bar.job, msg: n >= (f ? 1 : 2) ? `${n} 張` : (f ? '選擇照片' : '至少需要 2 張') }; },
     async run(job) {
       const o = O(), fmt = opt('splice.fmt');
       if (o.dir === 'f') {
@@ -1557,22 +1626,24 @@ const extName = f => f === 'jpg' ? 'jpg' : f;
         for (let i = 0; i < its.length; i++) {
           if (job.cancel) { Bar.msg('已取消'); return; }
           Bar.msg(`拼接中 ${i + 1}/${its.length}`);
-          const im = await decodeImage(its[i].file), p = its[i].fp;
-          drawFitted(x, im.src, im.w, im.h, { x: p.x * s, y: p.y * s, w: p.w * s, h: p.h * s }, 'fill'); im.close();
+          const im = await decodeImage(its[i].file), f = its[i].fp, dw = Math.max(1, f.w * s), dh = Math.max(1, f.h * s);
+          const d = drawScaled(im.src, im.w, im.h, dw, dh);
+          x.save(); x.translate(f.cx * s, f.cy * s); x.rotate(rad(f.r)); x.drawImage(d.src, 0, 0, d.w, d.h, -dw / 2, -dh / 2, dw, dh); x.restore(); im.close();
           Bar.prog((i + 1) / (its.length + 1)); await tick();
         }
         const b = await canvasBlob(c, fmt, opt('splice.q') / 100); c.width = 0;
         res.add(nextSerial() + '.' + extName(fmt), b, `${W}×${H}`);
         Bar.msg(`完成：${W}×${H}，${fmtBytes(b.size)}`); return;
       }
-      const its = ready(), L = layout(its.map(i => ({ w: i.w, h: i.h })), o), s = scaleFor(L, o);
+      const its = ready(), L = layout(its.map(rdim), o), s = scaleFor(L, o);
       const W = Math.round(L.W * s), H = Math.round(L.H * s);
       const c = newCanvas(W, H), x = ctx2d(c); x.fillStyle = o.bg; x.fillRect(0, 0, W, H);
       for (let i = 0; i < its.length; i++) {
         if (job.cancel) { Bar.msg('已取消'); return; }
         Bar.msg(`拼接中 ${i + 1}/${its.length}`);
-        const im = await decodeImage(its[i].file); const cl = L.cells[i];
-        drawFitted(x, im.src, im.w, im.h, { x: cl.x * s, y: cl.y * s, w: cl.w * s, h: cl.h * s }, L.fit); im.close();
+        const im = await decodeImage(its[i].file), cl = L.cells[i], rs = rotSrc(im.src, im.w, im.h, R90(its[i]));
+        drawFitted(x, rs.src, rs.w, rs.h, { x: cl.x * s, y: cl.y * s, w: cl.w * s, h: cl.h * s }, L.fit); im.close();
+        if (rs.src !== im.src) rs.src.width = 0;
         Bar.prog((i + 1) / (its.length + 1)); await tick();
       }
       Bar.msg('輸出中…');
