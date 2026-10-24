@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="圖影轉PDF.HTML報告">
 <meta name="mobile-web-app-capable" content="yes">
-<title>圖影轉PDF.HTML報告 C2.18</title>
+<title>圖影轉PDF.HTML報告 C2.19</title>
 <style>
 /* ===== 外殼 ===== */
 
@@ -438,7 +438,7 @@ body.imgOpen{overflow:hidden}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">圖影轉PDF.HTML報告</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C2.18</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C2.19</span></header>
 <nav id="shellTabs">
   <button data-t="PDF" class="on">照片</button>
   <button data-t="CMP">影片</button>
@@ -1095,7 +1095,7 @@ window.TB = (function(){
       document.getElementById('t'+k).classList.toggle('on',k===t);
     });
     document.body.classList.toggle('imgOpen',t==='IMG');
-    if(t==='IMG'){ ikFrame(); ikSize(); }
+    if(t==='IMG'){ ikFrame(); setTimeout(ikSize,0); }
     Array.prototype.forEach.call(document.querySelectorAll('#shellTabs button'),function(b){
       b.classList.toggle('on',b.dataset.t===t);
     });
@@ -1107,7 +1107,24 @@ window.TB = (function(){
   document.getElementById('shellTabs').addEventListener('click',function(e){
     var b=e.target.closest('button[data-t]'); if(!b) return;
     if(b.dataset.t==='VIEW'){ location.href='./viewer.html'; return; }
-    go(b.dataset.t);
+    var t=b.dataset.t;
+    /* C2.19 從圖片工具切到照片／標註：問要不要把圖帶過去 */
+    if(cur==='IMG'&&(t==='PDF'||t==='ANN')&&ikWin&&ikWin.pending){
+      var pd=ikWin.pending();
+      if(pd.res||pd.inp){
+        var dest=t==='PDF'?'照片清單':'標註';
+        var deliver=function(files){ go(t); if(!files.length) return;
+          if(t==='PDF'){ PDF.addFiles(files); toast('已帶入照片清單 '+files.length+' 張',2600); } else if(window.ANN&&ANN.push) ANN.push(files); };
+        var o=[];
+        if(pd.res) o.push({t:'帶 '+pd.res+' 張處理結果到'+dest,fn:function(){ var f=ikWin.take('res'); ikWin.skip(); deliver(f); }});
+        if(pd.inp) o.push({t:'帶 '+pd.inp+' 張原圖到'+dest,fn:function(){ var f=ikWin.take('inp'); ikWin.skip(); deliver(f); }});
+        o.push({t:'不用，直接切換',fn:function(){ ikWin.skip(); go(t); }});
+        o.push({t:'取消',ghost:true,fn:function(){}});
+        pick('圖片工具裡還有圖片','要一起帶到「'+dest+'」繼續編輯嗎？（同一批只問一次）',o);
+        return;
+      }
+    }
+    go(t);
   });
   /* ---- 跨頁交接：接收 viewer.html 送過來的頁面圖 ---- */
   function hoTake(){
@@ -6171,7 +6188,7 @@ function buildHtml(name){
       'document.getElementById("pr").onclick=function(){window.print();};})();';
       var html='<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">'+
         '<meta name="viewport" content="width=device-width,initial-scale=1">'+
-        '<meta name="generator" content="圖影轉PDF.HTML報告 C2.18">'+
+        '<meta name="generator" content="圖影轉PDF.HTML報告 C2.19">'+
         '<title>'+escH(name)+'</title><style>'+css+'</style></head><body>'+
         '<div class="top"><b>'+escH(name)+'</b><span>'+total+' 頁</span><button id="pr" type="button">列印／存 PDF</button></div>'+
         '<main class="doc">'+body.join('\n')+'</main>'+
