@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="圖影轉PDF.HTML報告">
 <meta name="mobile-web-app-capable" content="yes">
-<title>圖影轉PDF.HTML報告 C2.20</title>
+<title>圖影轉PDF.HTML報告 C2.21</title>
 <style>
 /* ===== 外殼 ===== */
 
@@ -33,7 +33,19 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 .pane{display:none}
 #tIMG iframe{display:block;width:100%;border:0;background:#f1f5f4}
 body.imgOpen{overflow:hidden}
-#tPDF #toIK{margin-left:6px}
+#tPDF #toIK,#tPDF #toAnim{margin-left:6px}
+#animDlg{position:fixed;inset:0;background:#0009;z-index:121;display:none;align-items:flex-end}
+#animDlg.on{display:flex}
+#animDlg .bx{background:#fff;width:100%;max-width:560px;margin:0 auto;border-radius:14px 14px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+#animDlg h4{margin:0 0 10px;font-size:16px}
+#animDlg .r{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:14px}
+#animDlg .r>span{width:72px;flex:none;color:#4a5a5a}
+#animDlg select{flex:1;min-width:0;height:40px;border:1px solid #c8d0d0;border-radius:8px;padding:0 8px;font-family:inherit;font-size:14px;background:#fff}
+#animDlg #adInfo{font-size:12.5px;color:#5a6a6a;margin:4px 0 10px;line-height:1.6}
+#animDlg .bb{display:flex;gap:8px}
+#animDlg .bb button{flex:1;height:46px;border-radius:10px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;border:1px solid #c8d0d0;background:#fff;color:#4a5a5a}
+#animDlg .bb #adGo{background:#0d6b6e;border-color:#0d6b6e;color:#fff}
+#animDlg .bb #adGo:disabled{background:#9fb5b5;border-color:#9fb5b5}
 .pane.on{display:block}
 #tANN.on{position:fixed;inset:0;z-index:50}
 #annBack{position:fixed;top:calc(8px + env(safe-area-inset-top));left:10px;z-index:12;
@@ -438,7 +450,7 @@ body.imgOpen{overflow:hidden}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">圖影轉PDF.HTML報告</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C2.20</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C2.21</span></header>
 <nav id="shellTabs">
   <button data-t="PDF" class="on">照片</button>
   <button data-t="CMP">影片</button>
@@ -775,7 +787,7 @@ body.imgOpen{overflow:hidden}
     </div>
     <div class="row" id="annRow" style="margin-top:8px;display:none">
       <span>其他工具</span>
-      <button type="button" id="toAnn">→ 送到標註量測</button><button type="button" class="" id="toIK">→ 圖片工具</button>
+      <button type="button" id="toAnn">→ 送到標註量測</button><button type="button" class="" id="toIK">→ 圖片工具</button><button type="button" id="toAnim">▶ 合成動畫</button>
     </div>
     <p class="hint" id="thumbHint" style="display:none">滑鼠停在圖片上放大預覽，點一下開全螢幕。下方：‹ › 調順序，「編輯」裁切旋轉，✕ 移除。</p>
   </div>
@@ -957,6 +969,16 @@ body.imgOpen{overflow:hidden}
   </div>
 </div>
 
+<div id="animDlg"><div class="bx">
+  <h4>把照片合成動畫</h4>
+  <div class="r"><span>使用照片</span><select id="adSrc"></select></div>
+  <div class="r"><span>每格時間</span><select id="adDelay"><option value="100">0.1 秒（快）</option><option value="200">0.2 秒</option><option value="300">0.3 秒</option><option value="500" selected>0.5 秒</option><option value="800">0.8 秒</option><option value="1000">1 秒</option><option value="1500">1.5 秒</option><option value="2000">2 秒（慢）</option></select></div>
+  <div class="r"><span>長邊</span><select id="adSize"><option value="320">320 px（最小）</option><option value="480">480 px</option><option value="640" selected>640 px（建議）</option><option value="800">800 px</option><option value="1080">1080 px（清楚、檔案大）</option></select></div>
+  <div class="r"><span>格式</span><select id="adFmt"><option value="gif">GIF（相容性最好，LINE 可直接播）</option><option value="webp">動態 WebP（檔案小、畫質好）</option></select></div>
+  <div class="r"><span>完成後</span><select id="adAfter"><option value="add">動畫加入清單，保留原照片</option><option value="rep">動畫取代這些照片</option></select></div>
+  <p id="adInfo"></p>
+  <div class="bb"><button type="button" id="adNo">取消</button><button type="button" id="adGo">合成</button></div>
+</div></div>
 <div id="preview"><img id="pvImg" alt=""><div id="pvCap"></div><button type="button" id="pvTog" style="display:none"></button></div>
 
 <div id="dropzone"><div>放開就加入<small>照片、PDF、zip、含檔案的資料夾都可以</small></div></div>
@@ -1390,6 +1412,7 @@ window.TB = (function(){
       ikGet().then(function(w){ w.add(tool||'conv',files); })
         .catch(function(e){ toast(e.message,4000); });
     },
+    ikAnim:function(files,o,onp){ return ikGet().then(function(w){ return w.makeAnim(files,o,onp); }); },
     /* HEIC／TIFF／PSD／RAW → JPEG（借圖片工具的解碼器） */
     ikDecode:function(files){
       return ikGet().then(function(w){
@@ -4611,6 +4634,7 @@ function buildPhotos(){
       $('status').textContent='壓縮照片 '+i+' / '+srcs.length+'…';
       $('zBar').classList.add('on'); $('zBar').firstChild.style.width=Math.round((i-1)/srcs.length*100)+'%';
       before+=it.file.size||0;
+      if(it.gif&&it.file===it.gif&&!it.rot&&!it.crop){ addOut(it.name||it.file.name,it.file); mark(it,it.file); return next(); }
       if((S.pass||it.keep)&&!it.rot&&!it.crop&&!FS){ addOut(it.name||it.file.name,it.file); mark(it,it.file); return next(); }
       return renderItem(it,1e9).then(function(c){
         return encodeImg(c,S.pass?{max:100000,q:.95,mode:'q'}:S,type,FS);
@@ -4826,6 +4850,13 @@ function addPdf(f){
 function addFiles(list){
   var arr=Array.prototype.slice.call(list||[]);
   if(!arr.length){ $('status').textContent='沒有收到檔案'; return; }
+  /* WebP／PNG 先探測是不是動畫，探完再照原順序加入 */
+  var probe=arr.filter(function(f){ return isAnimCand(f)&&!isGif(f)&&f._an===undefined; });
+  if(probe.length&&window.ImageDecoder){
+    Promise.all(probe.map(function(f){ return gifInfo(f).then(function(x){ if(x.d) try{ x.d.close(); }catch(e){} try{ f._an=x.n; }catch(e){} }); }))
+      .then(function(){ addFiles(list); });
+    return;
+  }
   var spec=arr.filter(isSpec);
   if(spec.length){ arr=arr.filter(function(f){ return !isSpec(f); }); setTimeout(function(){ convSpecial(spec); },0);
     if(!arr.length) return; if(list&&list._mode) arr._mode=1; list=arr; }
@@ -4862,7 +4893,7 @@ function addFiles(list){
   }
 
   var gEmpty=!items.length&&!pdfs.length&&!zips.length;
-  var gifs=pics.filter(isGif); pics=pics.filter(function(f){ return !isGif(f); });
+  var gifs=pics.filter(isAnimItem); pics=pics.filter(function(f){ return !isAnimItem(f); });
   pics.forEach(function(f){ pushImage(f); });
   render();
   if(gifs.length) setTimeout(function(){ takeGifs(gifs,gEmpty&&!pics.length); },0);
@@ -4899,6 +4930,9 @@ function addFiles(list){
    做法：拆成分鏡格排進 PDF（任何閱讀器都看得到、可列印），
          原始 GIF 嵌入成 PDF 附件（電腦版 Acrobat／Foxit 點開即播放）。 */
 function isGif(f){ return f.type==='image/gif'||/\.gif$/i.test(f.name||''); }
+function isAnimCand(f){ return /^image\/(gif|webp|png|apng)$/.test(f.type||'')||/\.(gif|webp|png|apng)$/i.test(f.name||''); }
+function animType(f){ return isGif(f)?'image/gif':(/webp/.test(f.type||'')||/\.webp$/i.test(f.name||''))?'image/webp':'image/png'; }
+function isAnimItem(f){ return isGif(f)||f._an>1; }
 function pushImgs(arr){
   var g=[], sp=[];
   arr.forEach(function(o){ if(isGif(o.file)) g.push(o.file); else if(isSpec(o.file)) sp.push(o.file); else pushImage(o.file,o.name); });
@@ -4908,7 +4942,7 @@ function pushImgs(arr){
 function gifInfo(f){
   if(!window.ImageDecoder) return Promise.resolve({f:f,n:1});
   var d;
-  try{ d=new ImageDecoder({data:f.stream(),type:'image/gif'}); }catch(e){ return Promise.resolve({f:f,n:1}); }
+  try{ d=new ImageDecoder({data:f.stream(),type:animType(f)}); }catch(e){ return Promise.resolve({f:f,n:1}); }
   return d.completed.then(function(){ return d.tracks.ready; }).then(function(){
     var t=d.tracks.selectedTrack;
     return {f:f,n:(t&&t.frameCount)||1,d:d};
@@ -4939,9 +4973,9 @@ function gifFrames(x,want){
 function takeGifs(files,wasEmpty){
   if(!window.ImageDecoder){
     files.forEach(function(f){ pushImage(f); }); render();
-    TB.toast('這個瀏覽器無法拆 GIF 動畫，只放第一格',3600); return;
+    TB.toast('這個瀏覽器無法讀動畫，只放第一格',3600); return;
   }
-  $('status').textContent='讀取 GIF…';
+  $('status').textContent='讀取動畫…';
   Promise.all(files.map(gifInfo)).then(function(infos){
     var anim=infos.filter(function(x){ return x.n>1; });
     infos.filter(function(x){ return x.n<=1; }).forEach(function(x){ if(x.d) try{ x.d.close(); }catch(e){} pushImage(x.f); });
@@ -4956,21 +4990,21 @@ function takeGifs(files,wasEmpty){
         render();
         if(wasEmpty&&anim.length===1){
           if(want===6||want===12) window.PDF.setPerPage(want);
-          window.PDF.setName(anim[0].f.name.replace(/\.[^.]+$/,'')+'_分鏡');
+          if(want>1) window.PDF.setName(anim[0].f.name.replace(/\.[^.]+$/,'')+'_分鏡');
         }
-        $('status').textContent='GIF 拆出 '+got+' 格，原始 GIF 會附在 PDF 附件';
-        TB.toast('已拆出 '+got+' 格'+(want>1?'（下方說明欄已填格數與秒數，可改）':'')+'<br>產生 PDF 時，原始 GIF 會一併嵌入成<b>附件</b>',5200);
+        $('status').textContent=(want===1?'已加入 '+anim.length+' 個動畫':'動畫拆出 '+got+' 格')+'　網頁報告會播放，PDF 附原始動畫';
+        TB.toast((want===1?'已加入動畫（縮圖顯示第一格）':'已拆出 '+got+' 格（說明欄已填格數與秒數，可改）')+'<br>網頁報告會<b>播放動畫</b>；PDF 放畫面並附原始檔',5200);
       }).catch(function(e){ $('status').textContent='GIF 拆格失敗：'+e.message; });
     };
     var opts=[
+      {t:'保持動畫（網頁報告會動；PDF 放第一格＋附件）',fn:function(){ run(1); }},
       {t:'拆成 6 格分鏡（每頁 6 格）',fn:function(){ run(6); }},
       {t:'拆成 12 格分鏡（每頁 12 格）',fn:function(){ run(12); }}
     ];
     if(maxN>12) opts.push({t:'全部 '+(maxN>120?'（取 120 格）':maxN+' 格'),fn:function(){ run(Math.min(maxN,120)); }});
-    opts.push({t:'只放第一格',fn:function(){ run(1); }});
     opts.push({t:'取消',ghost:true,fn:function(){ anim.forEach(function(x){ try{ x.d.close(); }catch(e){} }); $('status').textContent=''; }});
-    TB.pick('GIF 動畫 '+anim.length+' 個，共 '+tot+' 格',
-      'PDF 無法播放動畫（手機、Chrome、LINE 都只顯示靜態）。改排成分鏡圖，原始 GIF 嵌入 PDF 附件，電腦版 Acrobat 點開即播放。',opts);
+    TB.pick('動畫 '+anim.length+' 個，共 '+tot+' 格',
+      '網頁報告可以直接播放動畫；PDF 無法播放，只能放畫面或分鏡，原始動畫另嵌入 PDF 附件（電腦版 Acrobat 可點開播放）。',opts);
   });
 }
 
@@ -5504,6 +5538,7 @@ function grabNow(){
   return new Promise(function(res){ c.toBlob(function(b){
     if(b){
       pushImage(new File([b],nm,{type:'image/jpeg'}),nm);
+      items[items.length-1].vg=vBase;
       vGrabbed++;
       if(vQ[vI]){ vQ[vI].n++; vNav(); }
       $('vCount').textContent='已擷取 '+vGrabbed+' 張';
@@ -5619,7 +5654,7 @@ $('vClose').addEventListener('click',function(){
   $('vov').classList.remove('on');
   if(vURL){ URL.revokeObjectURL(vURL); vURL=null; }
   var nv=vQ.filter(function(q){ return q.n; }).length;
-  if(vGrabbed) $('status').textContent='已從 '+(nv>1?nv+' 部':'')+'影片加入 '+vGrabbed+' 張畫面';
+  if(vGrabbed){ $('status').textContent='已從 '+(nv>1?nv+' 部':'')+'影片加入 '+vGrabbed+' 張畫面'; if(vGrabbed>1) TB.toast('要做成動畫？按清單下方「▶ 合成動畫」',3200); }
   vQ=[]; vI=-1; vLoad++;
 });
 
@@ -5974,9 +6009,9 @@ function buildDoc(seq,opts){
       var u16=function(t){ var h='FEFF'; for(var i=0;i<t.length;i++) h+=t.charCodeAt(i).toString(16).toUpperCase().padStart(4,'0'); return '<'+h+'>'; };
       var nt=[];
       opts.attach.forEach(function(a,i){
-        var ef=alloc(), fsId=alloc(), key='GIF'+String(i+1).padStart(2,'0')+'.gif';
-        setP(ef,['<< /Type /EmbeddedFile /Subtype /image#2Fgif /Params << /Size '+a.bytes.length+' >> /Length '+a.bytes.length+' >>\nstream\n',a.bytes,'\nendstream']);
-        setP(fsId,['<< /Type /Filespec /F ('+key+') /UF '+u16(a.name)+' /Desc '+u16('原始 GIF 動畫（點開即播放）')+' /EF << /F '+ef+' 0 R /UF '+ef+' 0 R >> >>']);
+        var ef=alloc(), fsId=alloc(), key='ANIM'+String(i+1).padStart(2,'0')+'.'+(/webp/.test(a.type)?'webp':/png/.test(a.type)?'png':'gif');
+        setP(ef,['<< /Type /EmbeddedFile /Subtype /'+String(a.type||'image/gif').replace('/','#2F')+' /Params << /Size '+a.bytes.length+' >> /Length '+a.bytes.length+' >>\nstream\n',a.bytes,'\nendstream']);
+        setP(fsId,['<< /Type /Filespec /F ('+key+') /UF '+u16(a.name)+' /Desc '+u16('原始動畫（點開即播放）')+' /EF << /F '+ef+' 0 R /UF '+ef+' 0 R >> >>']);
         nt.push('('+key+') '+fsId+' 0 R');
       });
       names=' /Names << /EmbeddedFiles << /Names ['+nt.join(' ')+'] >> >> /PageMode /UseAttachments';
@@ -6032,6 +6067,53 @@ function serialize(objs){
   chunks.forEach(function(c){ out.set(c,o); o+=c.length; });
   return out;
 }
+
+/* ==================== C2.21 照片合成動畫（借圖片工具的 GIF／WebP 編碼器） ==================== */
+var adGroups=[];
+function adOpen(){
+  var imgs=items.filter(function(it){ return it.kind==='img'; });
+  if(imgs.length<2){ TB.toast('至少要 2 張照片才能合成動畫'); return; }
+  adGroups=[]; var seen={};
+  imgs.forEach(function(it){ if(it.vg){ if(!seen[it.vg]){ seen[it.vg]={k:it.vg,list:[]}; adGroups.push(seen[it.vg]); } seen[it.vg].list.push(it); } });
+  adGroups=adGroups.filter(function(g){ return g.list.length>1; });
+  var sel=$('adSrc'); sel.innerHTML='';
+  adGroups.forEach(function(g,i){ var o=document.createElement('option'); o.value='g'+i; o.textContent='影片抓格 '+g.list.length+' 張（'+(g.k.length>16?g.k.slice(0,15)+'…':g.k)+'）'; sel.appendChild(o); });
+  var o=document.createElement('option'); o.value='all'; o.textContent='清單全部照片 '+imgs.length+' 張（依目前順序）'; sel.appendChild(o);
+  adInfo(); $('animDlg').classList.add('on');
+}
+function adList(){ var v=$('adSrc').value; if(v==='all') return items.filter(function(it){ return it.kind==='img'; }); return (adGroups[+v.slice(1)]||{list:[]}).list.filter(function(it){ return items.indexOf(it)>=0; }); }
+function adInfo(){
+  var L=adList(), d=+$('adDelay').value;
+  $('adInfo').textContent=L.length+' 格，播放一輪約 '+(L.length*d/1000).toFixed(1)+' 秒，無限循環。'+(L.length>150?'　※ 張數多，合成會比較久':'');
+}
+['adSrc','adDelay'].forEach(function(id){ $(id).addEventListener('change',adInfo); });
+$('adNo').addEventListener('click',function(){ $('animDlg').classList.remove('on'); });
+$('animDlg').addEventListener('click',function(e){ if(e.target.id==='animDlg') $('animDlg').classList.remove('on'); });
+$('toAnim').addEventListener('click',adOpen);
+$('adGo').addEventListener('click',function(){
+  var L=adList(); if(L.length<2){ TB.toast('至少要 2 張'); return; }
+  var fmt=$('adFmt').value, delay=+$('adDelay').value, max=+$('adSize').value, rep=$('adAfter').value==='rep';
+  var btn=this; btn.disabled=true; btn.textContent='合成中…';
+  L.reduce(function(p,it){ return p.then(function(acc){
+    if(!it.rot&&!it.crop){ acc.push(it.file); return acc; }
+    return renderItem(it,1e9).then(function(c){ return cvBlob(c,'image/jpeg',.92); }).then(function(b){ acc.push(new File([b],'f.jpg',{type:'image/jpeg'})); return acc; });
+  }); },Promise.resolve([])).then(function(files){
+    return TB.ikAnim(files,{fmt:fmt,delay:delay,max:max,q:.8},function(i,n){ $('status').textContent='合成動畫 '+i+' / '+n+'…'; });
+  }).then(function(r){
+    var base=(L[0].vg||baseOf(L[0].name||'動畫')).replace(/[\\/:*?"<>|]/g,'_');
+    var f=new File([r.blob],base+'_動畫.'+(fmt==='gif'?'gif':'webp'),{type:r.blob.type||(fmt==='gif'?'image/gif':'image/webp')});
+    var at=items.indexOf(L[0]);
+    pushImage(f,f.name); var it=items.pop(); it.gif=f; it.cap='';
+    if(rep){ L.forEach(function(x){ var k=items.indexOf(x); if(k>=0){ if(x.url) URL.revokeObjectURL(x.url); items.splice(k,1); } }); }
+    else at=items.indexOf(L[L.length-1])+1;
+    items.splice(Math.max(0,Math.min(at,items.length)),0,it);
+    render();
+    $('animDlg').classList.remove('on');
+    $('status').textContent='已合成動畫：'+f.name+'（'+r.w+'×'+r.h+'，'+L.length+' 格，'+(r.blob.size<1048576?Math.round(r.blob.size/1024)+' KB':(r.blob.size/1048576).toFixed(1)+' MB')+'）';
+    TB.toast('動畫完成。按「網頁報告」會播放；也可「下載照片」或分享',3600);
+  }).catch(function(e){ TB.toast('合成失敗：'+(e&&e.message||e),4000); })
+    .then(function(){ btn.disabled=false; btn.textContent='合成'; });
+});
 
 /* ==================== C2.18 送到圖片工具 ==================== */
 $('toIK').addEventListener('click',function(){
@@ -6188,11 +6270,11 @@ function buildHtml(name){
       'document.getElementById("pr").onclick=function(){window.print();};})();';
       var html='<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">'+
         '<meta name="viewport" content="width=device-width,initial-scale=1">'+
-        '<meta name="generator" content="圖影轉PDF.HTML報告 C2.20">'+
+        '<meta name="generator" content="圖影轉PDF.HTML報告 C2.21">'+
         '<title>'+escH(name)+'</title><style>'+css+'</style></head><body>'+
         '<div class="top"><b>'+escH(name)+'</b><span>'+total+' 頁</span><button id="pr" type="button">列印／存 PDF</button></div>'+
         '<main class="doc">'+body.join('\n')+'</main>'+
-        '<p class="note">點照片可放大'+(res.gifs?'　GIF 動畫在任何瀏覽器都會播放':'')+'</p>'+
+        '<p class="note">點照片可放大'+(res.gifs?'　動畫在任何瀏覽器都會播放':'')+'</p>'+
         '<div id="lb"><img alt=""></div><script>'+js+'<\/script></body></html>';
       return {html:html,pages:total,photos:E.length,skipped:res.skipped,gifs:res.gifs,fallback:res.fallback};
     });
@@ -6209,7 +6291,7 @@ $('goHtml').addEventListener('click',function(){
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function(){ URL.revokeObjectURL(url); },4000);
     $('status').textContent='完成：'+name+'.html（'+(blob.size/1048576).toFixed(1)+' MB，'+r.pages+' 頁'+
-      (r.gifs?'，含 '+r.gifs+' 個會動的 GIF':'')+'）'+(r.skipped?'　PDF 中 '+r.skipped+' 個非照片內容未放入':'')+
+      (r.gifs?'，含 '+r.gifs+' 個會動的動畫':'')+'）'+(r.skipped?'　PDF 中 '+r.skipped+' 個非照片內容未放入':'')+
       (r.fallback?'　※ 此瀏覽器不支援 WebP 編碼，已改用 JPEG':'');
     if(window.TB&&TB.seqBump) TB.seqBump();
   }).catch(function(e){ $('status').textContent='網頁報告失敗：'+e.message; })
@@ -6238,7 +6320,7 @@ $('go').addEventListener('click',function(){
       var pre=Promise.resolve();
       var gl=[]; items.forEach(function(it){ if(it.gif&&gl.indexOf(it.gif)<0) gl.push(it.gif); });
       if(gl.length) pre=pre.then(function(){
-        return Promise.all(gl.map(function(f){ return f.arrayBuffer().then(function(b){ return {name:f.name,bytes:new Uint8Array(b)}; }); }))
+        return Promise.all(gl.map(function(f){ return f.arrayBuffer().then(function(b){ return {name:f.name,type:f.type||'image/gif',bytes:new Uint8Array(b)}; }); }))
           .then(function(a){ opts.attach=a; });
       });
       if(cfg.cover){
@@ -6256,7 +6338,7 @@ $('go').addEventListener('click',function(){
           a.href=url; a.download=name+'.pdf';
           document.body.appendChild(a); a.click(); a.remove();
           setTimeout(function(){ URL.revokeObjectURL(url); },4000);
-          $('status').textContent='完成：'+name+'.pdf（'+(blob.size/1048576).toFixed(1)+' MB）'+(opts.attach?'　含 '+opts.attach.length+' 個 GIF 附件':'');
+          $('status').textContent='完成：'+name+'.pdf（'+(blob.size/1048576).toFixed(1)+' MB）'+(opts.attach?'　含 '+opts.attach.length+' 個動畫附件':'');
           if(window.TB&&TB.seqBump)TB.seqBump();
         });
     }
