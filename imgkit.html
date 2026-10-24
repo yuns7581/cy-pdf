@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d6b6e">
-<title>圖片工具 C1.4</title>
+<title>圖片工具 C1.5</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d6b6e'/%3E%3Crect x='14' y='18' width='36' height='28' rx='3' fill='none' stroke='%23fff' stroke-width='4'/%3E%3Cpath d='M18 42l9-10 7 7 5-5 7 8' fill='none' stroke='%23f2b33d' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
 :root{
@@ -126,7 +126,7 @@ video{background:#000;border-radius:6px}
 </head>
 <body>
 <header class="top">
-  <div class="row"><h1>圖片工具</h1><span class="ver">C1.4</span><span class="local">全部在本機處理，不上傳</span></div>
+  <div class="row"><h1>圖片工具</h1><span class="ver">C1.5</span><span class="local">全部在本機處理，不上傳</span></div>
   <nav class="tabs" role="tablist" id="tabs">
     <button role="tab" data-t="conv">格式轉換</button>
     <button role="tab" data-t="splice">拼接</button>
@@ -2311,6 +2311,23 @@ window.IK = {
     if (kind === 'res') { const res = R.ok().filter(r => !r.sent && /^image\//.test(r.blob.type)); res.forEach(r => r.sent = 1); return res.map(r => new File([r.blob], r.name, { type: r.blob.type })); }
     if (kind === 'inp') { const it = L.items.filter(i => !i.err && !i.host && !i.sent); it.forEach(i => i.sent = 1); return it.map(i => i.file); }
     return [];
+  },
+  async makeAnim(files, o, onp) {
+    const f0 = await decodeImage(files[0]); let W = f0.w, H = f0.h; f0.close();
+    const s = Math.min(1, (o.max || 640) / Math.max(W, H)); W = Math.max(2, Math.round(W * s)); H = Math.max(2, Math.round(H * s));
+    const c = newCanvas(W, H), x = ctx2d(c, { willReadFrequently: true });
+    const enc = await makeAnimOut(o.fmt === 'webp' ? 'webp' : 'gif', W, H, { colors: 256, q: o.q || 0.8, loop: true });
+    for (let i = 0; i < files.length; i++) {
+      const im = await decodeImage(files[i]);
+      x.fillStyle = '#ffffff'; x.fillRect(0, 0, W, H);
+      const kk = Math.min(W / im.w, H / im.h), dw = im.w * kk, dh = im.h * kk, d = drawScaled(im.src, im.w, im.h, dw, dh);
+      x.drawImage(d.src, 0, 0, d.w, d.h, (W - dw) / 2, (H - dh) / 2, dw, dh); im.close();
+      await enc.add(x.getImageData(0, 0, W, H).data, o.delay || 500);
+      if (onp) try { onp(i + 1, files.length); } catch (e) {}
+      if (i % 2) await tick();
+    }
+    const blob = await enc.finish(); c.width = 0;
+    return { blob, w: W, h: H };
   },
   skip() { const R = RS[curTool], L = FLS[curTool]; R && R.ok().forEach(r => r.sent = 1); L && L.items.forEach(i => i.sent = 1); },
   async toJpeg(file) {
