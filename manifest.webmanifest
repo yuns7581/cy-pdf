@@ -1,7 +1,7 @@
 {
   "name": "圖影轉PDF.HTML報告｜呈易科技",
   "short_name": "圖影轉PDF.HTML報告",
-  "description": "照片／影片抓格／GIF 壓縮後轉 PDF 或網頁報告，另有標註量測、PDF 檢視。全程在裝置本機處理，可離線使用。",
+  "description": "照片／影片抓格／GIF 壓縮後轉 PDF 或網頁報告，內含圖片工具（HEIC/RAW 轉檔、裁剪、浮水印、拼接）、標註量測、PDF 檢視。全程在裝置本機處理，可離線使用。",
   "lang": "zh-Hant-TW",
   "dir": "ltr",
   "start_url": "./",
@@ -70,7 +70,12 @@
             "video/webm",
             ".webm",
             "video/3gpp",
-            ".3gp"
+            ".3gp",
+            "image/heif",
+            ".heif",
+            "image/tiff",
+            ".tif",
+            ".tiff"
           ]
         }
       ]
