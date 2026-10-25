@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="圖影轉PDF.HTML報告">
 <meta name="mobile-web-app-capable" content="yes">
-<title>圖影轉PDF.HTML報告 C2.21</title>
+<title>圖影轉PDF.HTML報告 C2.22</title>
 <style>
 /* ===== 外殼 ===== */
 
@@ -450,7 +450,7 @@ body.imgOpen{overflow:hidden}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">圖影轉PDF.HTML報告</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C2.21</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C2.22</span></header>
 <nav id="shellTabs">
   <button data-t="PDF" class="on">照片</button>
   <button data-t="CMP">影片</button>
@@ -871,9 +871,9 @@ body.imgOpen{overflow:hidden}
         <span>每頁張數</span>
         <div class="seg" id="perPage">
           <button type="button" data-v="1">1</button>
-          <button type="button" data-v="2">2</button>
+          <button type="button" data-v="2" aria-pressed="true">2</button>
           <button type="button" data-v="4">4</button>
-          <button type="button" data-v="6" aria-pressed="true">6</button>
+          <button type="button" data-v="6">6</button>
           <button type="button" data-v="9">9</button>
           <button type="button" data-v="12">12</button>
           <button type="button" data-v="16">16</button>
@@ -889,8 +889,8 @@ body.imgOpen{overflow:hidden}
       <div class="row">
         <span>紙張方向</span>
         <div class="seg" id="orient">
-          <button type="button" data-v="p" aria-pressed="true">直向</button>
-          <button type="button" data-v="l">橫向</button>
+          <button type="button" data-v="p">直向</button>
+          <button type="button" data-v="l" aria-pressed="true">橫向</button>
         </div>
       </div>
       <div class="row">
@@ -904,8 +904,8 @@ body.imgOpen{overflow:hidden}
       <div class="row">
         <span>頁尾日期頁碼</span>
         <div class="seg" id="footerOpt">
-          <button type="button" data-v="1" aria-pressed="true">加上</button>
-          <button type="button" data-v="0">不要</button>
+          <button type="button" data-v="1">加上</button>
+          <button type="button" data-v="0" aria-pressed="true">不要</button>
         </div>
       </div>
     </div>
@@ -918,12 +918,12 @@ body.imgOpen{overflow:hidden}
       <div class="row">
         <span>加封面頁</span>
         <div class="seg" id="coverOpt">
-          <button type="button" data-v="1">要</button>
-          <button type="button" data-v="0" aria-pressed="true">不要</button>
+          <button type="button" data-v="1" aria-pressed="true">要</button>
+          <button type="button" data-v="0">不要</button>
         </div>
       </div>
     </div>
-    <div id="coverFields" style="display:none;margin-top:11px">
+    <div id="coverFields" style="display:block;margin-top:11px">
       <input type="text" id="cvClinic" placeholder="診所名稱" spellcheck="false" style="margin-bottom:8px">
       <input type="text" id="cvTitle" placeholder="文件標題，例如：設備保養紀錄" spellcheck="false" style="margin-bottom:8px">
       <input type="text" id="cvNote" placeholder="工單編號、機型或負責人（選填）" spellcheck="false">
@@ -972,10 +972,10 @@ body.imgOpen{overflow:hidden}
 <div id="animDlg"><div class="bx">
   <h4>把照片合成動畫</h4>
   <div class="r"><span>使用照片</span><select id="adSrc"></select></div>
-  <div class="r"><span>每格時間</span><select id="adDelay"><option value="100">0.1 秒（快）</option><option value="200">0.2 秒</option><option value="300">0.3 秒</option><option value="500" selected>0.5 秒</option><option value="800">0.8 秒</option><option value="1000">1 秒</option><option value="1500">1.5 秒</option><option value="2000">2 秒（慢）</option></select></div>
+  <div class="r"><span>每格時間</span><select id="adDelay"><option value="100">0.1 秒（快）</option><option value="200">0.2 秒</option><option value="300">0.3 秒</option><option value="500">0.5 秒</option><option value="800">0.8 秒</option><option value="1000">1 秒</option><option value="1500" selected>1.5 秒</option><option value="2000">2 秒（慢）</option></select></div>
   <div class="r"><span>長邊</span><select id="adSize"><option value="320">320 px（最小）</option><option value="480">480 px</option><option value="640" selected>640 px（建議）</option><option value="800">800 px</option><option value="1080">1080 px（清楚、檔案大）</option></select></div>
-  <div class="r"><span>格式</span><select id="adFmt"><option value="gif">GIF（相容性最好，LINE 可直接播）</option><option value="webp">動態 WebP（檔案小、畫質好）</option></select></div>
-  <div class="r"><span>完成後</span><select id="adAfter"><option value="add">動畫加入清單，保留原照片</option><option value="rep">動畫取代這些照片</option></select></div>
+  <div class="r"><span>格式</span><select id="adFmt"><option value="gif">GIF（相容性最好，LINE 可直接播）</option><option value="webp" selected>動態 WebP（檔案小、畫質好）</option></select></div>
+  <div class="r"><span>完成後</span><select id="adAfter"><option value="add">動畫加入清單，保留原照片</option><option value="rep" selected>動畫取代這些照片</option></select></div>
   <p id="adInfo"></p>
   <div class="bb"><button type="button" id="adNo">取消</button><button type="button" id="adGo">合成</button></div>
 </div></div>
@@ -4052,7 +4052,7 @@ setTool(S.tool);resize();
 "use strict";
 
 var items=[];   // {kind:'img'|'pdf', ...}
-var cfg={perPage:6, orient:'p', fit:'contain', full:0, footer:1, cover:false, cvOrg:true};
+var cfg={perPage:2, orient:'l', fit:'contain', full:0, footer:0, cover:true, cvOrg:true};
 /* C2.9 共用壓縮設定：長邊上限 × 品質（或每張 KB 上限） */
 function segVal(id){
   var b=document.querySelector('#'+id+' button[aria-pressed="true"]');
@@ -6270,7 +6270,7 @@ function buildHtml(name){
       'document.getElementById("pr").onclick=function(){window.print();};})();';
       var html='<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">'+
         '<meta name="viewport" content="width=device-width,initial-scale=1">'+
-        '<meta name="generator" content="圖影轉PDF.HTML報告 C2.21">'+
+        '<meta name="generator" content="圖影轉PDF.HTML報告 C2.22">'+
         '<title>'+escH(name)+'</title><style>'+css+'</style></head><body>'+
         '<div class="top"><b>'+escH(name)+'</b><span>'+total+' 頁</span><button id="pr" type="button">列印／存 PDF</button></div>'+
         '<main class="doc">'+body.join('\n')+'</main>'+
