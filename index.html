@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="圖影轉PDF.HTML報告">
 <meta name="mobile-web-app-capable" content="yes">
-<title>圖影轉PDF.HTML報告 C2.22</title>
+<title>圖影轉PDF.HTML報告 C2.23</title>
 <style>
 /* ===== 外殼 ===== */
 
@@ -450,7 +450,7 @@ body.imgOpen{overflow:hidden}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">圖影轉PDF.HTML報告</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C2.22</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C2.23</span></header>
 <nav id="shellTabs">
   <button data-t="PDF" class="on">照片</button>
   <button data-t="CMP">影片</button>
@@ -2402,7 +2402,7 @@ var cv=document.getElementById('cv'),ctx=cv.getContext('2d');
 var mc=document.createElement('canvas').getContext('2d');
 var FONT='"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
 var TOOLS={select:['▣','選取'],dim:['↔','尺寸'],area:['▦','面積'],cube:['⬛','立方體'],
-  arrow:['↗','箭頭'],rect:['▭','矩形'],ellipse:['◯','橢圓'],text:['Ａ','文字'],free:['✎','手繪'],line:['／','線'],fit:['◈','實尺']};
+  arrow:['↗','箭頭'],rect:['▭','矩形尺寸'],box:['□','矩形'],ellipse:['◯','橢圓'],text:['Ａ','文字'],free:['✎','手繪'],line:['／','線'],fit:['◈','實尺']};
 
 function $(i){return document.getElementById(i);}
 function toast(m,ms){var t=$('toast');t.innerHTML=m;t.className='show';
@@ -3166,7 +3166,7 @@ function labelsOf(a,r){
     }else{
       L.push({t:'需先校準才能顯示實尺',x:0,y:0,f:a.f});
     }
-  }else if(a.t==='ellipse'){
+  }else if(a.t==='ellipse'||a.t==='box'){
     if(a.label){q=box(a);L.push({t:a.label,x:(q.L+q.R)/2,y:q.T-a.f*0.9,f:a.f});}
   }else if(a.t==='free'){
     if(a.label)L.push({t:a.label,x:a.p[0].x,y:a.p[0].y-a.f,f:a.f});
@@ -3226,7 +3226,7 @@ function drawAnn(c,a,r){
   if(t==='arrow'||t==='line'){
     c.beginPath();c.moveTo(a.x1,a.y1);c.lineTo(a.x2,a.y2);c.stroke();
     if(t==='arrow')head(c,a.x1,a.y1,a.x2,a.y2,hs);
-  }else if(t==='rect'){
+  }else if(t==='rect'||t==='box'){
     q=box(a);c.strokeRect(q.L,q.T,q.R-q.L,q.B-q.T);
   }else if(t==='ellipse'){
     c.beginPath();c.ellipse((a.x1+a.x2)/2,(a.y1+a.y2)/2,Math.abs(a.x2-a.x1)/2,Math.abs(a.y2-a.y1)/2,0,0,6.2832);
@@ -3326,7 +3326,7 @@ function hit(p,tol){
     }else if(a.t==='area'){
       var qa=box(a);
       if(p.x>qa.L-tol&&p.x<qa.R+tol&&p.y>qa.T-tol&&p.y<qa.B+tol)return a;
-    }else if(a.t==='rect'||a.t==='ellipse'){
+    }else if(a.t==='rect'||a.t==='ellipse'||a.t==='box'){
       var q1=box(a);if(nearRect(p,q1.L,q1.T,q1.R,q1.B,tol))return a;
     }else if(a.t==='cube'){
       var q=cubePts(a);
@@ -3343,7 +3343,8 @@ var ptrs={},drag=null,g=null,calMode=false;
 function npc(){return Object.keys(ptrs).length;}
 function pushUndo(){var r=cur();if(!r)return;
   r.undo.push(JSON.stringify(r.anns));if(r.undo.length>40)r.undo.shift();}
-function ctxBar(){$('ctx').className=S.sel?'show':'';}
+function ctxBar(){$('ctx').className=S.sel?'show':'';
+  if(S.sel)$('cEdit').textContent=/^(dim|rect|area|cube|fit)$/.test(S.sel.t)?'改數字':'改文字';}
 function autoSel(a){
   if(S.tool!=='select'){S.lastDraw=S.tool;setTool('select');
     toast('已選取　工具切到「選取」<br>再按「選取」可回到「'+TOOLS[S.lastDraw][1]+'」',2400);}
@@ -3575,7 +3576,7 @@ $('dkTool').onclick=function(){
      '<div class="gi" data-scan="1"><i>&#9707;</i>拉正掃描</div>'+
      (_pk==='floor'?'<div class="gi" data-cal="3"><i>&#8597;</i>垂直校正（兩線）</div>':'')+
      '</div><h3>繪圖</h3><div class="grid">';
-  ['arrow','line','ellipse','text','free'].forEach(function(k){h+=gi(k);});
+  ['arrow','line','box','ellipse','text','free'].forEach(function(k){h+=gi(k);});
   var _r=cur();
   h+='</div><h3>校準　'+(_r&&_r.H?'目前：透視校正（斜拍已修正）':(_r&&_r.ppcm?'目前：單線比例尺':'目前：未校準'))+
      '<br>正對拍攝用單線就夠；斜拍一定要用四點透視，否則誤差可達 ±20%</h3><div class="grid">'+
@@ -6270,7 +6271,7 @@ function buildHtml(name){
       'document.getElementById("pr").onclick=function(){window.print();};})();';
       var html='<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">'+
         '<meta name="viewport" content="width=device-width,initial-scale=1">'+
-        '<meta name="generator" content="圖影轉PDF.HTML報告 C2.22">'+
+        '<meta name="generator" content="圖影轉PDF.HTML報告 C2.23">'+
         '<title>'+escH(name)+'</title><style>'+css+'</style></head><body>'+
         '<div class="top"><b>'+escH(name)+'</b><span>'+total+' 頁</span><button id="pr" type="button">列印／存 PDF</button></div>'+
         '<main class="doc">'+body.join('\n')+'</main>'+
