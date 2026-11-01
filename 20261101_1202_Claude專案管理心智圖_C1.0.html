@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude專案管理心智圖</title>
+<style>
+:root{
+  --bg:#f6f5f1; --panel:#ffffff; --ink:#1f2328; --muted:#6b7077; --line:#c9c6bd;
+  --root:#2b2b2b; --accent:#c2611f;
+  --c1:#2f6fb0; --c2:#7a4fb3; --c3:#c2611f; --c4:#b23a48; --c5:#2e8b57; --c6:#8a6d1f; --c7:#4a5a6a;
+  --chip:#efeee9; --warn:#b23a48; --ok:#2e8b57;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16181b; --panel:#1f2226; --ink:#e7e7e4; --muted:#9aa0a6; --line:#3a3e44;
+    --root:#e7e7e4; --chip:#2a2e33;
+    --c1:#6ea8e6; --c2:#b08ae6; --c3:#e8935a; --c4:#e57583; --c5:#5fc28c; --c6:#d4b45a; --c7:#9fb0c0;
+    --warn:#e57583; --ok:#5fc28c;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16181b; --panel:#1f2226; --ink:#e7e7e4; --muted:#9aa0a6; --line:#3a3e44;
+  --root:#e7e7e4; --chip:#2a2e33;
+  --c1:#6ea8e6; --c2:#b08ae6; --c3:#e8935a; --c4:#e57583; --c5:#5fc28c; --c6:#d4b45a; --c7:#9fb0c0;
+  --warn:#e57583; --ok:#5fc28c;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;display:flex;flex-direction:column}
+header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font-size:17px;margin:0 12px 0 0}
+header .sub{color:var(--muted);font-size:13px;margin-right:auto}
+button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:8px;padding:5px 10px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+main{flex:1;display:flex;min-height:0}
+#stage{flex:1;overflow:auto;position:relative;cursor:grab}
+#stage.drag{cursor:grabbing}
+#canvas{position:relative;transform-origin:0 0}
+svg#links{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
+.node{position:absolute;white-space:nowrap;border-radius:10px;padding:5px 11px;background:var(--panel);border:1.5px solid var(--line);cursor:pointer;user-select:none;font-size:14px;transition:box-shadow .15s}
+.node:hover{box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.node.sel{outline:2px solid var(--accent);outline-offset:2px}
+.node.root{background:var(--root);color:var(--bg);font-weight:700;font-size:16px;border:none;padding:9px 16px}
+.node.l1{font-weight:700;color:#fff;border:none}
+.node .tog{display:inline-block;min-width:18px;margin-left:6px;font-size:11px;opacity:.75;text-align:center}
+.node .badge{font-size:11px;margin-left:6px;padding:0 6px;border-radius:6px;background:var(--chip);color:var(--muted)}
+.node.warn{border-color:var(--warn)}
+.node.todo{border-style:dashed}
+aside{width:360px;max-width:42vw;border-left:1px solid var(--line);background:var(--panel);overflow:auto;padding:16px}
+aside h2{font-size:16px;margin:0 0 4px}
+aside .path{color:var(--muted);font-size:12px;margin-bottom:10px}
+aside p,aside li{font-size:14px}
+aside ul{padding-left:18px;margin:6px 0}
+aside table{border-collapse:collapse;width:100%;font-size:13px;margin:6px 0}
+aside td,aside th{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+aside th{background:var(--chip)}
+aside a{color:var(--accent)}
+.tag{display:inline-block;font-size:12px;padding:1px 7px;border-radius:6px;margin-right:4px;background:var(--chip)}
+.tag.ok{color:var(--ok)} .tag.no{color:var(--warn)}
+.hint{color:var(--muted);font-size:13px}
+code{background:var(--chip);padding:0 4px;border-radius:4px;font-size:12.5px}
+@media (max-width:760px){
+  main{flex-direction:column}
+  aside{width:auto;max-width:none;border-left:none;border-top:1px solid var(--line);height:42vh}
+  header .sub{width:100%;order:3}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Claude 專案與版本管理</h1>
+  <span class="sub">2026-11-01 建置紀錄｜點節點看說明、再點一次展開或收合｜可拖曳畫面</span>
+  <button id="bExpand">全部展開</button>
+  <button id="bCollapse">只看主幹</button>
+  <button id="bZoomIn">＋</button>
+  <button id="bZoomOut">－</button>
+  <button id="bTheme">深淺色</button>
+</header>
+<main>
+  <div id="stage"><div id="canvas"><svg id="links"></svg></div></div>
+  <aside id="detail"></aside>
+</main>
+<script>
+const DRIVE = "https://drive.google.com/drive/folders/1IeQORkArl0mwq6GaWxC6b-tR_ed6OZxv";
+const NOTION = "https://app.notion.com/p/cc3b2103bfd04380ad999baca31d846c";
+
+const T = {
+ t:"Claude 專案管理系統", d:`
+ <p>目的：不管開了多少對話，都能 <b>10 秒內找到每個主題的最新版</b>。</p>
+ <table><tr><th>工具</th><th>角色</th></tr>
+ <tr><td>Google Drive <code>CY_定稿</code></td><td>放檔案：最新版的唯一位置</td></tr>
+ <tr><td>Notion「Claude 工作索引」</td><td>放目錄：版次、位置、下一步</td></tr>
+ <tr><td>Claude 對話</td><td>工作台：做完就交接，不拿來存檔</td></tr></table>
+ <p><a href="${DRIVE}" target="_blank">開啟 CY_定稿</a>｜<a href="${NOTION}" target="_blank">開啟 Notion 索引</a></p>`,
+ c:[
+ {t:"① 問題診斷", d:`<p>側欄找不到最新版的三個原因：</p><ul>
+   <li><b>對話被拿來放檔案</b>：同一主題開多個對話，例如 RAGIC↔NOTION 的 1024 和 1027</li>
+   <li><b>命名規則不一致</b>：<code>**</code>、<code>*</code>、有日期、沒日期混在一起</li>
+   <li><b>專案分類太少</b>：專案只有 4 個，釘選卻有 17 個</li></ul>
+   <p>核心原則：<b>Claude 對話是工作台，不是檔案櫃。最新版只能存在一個地方。</b></p>`,
+  c:[
+   {t:"對話當檔案櫃", d:"<p>版本散在不同對話裡，只能靠記憶找。解法：定稿檔一律放進 Drive。</p>"},
+   {t:"命名不一致", d:"<p><code>*</code> 和 <code>**</code> 沒有定義。解法：改用狀態前綴「▶進行／✔定稿」。</p>"},
+   {t:"釘選過多", d:"<p>釘選 17 個等於沒有重點。解法：釘選最多 7 個進行中的，完成就取消。</p>"}
+  ]},
+ {t:"② 三層架構", d:`<p>三個工具各司其職，不重疊。</p>`,
+  c:[
+   {t:"第1層：Drive 存檔案", d:`<p>判定規則：<b>子資料夾外層那一份就是最新版</b>。舊版一律移到 <code>_封存舊版</code>。</p><p>檔名：<code>yyyymmdd_hhmm_前綴_C1.x</code>（遊戲工具箱沿用 T 系列）</p>`},
+   {t:"第2層：Claude 專案按領域分", d:`<p>建議 7 個專案，和 Drive 子資料夾編號一致：</p><ul>
+     <li>01 牙科銷售行銷</li><li>02 Ragic系統</li><li>03 空壓機機房</li><li>04 資安</li>
+     <li>05 公司治理稅務</li><li>06 家庭教育</li><li>07 牙科保養合約</li></ul>
+     <p>專案知識只放<b>最新一份</b>交接檔，有新版就換掉。舊對話用對話選單的「新增至專案」歸位。</p>`},
+   {t:"第3層：對話命名＋交接卡", d:`<p><b>命名</b>：<code>狀態_yyyymmdd_主題_C版次</code></p>
+     <ul><li><code>▶進行_20261027_NOTION-RAGIC同步_C1.2</code></li><li><code>✔定稿_20261025_工具箱_C2.1</code></li></ul>
+     <p><b>交接卡</b>（貼進每個專案的「專案指示」）：</p>
+     <p><code>每次對話結束前，輸出交接卡：最新版次｜檔名｜應放 Drive 子資料夾｜下一步。定稿檔請提醒我放入 CY_定稿，並更新 Notion「Claude 工作索引」。</code></p>`}
+  ]},
+ {t:"③ Drive 沙盒", d:`<p>用兩個帳號做隔離：Claude 只連沙盒帳號，主帳號的機敏資料完全碰不到。</p><p><a href="${DRIVE}" target="_blank">開啟 CY_定稿</a></p>`,
+  c:[
+   {t:"兩個帳號的角色", d:`<table><tr><th>帳號</th><th>角色</th><th>Claude</th></tr>
+     <tr><td>ygt824（主帳號）</td><td>原始檔、機敏資料</td><td><span class="tag no">看不到</span></td></tr>
+     <tr><td>yuns7581（沙盒）</td><td>擁有 CY_定稿</td><td><span class="tag ok">可讀寫</span></td></tr></table>
+     <p>共用方向：<b>yuns7581 → ygt824</b>（ygt824 是編輯者）。反過來沒有共用，所以 Claude 進不了主帳號。</p>`},
+   {t:"CY_定稿 結構", d:`<ul><li>00_使用規則（Google 文件）</li><li>01_牙科銷售行銷</li><li>02_Ragic系統</li><li>03_空壓機機房</li><li>04_資安</li><li>05_公司治理稅務</li><li>06_家庭教育 ← 已有：遊戲工具箱 T2.43</li><li>07_牙科保養合約</li><li>_封存舊版</li></ul>`},
+   {t:"權限邊界", d:`<table><tr><th>動作</th><th>資料夾／Claude 建的檔</th><th>ygt824 放進來的檔</th></tr>
+     <tr><td>讀取</td><td>✅</td><td>✅</td></tr><tr><td>修改內容</td><td>✅</td><td>✅</td></tr>
+     <tr><td>移動</td><td>✅</td><td>❌</td></tr><tr><td>刪除</td><td>✅</td><td>❌</td></tr></table>
+     <p><b>維持現狀</b>：Claude 刪不掉你的原始檔，這本身就是保護。不建議轉移擁有權。</p>`},
+   {t:"空間 15GB", d:`<p>ygt824 放進來的檔案，空間算在<b>主帳號</b>，不佔沙盒的 15GB。</p><p>影片不要放進沙盒，留在主帳號。</p>`},
+   {t:"禁止放入", cls:"warn", d:`<table><tr><th>類別</th><th>放哪裡</th></tr>
+     <tr><td>密碼、帳號、金鑰</td><td>密碼管理器</td></tr>
+     <tr><td>稅務、財報、證件、合約正本</td><td>ygt824 的 <code>_機敏</code>（不共用）</td></tr>
+     <tr><td>客戶個資</td><td>Ragic</td></tr>
+     <tr><td>影片</td><td>ygt824</td></tr></table>`},
+   {t:"_機敏 資料夾", cls:"warn", d:`<p><b>只建在 ygt824</b>，不共用給任何人，包括 yuns7581。</p><p>曾經誤建在沙盒裡（空的），已經丟進垃圾桶。</p><p>建之前先看右上角頭像，確認登入的是 ygt824。</p>`}
+  ]},
+ {t:"④ Notion 索引", d:`<p>資料庫「Claude 工作索引」，位置：<b>00 總目錄</b>底下。</p><p><a href="${NOTION}" target="_blank">開啟 Notion 索引</a></p>`,
+  c:[
+   {t:"欄位", d:`<table><tr><th>欄位</th><th>用途</th></tr>
+     <tr><td>主題</td><td>一個主題一筆</td></tr><tr><td>專案</td><td>01～07</td></tr>
+     <tr><td>狀態</td><td>待辦／進行／定稿／封存</td></tr><tr><td>最新版次、最新檔名</td><td>對照 Drive</td></tr>
+     <tr><td>Drive連結</td><td>對應的子資料夾</td></tr><tr><td>對話連結</td><td>目前在用的 Claude 對話</td></tr>
+     <tr><td>下一步、更新日</td><td>接手時看這兩欄</td></tr></table>`},
+   {t:"已建 19 筆", d:`<ul><li>01：3D模型、禾慕影片、中彰投診所、網站評估</li><li>02：RAGIC↔NOTION</li>
+     <li>03：馬達過熱、機房教育訓練、雙馬達測試、RO</li><li>04：資安比較、密碼管理</li>
+     <li>05：沙盤規劃、治理建議、所得稅審查</li><li>06：學習樂園 C.342、小日子、益智遊戲、遊戲工具箱 T2.43</li>
+     <li>未分類：Design system build</li></ul>
+     <p>合併：RAGIC↔NOTION 的兩個對話、兩個中彰投診所整理。</p>`},
+   {t:"遊戲工具箱 已更新", d:`<p>主題改成「遊戲工具箱／符號圖示」，專案 06，版次 <b>T2.43</b>／符號圖示 C1.3，檔名 <code>20261031_遊戲工具箱_T2.43.html</code>，更新日 10/31。</p><p>T 系列保留，不改成 C。</p>`},
+   {t:"要你確認的", cls:"todo", d:`<ul><li>狀態欄目前全部是「進行」，請改成定稿或封存</li><li>Design system build 歸屬哪個專案</li><li>其他筆的版次、檔名、對話連結要你打開對話確認</li><li>「錄音」「牙科保養／藥水合約」專案裡的對話還沒建檔</li></ul>`}
+  ]},
+ {t:"⑤ 今天的執行紀錄", d:`<p>依時間順序，包含被擋下和失敗的動作。</p>`,
+  c:[
+   {t:"檢查沙盒帳號", d:`<p>yuns7581 的我的雲端硬碟、與我共用都是空的 → <span class="tag ok">可以當沙盒</span></p>`},
+   {t:"建立 CY_定稿 結構", d:`<p>建立 1 個根資料夾、8 個子資料夾，以及 00_使用規則 → <span class="tag ok">完成</span></p>`},
+   {t:"共用給 ygt824", d:`<p>Claude 執行時被權限規則擋下（授予存取權要你親自確認）→ <b>你手動共用</b> → 查過權限 <span class="tag ok">完成</span></p>`},
+   {t:"建立 Notion 資料庫＋19 筆", d:`<p>先搜尋，確認沒有重複的索引才建 → <span class="tag ok">完成</span></p>`},
+   {t:"發現 _機敏 建錯帳號", d:`<p>擁有者是 yuns7581，而且是空的 → 你同意後丟進垃圾桶 <span class="tag ok">完成</span></p>`},
+   {t:"索引搬到 00 總目錄", d:`<p><span class="tag ok">完成</span>（顯示在頁面最下方，可以自己拖到最上面）</p>`},
+   {t:"第一次掃描 Drive", d:`<p>還沒有檔案。原因：你上傳的時間比掃描晚。</p>`},
+   {t:"找到遊戲工具箱 T2.43", d:`<p>擁有者 ygt824，7.2MB，放在根目錄 → 確認 Claude 讀得到</p>`},
+   {t:"移動檔案失敗", d:`<p>Drive 拒絕：檔案擁有者不是沙盒帳號 → <b>你手動移進 06</b> → 確認 <span class="tag ok">完成</span></p>`},
+   {t:"更新 Notion 工具箱那筆", d:`<p>版次、檔名、專案、連結、下一步都已更新 → <span class="tag ok">完成</span></p>`}
+  ]},
+ {t:"⑥ 你的待辦", d:`<p>依優先順序排列，都要用 <b>ygt824</b> 操作（Claude 碰不到主帳號）。</p>`,
+  c:[
+   {t:"1. 在 ygt824 建 _機敏", cls:"todo", d:"<p>先看頭像確認是 ygt824，不共用。把稅務、財報、證件移進去。</p>"},
+   {t:"2. 新增 CY_定稿 捷徑", cls:"todo", d:"<p>與我共用 → CY_定稿 → 右鍵 → 整理 → 新增捷徑到雲端硬碟。</p>"},
+   {t:"3. 把定稿檔拖進子資料夾", cls:"todo", d:"<p>直接拖進 01～07，不要先放根目錄。符號圖示 C1.3 放 06。</p>"},
+   {t:"4. 專案指示貼交接卡", cls:"todo", d:"<p>內容在「② 三層架構 → 第3層」。</p>"},
+   {t:"5. 對話歸專案、整理釘選", cls:"todo", d:"<p>改名加狀態前綴，完成的取消釘選，釘選最多 7 個。</p>"},
+   {t:"6. 密碼管理器", cls:"todo", d:"<p>資安的優先項目：先決定用哪一套，密碼絕不放 Drive 或 Notion。</p>"}
+  ]},
+ {t:"⑦ 日常流程", d:`<p>以後每次有新版都照這個流程：</p>`,
+  c:[
+   {t:"1. 對話結束拿交接卡", d:"<p>版次、檔名、資料夾、下一步。</p>"},
+   {t:"2. ygt824 拖進子資料夾", d:"<p>電腦：直接拖。手機：⋮ → 移動。</p>"},
+   {t:"3. 舊版拖進 _封存舊版", d:"<p>外層只留一份。</p>"},
+   {t:"4. 跟 Claude 說「掃描 Drive」", d:"<p>Claude 會補 Notion 的檔名、版次、更新日，並提醒放錯位置的檔案。</p>"}
+  ]}
+ ]
+};
+
+// ---------- layout & render ----------
+const COLORS=["--c1","--c2","--c3","--c4","--c5","--c6","--c7"];
+let uid=0;
+(function prep(n,depth,color,path){
+  n.id=uid++; n.depth=depth; n.path=path;
+  n.open = depth<1;
+  n.color=color;
+  (n.c||[]).forEach((ch,i)=>{ if(depth===0) ch._i=i; prep(ch,depth+1,depth===0?COLORS[i%COLORS.length]:color,[...path,n.t]); });
+})(T,0,null,[]);
+
+const canvas=document.getElementById('canvas'), svg=document.getElementById('links'), stage=document.getElementById('stage'), detail=document.getElementById('detail');
+let scale=1, selected=null;
+const GAPX=48, ROWH=40;
+
+function render(){
+  canvas.querySelectorAll('.node').forEach(e=>e.remove());
+  svg.innerHTML='';
+  // create elements to measure widths
+  const els=[];
+  (function mk(n){
+    const el=document.createElement('div');
+    el.className='node'+(n.depth===0?' root':'')+(n.depth===1?' l1':'')+(n.cls?' '+n.cls:'')+(selected===n?' sel':'');
+    if(n.depth===1) el.style.background=`var(${n.color})`;
+    else if(n.depth>1 && !n.cls) el.style.borderColor=`var(${n.color})`;
+    el.textContent=n.t;
+    if(n.c&&n.c.length){ const s=document.createElement('span'); s.className='tog'; s.textContent=n.open?'－':'＋'+n.c.length; el.appendChild(s); }
+    el.onclick=(e)=>{ e.stopPropagation(); if(selected===n && n.c){ n.open=!n.open; } else { selected=n; if(n.c && !n.open) n.open=true; } show(n); render(); };
+    canvas.appendChild(el); n.el=el; els.push(n);
+    if(n.open) (n.c||[]).forEach(mk);
+  })(T);
+  // column x by depth
+  const colW=[];
+  els.forEach(n=>{ n.w=n.el.offsetWidth; n.h=n.el.offsetHeight; colW[n.depth]=Math.max(colW[n.depth]||0,n.w); });
+  const colX=[24]; for(let i=1;i<colW.length;i++) colX[i]=colX[i-1]+colW[i-1]+GAPX;
+  // y: leaves sequential
+  let y=24;
+  (function lay(n){
+    const kids=n.open?(n.c||[]):[];
+    if(!kids.length){ n.y=y; y+=ROWH; }
+    else { kids.forEach(lay); n.y=(kids[0].y+kids[kids.length-1].y)/2; }
+    n.x=colX[n.depth];
+  })(T);
+  let maxX=0;
+  els.forEach(n=>{ n.el.style.left=n.x+'px'; n.el.style.top=(n.y-n.h/2+ROWH/2)+'px'; maxX=Math.max(maxX,n.x+n.w); });
+  const H=y+24, W=maxX+40;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  svg.setAttribute('width',W); svg.setAttribute('height',H);
+  let paths='';
+  els.forEach(n=>{ if(!n.open) return; (n.c||[]).forEach(ch=>{
+    const x1=n.x+n.w, y1=n.y+ROWH/2, x2=ch.x, y2=ch.y+ROWH/2, mx=(x1+x2)/2;
+    paths+=`<path d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}" fill="none" stroke="var(${ch.color})" stroke-opacity=".55" stroke-width="${n.depth===0?2.5:1.6}"/>`;
+  });});
+  svg.innerHTML=paths;
+  canvas.style.transform=`scale(${scale})`;
+}
+function show(n){
+  detail.innerHTML=`<h2>${n.t}</h2><div class="path">${n.path.join(' › ')||'中心'}</div>${n.d||''}${n.c?`<p class="hint">再點一次節點可以${n.open?'收合':'展開'}子項目（${n.c.length} 項）。</p>`:''}`;
+}
+function setAll(open){ (function f(n){ if(n.c){ n.open=open||n.depth===0; n.c.forEach(f);} })(T); render(); }
+document.getElementById('bExpand').onclick=()=>setAll(true);
+document.getElementById('bCollapse').onclick=()=>setAll(false);
+document.getElementById('bZoomIn').onclick=()=>{scale=Math.min(1.8,scale+.15);render();};
+document.getElementById('bZoomOut').onclick=()=>{scale=Math.max(.5,scale-.15);render();};
+document.getElementById('bTheme').onclick=()=>{
+  const r=document.documentElement, cur=r.getAttribute('data-theme');
+  const dark = cur? cur==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  r.setAttribute('data-theme', dark?'light':'dark');
+};
+// drag to pan
+let dragging=false,sx,sy,sl,st;
+stage.addEventListener('mousedown',e=>{ if(e.target.closest('.node')) return; dragging=true; stage.classList.add('drag'); sx=e.clientX; sy=e.clientY; sl=stage.scrollLeft; st=stage.scrollTop; });
+window.addEventListener('mousemove',e=>{ if(!dragging) return; stage.scrollLeft=sl-(e.clientX-sx); stage.scrollTop=st-(e.clientY-sy); });
+window.addEventListener('mouseup',()=>{ dragging=false; stage.classList.remove('drag'); });
+
+selected=T; show(T); render();
+</script>
+</body>
+</html>
