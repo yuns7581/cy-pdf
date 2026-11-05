@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="圖影轉PDF.HTML報告">
 <meta name="mobile-web-app-capable" content="yes">
-<title>圖影轉PDF.HTML報告 C2.23</title>
+<title>圖影轉PDF.HTML報告 C2.24</title>
 <style>
 /* ===== 外殼 ===== */
 
@@ -33,7 +33,7 @@ body.annOpen #shellHead,body.annOpen #shellTabs{display:none}
 .pane{display:none}
 #tIMG iframe{display:block;width:100%;border:0;background:#f1f5f4}
 body.imgOpen{overflow:hidden}
-#tPDF #toIK,#tPDF #toAnim{margin-left:6px}
+
 #animDlg{position:fixed;inset:0;background:#0009;z-index:121;display:none;align-items:flex-end}
 #animDlg.on{display:flex}
 #animDlg .bx{background:#fff;width:100%;max-width:560px;margin:0 auto;border-radius:14px 14px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
@@ -285,6 +285,54 @@ body.imgOpen{overflow:hidden}
     padding:0 !important;font-size:12px !important;}
 #tPDF #cShot:active{background:#FFD9BE !important}
 #tPDF #cRes{font-size:11px;color:#7E8E9C;text-align:center;margin:0 0 8px}
+/* C2.24 文件模式／個別壓縮 */
+#tPDF #cDoc{border:1px solid #3A4C5A;background:#1B2733;color:#9BAAB7;font-family:inherit;font-size:12.5px;font-weight:700;padding:6px 10px;border-radius:99px;cursor:pointer}
+#tPDF #cDoc[aria-pressed="true"]{background:#FFA463;border-color:#FFA463;color:#16202B}
+#tPDF #dov{position:fixed;inset:0;background:#0D141B;z-index:90;display:none;flex-direction:column}
+#tPDF #dov.on{display:flex}
+#tPDF #dTop{display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;color:#fff}
+#tPDF #dTop b{font-size:15px}
+#tPDF #dTop button{border:0;background:transparent;color:#fff;font-family:inherit;font-size:15px;font-weight:700;padding:8px 4px;cursor:pointer}
+#tPDF #dTop button.apply{color:#FFA463}
+#tPDF #dTop button:disabled{opacity:.4}
+#tPDF #dStage{flex:1;position:relative;overflow:hidden;touch-action:none}
+#tPDF #dCv{position:absolute;left:0;top:0;touch-action:none}
+#tPDF #dBot{padding:10px 14px calc(14px + env(safe-area-inset-bottom));background:#141D26}
+#tPDF #dBot .lbl{color:#8D9DAB;font-size:12.5px;margin:0 0 6px}
+#tPDF #dBot .seg{border-color:#2C3B48;margin-bottom:10px}
+#tPDF #dBot .seg button{flex:1;background:#1B2733;color:#9BAAB7;border-left-color:#2C3B48;padding:9px 4px;font-size:13px}
+#tPDF #dBot .seg button[aria-pressed="true"]{background:#FFA463;color:#16202B}
+#tPDF #dBot .acts{display:flex;gap:8px}
+#tPDF #dBot .acts button{flex:1;border:1px solid #2C3B48;background:#1B2733;color:#DCE4EA;font-family:inherit;font-size:13.5px;font-weight:600;padding:10px 4px;border-radius:8px;cursor:pointer}
+#tPDF #edBot .acts{flex-wrap:wrap}
+#tPDF #edDoc{color:#FFC48A !important}
+#tPDF .zsb{position:absolute;left:3px;bottom:35px;max-width:calc(100% - 6px);background:rgba(212,85,15,.92);color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+#tPDF .zsrow{display:flex;align-items:center;gap:10px;margin-top:10px}
+#tPDF .zsrow .hint{margin:0;flex:1}
+#tPDF #zsOpen{border:1px solid var(--line);background:#fff;color:var(--ink);font-family:inherit;font-size:14px;font-weight:700;padding:9px 14px;border-radius:8px;cursor:pointer;white-space:nowrap}
+#tPDF #zsSheet{position:fixed;inset:0;background:rgba(10,16,22,.55);z-index:85;display:none;align-items:flex-end;justify-content:center}
+#tPDF #zsSheet.on{display:flex}
+#tPDF #zsSheet .bx{background:#fff;width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:14px 14px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom))}
+#tPDF #zsSheet .zshd{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+#tPDF #zsSheet .zshd b{font-size:16px}
+#tPDF #zsSheet .zshd span{flex:1;color:var(--ink-2);font-size:13px}
+#tPDF #zsSheet .zshd button{border:0;background:var(--steel);color:#fff;font-family:inherit;font-size:14px;font-weight:700;padding:8px 14px;border-radius:8px;cursor:pointer}
+#tPDF #zsGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:6px}
+#tPDF .zst{position:relative;aspect-ratio:1/1;border:2px solid var(--line);border-radius:8px;overflow:hidden;background:#0D141B;padding:0;cursor:pointer}
+#tPDF .zst img{width:100%;height:100%;object-fit:contain;display:block}
+#tPDF .zst i{position:absolute;top:0;left:0;background:var(--steel);color:#fff;font-style:normal;font-size:11px;font-weight:700;min-width:18px;padding:1px 4px;border-bottom-right-radius:6px}
+#tPDF .zst em{position:absolute;left:0;right:0;bottom:0;background:rgba(212,85,15,.9);color:#fff;font-style:normal;font-size:9.5px;font-weight:700;padding:1px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#tPDF .zst.on{border-color:var(--signal);box-shadow:inset 0 0 0 3px var(--signal)}
+#tPDF .zst.on::after{content:"✓";position:absolute;top:2px;right:3px;width:20px;height:20px;border-radius:50%;background:var(--signal);color:#fff;font-size:13px;font-weight:700;line-height:20px;text-align:center}
+#tPDF .lnk{border:0;background:none;color:var(--signal-dark);font-family:inherit;font-size:13.5px;font-weight:700;padding:8px 0;cursor:pointer}
+#tPDF #zsSheet .zsft{display:flex;gap:8px;margin-top:14px}
+#tPDF #zsSheet .zsft button{flex:1;border:1px solid var(--line);background:#fff;color:var(--ink);font-family:inherit;font-size:15px;font-weight:700;padding:12px;border-radius:9px;cursor:pointer}
+#tPDF #zsSheet .zsft button.pri{background:var(--signal);border-color:var(--signal);color:#fff}
+#tPDF #zsSheet .zsft button:disabled{opacity:.45;cursor:default}
+#tPDF #annRow{flex-wrap:wrap;justify-content:flex-start;gap:6px}
+#tPDF #annRow>span{flex:0 0 100%}
+#tPDF #toIK,#tPDF #toAnim{border:1px solid var(--line);background:#fff;color:var(--ink-2);font-family:inherit;font-size:13px;font-weight:600;padding:8px 12px;border-radius:8px;cursor:pointer;margin-left:0}
+
 #tPDF .thumb{position:relative;aspect-ratio:1/1;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#0D141B}
 #tPDF .thumb img{width:100%;height:100%;object-fit:contain;display:block;cursor:zoom-in}
 #tPDF .thumb .zb{position:absolute;left:0;right:0;top:0;padding:3px 4px 3px 26px;background:rgba(13,107,110,.88);color:#fff;font-size:10.5px;font-weight:700;line-height:1.25;text-align:right;font-variant-numeric:tabular-nums;pointer-events:none}
@@ -450,7 +498,7 @@ body.imgOpen{overflow:hidden}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">圖影轉PDF.HTML報告</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C2.23</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C2.24</span></header>
 <nav id="shellTabs">
   <button data-t="PDF" class="on">照片</button>
   <button data-t="CMP">影片</button>
@@ -857,6 +905,7 @@ body.imgOpen{overflow:hidden}
       </div>
     </div>
     <p class="hint" id="qHint"></p>
+    <div class="zsrow"><button type="button" id="zsOpen">個別壓縮…</button><span id="zsNote" class="hint"></span></div>
     <button type="button" id="zRun" disabled>▶ 開始壓縮</button>
     <div id="zBar"><i></i></div>
     <p id="zSum"></p>
@@ -882,8 +931,8 @@ body.imgOpen{overflow:hidden}
       <div class="row">
         <span>頁面貼合</span>
         <div class="seg" id="full">
-          <button type="button" data-v="0" aria-pressed="true">固定 A4</button>
-          <button type="button" data-v="1">貼合影像（無白邊）</button>
+          <button type="button" data-v="0">固定 A4</button>
+          <button type="button" data-v="1" aria-pressed="true">貼合影像（無白邊）</button>
         </div>
       </div>
       <div class="row">
@@ -949,7 +998,7 @@ body.imgOpen{overflow:hidden}
   <div class="card">
     <h2>檔名</h2>
     <input type="text" id="fname" spellcheck="false">
-    <p class="hint">PDF 與照片 ZIP 共用這個檔名，自動補上副檔名。日期帶入今天，版次 C1.x 每次匯出自動 +1，隔天歸零回 C1.0。想固定檔名就把 <b>_C1.n</b> 拿掉，跳號機制不會動它。</p>
+    <p class="hint">PDF 與照片 ZIP 共用這個檔名，自動補上副檔名。日期帶入今天，版次 C1.x 每次匯出自動 +1，隔天歸零回 C1.0。中段可改（例：20261105_江牙醫機房_C1.0），日期與版次仍會自動帶入。想固定檔名就把 <b>_C1.n</b> 拿掉，跳號機制不會動它。</p>
   </div>
 </main>
 
@@ -1009,6 +1058,7 @@ body.imgOpen{overflow:hidden}
       <button type="button" id="edRotL">↺ 左轉</button>
       <button type="button" id="edRotR">↻ 右轉</button>
       <button type="button" id="edReset">重設裁切</button>
+      <button type="button" id="edDoc">📄 文件校正</button>
     </div>
   </div>
 </div>
@@ -1017,6 +1067,7 @@ body.imgOpen{overflow:hidden}
   <div id="cTop">
     <button type="button" id="cClose">完成</button>
     <b>連續拍照</b>
+    <button type="button" id="cDoc" aria-pressed="false">📄 文件模式 關</button>
     <span id="cCount">已拍 0 張</span>
   </div>
   <div id="cWrap"><video id="cEl" playsinline autoplay muted></video><div id="cFlash"></div></div>
@@ -1030,6 +1081,61 @@ body.imgOpen{overflow:hidden}
     </div>
   </div>
 </div>
+
+<div id="dov">
+  <div id="dTop">
+    <button type="button" id="dRetake">重拍</button>
+    <b id="dTitle">文件校正</b>
+    <button type="button" id="dKeep" class="apply">✓ 保留</button>
+  </div>
+  <div id="dStage"><canvas id="dCv"></canvas></div>
+  <div id="dBot">
+    <p class="lbl" id="dHint">拖四個角對齊單據邊緣</p>
+    <div class="seg" id="dFilter">
+      <button type="button" data-v="color">原色</button>
+      <button type="button" data-v="enh" aria-pressed="true">增強</button>
+      <button type="button" data-v="gray">灰階</button>
+      <button type="button" data-v="bw">黑白</button>
+    </div>
+    <p class="lbl">壓縮（之後可在「個別壓縮」改）</p>
+    <div class="seg" id="dPreset">
+      <button type="button" data-v="hi">清晰 2400px</button>
+      <button type="button" data-v="std" aria-pressed="true">標準 2000px</button>
+      <button type="button" data-v="lo">小檔 1600px</button>
+    </div>
+    <div class="acts">
+      <button type="button" id="dAuto">自動找邊</button>
+      <button type="button" id="dFull">整張不裁</button>
+      <button type="button" id="dRot">↻ 轉 90°</button>
+    </div>
+  </div>
+</div>
+
+<div id="zsSheet"><div class="bx">
+  <div class="zshd"><b>個別壓縮</b><span id="zsCnt">已選 0 張</span><button type="button" id="zsClose">完成</button></div>
+  <p class="hint" style="margin:0 0 8px">點縮圖選取（可多選），設定後按「套用」。沒選到的照片沿用共用壓縮設定。輸出格式與尺寸裁切仍用共用設定。</p>
+  <div id="zsGrid"></div>
+  <button type="button" id="zsAll" class="lnk">全選／全不選</button>
+  <div class="rows" style="margin-top:10px">
+    <div class="row"><span>長邊上限</span>
+      <select id="zsMax" class="sel">
+        <option value="orig">原始直通（不重新編碼）</option>
+        <option value="0">原尺寸</option>
+        <option value="3000">3000 px</option>
+        <option value="2400">2400 px</option>
+        <option value="2000">2000 px（文件）</option>
+        <option value="1600">1600 px</option>
+        <option value="1280">1280 px</option>
+        <option value="1100">1100 px</option>
+        <option value="800">800 px</option>
+      </select></div>
+    <div class="row" id="zsModeRow"><span>壓縮方式</span>
+      <div class="seg" id="zsMode"><button type="button" data-v="q" aria-pressed="true">指定品質</button><button type="button" data-v="s">指定大小</button></div></div>
+    <div class="row" id="zsQRow"><span>品質 <b id="zsQv">30</b></span><input type="range" id="zsQ" min="20" max="95" value="30"></div>
+    <div class="row" id="zsKBRow" style="display:none"><span>每張上限</span><span class="zsub"><input type="number" id="zsKB" value="500" min="50" step="50"> KB</span></div>
+  </div>
+  <div class="zsft"><button type="button" id="zsClear">改回共用設定</button><button type="button" id="zsApply" class="pri">套用到已選</button></div>
+</div></div>
 
 <div id="vov">
   <div id="vTop">
@@ -1085,27 +1191,27 @@ window.TB = (function(){
   function tday(){ var d=new Date(); return d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate()); }
   var seqMem=null, seqDay=null;      /* file:// 下 localStorage 可能不可用，記憶體為主 */
   function seqGet(){
-    if(seqMem!==null&&seqDay===tday()) return seqMem;
-    var n=0;
-    try{ var o=JSON.parse(localStorage.getItem('tbSeq')||'{}');
-         if(o.d===tday()) n=o.n|0; }catch(e){}
-    seqMem=n; seqDay=tday();
+    /* C2.24：每次重讀 localStorage（圖片工具等也會跳號），讀不到才用記憶體 */
+    var d=tday(), mem=(seqDay===d&&seqMem!==null)?seqMem:0, n=mem;
+    try{ var o=JSON.parse(localStorage.getItem('tbSeq')||'{}'); if(o.d===d) n=Math.max(mem,o.n|0); }catch(e){}
+    seqMem=n; seqDay=d;
     return n;
   }
   function seqSet(n){
     seqMem=n; seqDay=tday();
     try{ localStorage.setItem('tbSeq',JSON.stringify({d:tday(),n:n})); }catch(e){}
   }
-  function seqName(mid){ return tday()+'_'+(mid||'匯出')+'_C1.'+seqGet(); }
-  function seqBump(){
-    seqSet(seqGet()+1);
-    var el=document.getElementById('fname');
-    if(el){
-      var m=/^(.*_C1\.)(\d+)$/.exec((el.value||'').trim());
-      if(m) el.value=m[1]+seqGet();          /* 沒有 _C1.n 後綴＝使用者自訂固定檔名，不覆寫 */
-      else if(!(el.value||'').trim()) el.value=seqName('匯出');
-    }
+  var SEQ_MID='圖影匯出';
+  function seqName(mid){ return tday()+'_'+(mid||SEQ_MID)+'_C1.'+seqGet(); }
+  /* 檔名欄：自動格式（YYYYMMDD_名稱_C1.n）時，日期與版次每次匯出前重新帶入，App 開著過夜也不會用到昨天的日期 */
+  function fname(){
+    var el=document.getElementById('fname'); if(!el) return seqName();
+    var v=(el.value||'').trim(), m=/^\d{8}_(.+)_C1\.\d+$/.exec(v);
+    if(!v) el.value=seqName();
+    else if(m) el.value=tday()+'_'+m[1]+'_C1.'+seqGet();   /* 中段可自訂（例：江牙醫機房），日期與版次自動 */
+    return el.value.trim().replace(/\.(pdf|zip|html)$/i,'');  /* 沒有 _C1.n 後綴＝自訂固定檔名，不覆寫 */
   }
+  function seqBump(){ seqSet(seqGet()+1); fname(); }
   function toast(m,ms){
     var t=document.getElementById('tbToast');
     t.innerHTML=m; t.classList.add('on');
@@ -1369,7 +1475,7 @@ window.TB = (function(){
 
   var exports = {
     go:go, toast:toast, cur:function(){return cur;}, intake:intake, pick:pick,
-    seqName:seqName, seqBump:seqBump, seqGet:seqGet, today:tday,
+    seqName:seqName, seqBump:seqBump, seqGet:seqGet, fname:fname, today:tday,
     /* PDF／zip → 圖片檔陣列，三個分頁共用 */
     importPack:function(file){
       if(!file) return Promise.reject(new Error('沒有檔案'));
@@ -2091,7 +2197,7 @@ async function downloadZip(){
   });
   const z=await makeZip(files);
   const d=new Date(), p=n=>String(n).padStart(2,'0');
-  saveBlob(z, (window.TB&&TB.seqName?TB.seqName('壓縮圖片'):(d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'_壓縮圖片_C1.0'))+'.zip');
+  saveBlob(z, (window.TB&&TB.seqName?TB.seqName():(d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'_圖影匯出_C1.0'))+'.zip');
   if(window.TB&&TB.seqBump)TB.seqBump();
   $('btnZip').textContent='全部下載 (ZIP)'; $('btnZip').disabled=false;
 }
@@ -2230,7 +2336,7 @@ async function runVideo(){
   $('vStat').textContent = vStopFlag?'已停止（保留已錄部分）':'完成';
 
   const ext = mime.includes('mp4')?'.mp4':'.webm';
-  const name = baseName(vFile.name)+'_min'+ext;
+  const name = (window.TB&&TB.seqName?TB.seqName():baseName(vFile.name)+'_min')+ext; if(window.TB&&TB.seqBump) TB.seqBump();
   const r=Math.round((1-vOut.size/vFile.size)*100);
   $('vCard').classList.remove('hide');
   $('vResult').innerHTML='';
@@ -2292,7 +2398,7 @@ $('vCut').onclick=async()=>{
     const buf=new Uint8Array(await vFile.arrayBuffer());
     const r=MP4Trim.trim(buf, vA, vB);
     const base=(vFile.name||'video').replace(/\.[^.]+$/,'');
-    const nm=base+'_剪輯_'+Math.round(r.startSec)+'-'+Math.round(r.endSec)+'s.mp4';
+    const nm=(window.TB&&TB.seqName?TB.seqName():base+'_剪輯_'+Math.round(r.startSec)+'-'+Math.round(r.endSec)+'s')+'.mp4'; if(window.TB&&TB.seqBump) TB.seqBump();
     const url=URL.createObjectURL(r.blob);
     $('vCutOut').innerHTML=
       '<div class="stat" style="margin-top:10px">完成：'+fmt(r.blob.size)+
@@ -3967,7 +4073,7 @@ function dl(blob,name){var u=URL.createObjectURL(blob),a=document.createElement(
 function stamp(){var d=new Date(),p=function(n){return('0'+n).slice(-2);};
   return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'_'+p(d.getHours())+p(d.getMinutes());}
 function outPNG(){var r=cur();if(!r){toast('先載入圖片');return;}
-  render(r).toBlob(function(b){dl(b,(r.title||r.name)+'_標註.png');toast('PNG 已下載');},'image/png');}
+  render(r).toBlob(function(b){var nm=(window.TB&&TB.seqName)?TB.seqName():((r.title||r.name)+'_標註');dl(b,nm+'.png');if(window.TB&&TB.seqBump)TB.seqBump();toast('PNG 已下載：'+nm);},'image/png');}
 function outPDF(){
   if(!S.imgs.length){toast('先載入圖片');return;}
   toast('產生 PDF 中…');
@@ -3977,7 +4083,7 @@ function outPDF(){
       var bin=atob(b64),u=new Uint8Array(bin.length);
       for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
       return{d:u,w:c.width,h:c.height};});
-    dl(makePDF(pages),stamp()+'_'+(S.proj||'現場標註')+'_'+pages.length+'張.pdf');
+    dl(makePDF(pages),((window.TB&&TB.seqName)?TB.seqName():(stamp()+'_'+(S.proj||'現場標註')+'_'+pages.length+'張'))+'.pdf');if(window.TB&&TB.seqBump)TB.seqBump();
     toast('PDF 已下載（共 '+pages.length+' 頁）');
   }catch(err){toast('PDF 失敗：'+err.message);}},60);}
 function makePDF(pages){
@@ -4053,7 +4159,7 @@ setTool(S.tool);resize();
 "use strict";
 
 var items=[];   // {kind:'img'|'pdf', ...}
-var cfg={perPage:2, orient:'l', fit:'contain', full:0, footer:0, cover:true, cvOrg:true};
+var cfg={perPage:2, orient:'l', fit:'contain', full:1, footer:0, cover:true, cvOrg:true};
 /* C2.9 共用壓縮設定：長邊上限 × 品質（或每張 KB 上限） */
 function segVal(id){
   var b=document.querySelector('#'+id+' button[aria-pressed="true"]');
@@ -4083,7 +4189,7 @@ var byName=function(a,b){ return String(a).localeCompare(String(b),'zh-Hant',{nu
 function pad(n){ return String(n).padStart(2,'0'); }
 function today(){ var d=new Date(); return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate()); }
 function isoToday(){ var d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
-$('fname').value=(window.TB&&TB.seqName)?TB.seqName('匯出'):(today()+'_匯出_C1.0');
+$('fname').value=(window.TB&&TB.seqName)?TB.seqName():(today()+'_圖影匯出_C1.0');
 
 /* ==================== PDF 來源解析 ==================== */
 function makePDFSource(u8){
@@ -4483,8 +4589,9 @@ function exifOrientation(b){
   }
   return 1;
 }
+function specFor(it,S){ var o=(it&&(it.zs||(it.par&&it.par.zs))); return o||S; }
 function passthrough(it,force){
-  if((!force&&!imgSpec().pass)||it.rot||it.crop) return Promise.resolve(null);
+  if((!force&&!specFor(it,imgSpec()).pass)||it.rot||it.crop) return Promise.resolve(null);
   var f=it.file;
   if(f.type!=='image/jpeg'&&!/\.jpe?g$/i.test(f.name||'')) return Promise.resolve(null);
   return f.arrayBuffer().then(function(buf){
@@ -4581,7 +4688,7 @@ function encodeImg(src,S,type,FS){
 function toJpeg(it){
   return passthrough(it,!!it.keep).then(function(p){
     if(p) return p;
-    var S=it.keep?{max:100000,q:.92,mode:'q'}:imgSpec();
+    var S=it.keep?{max:100000,q:.92,mode:'q'}:specFor(it,imgSpec());
     var srcMax=0;
     return renderItem(it,1e9).then(function(c){ srcMax=Math.max(c.width,c.height); return encodeImg(c,S,'image/jpeg',null); })
       .then(function(r){
@@ -4597,7 +4704,7 @@ function toJpeg(it){
 var zCache=null;
 function zKey(){
   return JSON.stringify([imgSpec(),segVal('zFmt'),fitSpec(),items.map(function(it){
-    return [it.seq,it.rot||0,it.crop||0];
+    return [it.seq,it.rot||0,it.crop||0,it.zs||0];
   })]);
 }
 function baseOf(n){ var i=(n||'').lastIndexOf('.'); return i>0?n.slice(0,i):(n||'photo'); }
@@ -4636,12 +4743,13 @@ function buildPhotos(){
       $('zBar').classList.add('on'); $('zBar').firstChild.style.width=Math.round((i-1)/srcs.length*100)+'%';
       before+=it.file.size||0;
       if(it.gif&&it.file===it.gif&&!it.rot&&!it.crop){ addOut(it.name||it.file.name,it.file); mark(it,it.file); return next(); }
-      if((S.pass||it.keep)&&!it.rot&&!it.crop&&!FS){ addOut(it.name||it.file.name,it.file); mark(it,it.file); return next(); }
+      var SI=specFor(it,S);
+      if((SI.pass||it.keep)&&!it.rot&&!it.crop&&!FS){ addOut(it.name||it.file.name,it.file); mark(it,it.file); return next(); }
       return renderItem(it,1e9).then(function(c){
-        return encodeImg(c,S.pass?{max:100000,q:.95,mode:'q'}:S,type,FS);
+        return encodeImg(c,SI.pass?{max:100000,q:.95,mode:'q'}:SI,type,FS);
       }).then(function(r){
         var nm=baseOf(it.name||it.file.name)+(FS?('_'+r.w+'x'+r.h):'_min')+ext;
-        if(!FS&&!it.rot&&!it.crop&&it.file.size<=r.blob.size&&S.mode!=='s'&&it.file.type===type){
+        if(!FS&&!it.rot&&!it.crop&&it.file.size<=r.blob.size&&SI.mode!=='s'&&it.file.type===type){
           addOut(it.name||it.file.name,it.file); mark(it,it.file); }
         else { addOut(nm,r.blob); mark(it,r.blob); }
         return new Promise(function(res){ setTimeout(res,0); }).then(next);
@@ -4673,7 +4781,7 @@ function zDone(z){
   var pct=z.before?Math.round((1-z.after/z.before)*100):0;
   return z.files.length+' 張　'+fmtSz(z.before)+' → '+fmtSz(z.after)+(pct>0?'（省 '+pct+'%）':'');
 }
-function zipName(){ return ($('fname').value||today()+'_匯出_C1.0').trim().replace(/\.(pdf|zip)$/i,''); }
+function zipName(){ return (window.TB&&TB.fname)?TB.fname():($('fname').value||today()+'_圖影匯出_C1.0').trim().replace(/\.(pdf|zip)$/i,''); }
 function zBusy(on){ ['go','goZip','goShare','goHtml','zRun'].forEach(function(id){ $(id).disabled=on||!items.length; }); }
 function refreshThumb(it){
   it.big=null;
@@ -5174,6 +5282,9 @@ function render(){
     if(it.kind==='img'&&(it.rot||it.crop)){
       var e2=document.createElement('div'); e2.className='edited'; e2.textContent='已編輯'; d.appendChild(e2);
     }
+    if(it.kind==='img'&&it.zs){
+      var e3=document.createElement('div'); e3.className='zsb'; e3.textContent=(it.doc?'文件 ':'個別 ')+zsLabel(it.zs); d.appendChild(e3);
+    }
     var ctl=document.createElement('div'); ctl.className='ctl';
     ctl.appendChild(mk('‹','往前移',function(){ swap(i,i-1); }));
     if(it.kind==='img'){
@@ -5213,7 +5324,7 @@ function render(){
   $('pickLabel').textContent=has?'再加入照片':'選擇照片';
   $('go').disabled=!has; $('goZip').disabled=!has; $('goShare').disabled=!has; $('goHtml').disabled=!has; $('zRun').disabled=!has;
   $('annRow').style.display=items.some(function(x){ return x.kind==='img'; })?'flex':'none';
-  zSumShow();
+  zSumShow(); zsCount();
   if(has) $('status').textContent=summary();
 }
 function summary(){
@@ -5222,7 +5333,7 @@ function summary(){
   var parts=[];
   if(im) parts.push(im+' 張照片');
   if(pd) parts.push(pd+' 個 PDF（'+pg+' 頁）');
-  var total=Math.ceil(im/cfg.perPage)+pg;
+  var total=(cfg.full?im:Math.ceil(im/cfg.perPage))+pg;
   return parts.join('，')+'　約 '+total+' 頁';
 }
 function mk(t,label,fn){
@@ -5728,11 +5839,13 @@ function startCam(){
     $('status').textContent='無法開啟相機：'+(e.name==='NotAllowedError'?'權限被拒絕，請在網址列左側允許相機':e.message);
   });
 }
-function camPush(blob){
+function camPush(blob,opt){
   if(!blob) return;
+  if(DOC.on&&!opt){ docOpen(blob,'cam'); return; }        /* 文件模式：先進校正畫面 */
   var d=new Date();
-  var nm='拍攝_'+today()+'_'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds())+'_'+(camShots+1)+'.jpg';
+  var nm=(opt&&opt.name)||('拍攝_'+today()+'_'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds())+'_'+(camShots+1)+'.jpg');
   pushImage(new File([blob],nm,{type:'image/jpeg'}),nm);
+  if(opt&&opt.spec){ var li=items[items.length-1]; li.zs=opt.spec; li.doc=opt.doc; zCache=null; }
   camShots++;
   $('cCount').textContent='已拍 '+camShots+' 張';
   var f=$('cFlash');
@@ -5795,6 +5908,261 @@ $('cClose').addEventListener('click',function(){
   $('cov').classList.remove('on');
   if(camShots) $('status').textContent='連續拍照加入 '+camShots+' 張';
 });
+
+/* ==================== C2.24 文件模式（單據拍照→找邊→拉正→增強→個別壓縮） ==================== */
+var DOC_PRE={hi:{max:2400,q:.6,label:'清晰'},std:{max:2000,q:.45,label:'標準'},lo:{max:1600,q:.35,label:'小檔'}};
+var DOC={on:false,filter:'enh',preset:'std'};
+try{ Object.assign(DOC,JSON.parse(localStorage.getItem('cyDoc1')||'{}')); }catch(e){}
+function docSave(){ try{ localStorage.setItem('cyDoc1',JSON.stringify(DOC)); }catch(e){} }
+function docSpec(k){ var p=DOC_PRE[k]||DOC_PRE.std; return {max:p.max,q:p.q,pass:false,mode:'q',target:500*1024}; }
+function zsLabel(s){
+  if(!s) return '';
+  if(s.pass) return '原檔';
+  return (s.max>=100000?'原尺寸':s.max+'px')+' '+(s.mode==='s'?('≤'+Math.round(s.target/1024)+'KB'):('Q'+Math.round(s.q*100)));
+}
+var dv={src:null,disp:null,quad:null,mode:'cam',idx:-1,drag:-1,scale:1,ox:0,oy:0,cache:{},busy:false};
+function dCanvas(w,h){ var c=document.createElement('canvas'); c.width=w; c.height=h; return c; }
+/* --- 自動找邊：縮圖 → Otsu 二值 → 最大亮區 → 四極點 --- */
+function docDetect(c){
+  var k=Math.min(1,360/Math.max(c.width,c.height)), w=Math.max(8,Math.round(c.width*k)), h=Math.max(8,Math.round(c.height*k));
+  var t=dCanvas(w,h), x=t.getContext('2d'); x.drawImage(c,0,0,w,h);
+  var d=x.getImageData(0,0,w,h).data, n=w*h, L=new Uint8Array(n), hist=new Array(256).fill(0), i;
+  for(i=0;i<n;i++){ var v=(d[i*4]*77+d[i*4+1]*150+d[i*4+2]*29)>>8; L[i]=v; hist[v]++; }
+  var sum=0; for(i=0;i<256;i++) sum+=i*hist[i];
+  var sB=0,wB=0,best=0,th=128;
+  for(i=0;i<256;i++){ wB+=hist[i]; if(!wB) continue; var wF=n-wB; if(!wF) break; sB+=i*hist[i];
+    var mB=sB/wB, mF=(sum-sB)/wF, b=wB*wF*(mB-mF)*(mB-mF); if(b>best){ best=b; th=i; } }
+  var lab=new Int32Array(n), bestId=0, bestN=0, id=0, st=new Int32Array(n);
+  for(i=0;i<n;i++){
+    if(lab[i]||L[i]<=th) continue;
+    id++; var top=0, cnt=0; st[top++]=i; lab[i]=id;
+    while(top){ var p=st[--top]; cnt++; var px=p%w, py=(p-px)/w;
+      if(px>0&&!lab[p-1]&&L[p-1]>th){ lab[p-1]=id; st[top++]=p-1; }
+      if(px<w-1&&!lab[p+1]&&L[p+1]>th){ lab[p+1]=id; st[top++]=p+1; }
+      if(py>0&&!lab[p-w]&&L[p-w]>th){ lab[p-w]=id; st[top++]=p-w; }
+      if(py<h-1&&!lab[p+w]&&L[p+w]>th){ lab[p+w]=id; st[top++]=p+w; } }
+    if(cnt>bestN){ bestN=cnt; bestId=id; }
+  }
+  var fb=function(){ var mx=c.width*.05, my=c.height*.05;
+    return [{x:mx,y:my},{x:c.width-mx,y:my},{x:c.width-mx,y:c.height-my},{x:mx,y:c.height-my}]; };
+  if(!bestId||bestN<n*.12) return {quad:fb(),auto:false};
+  var tl=[1e9,0,0],tr=[-1e9,0,0],br=[-1e9,0,0],bl=[1e9,0,0];
+  for(i=0;i<n;i++){ if(lab[i]!==bestId) continue; var X=i%w, Y=(i-X)/w;
+    if(X+Y<tl[0]) tl=[X+Y,X,Y]; if(X-Y>tr[0]) tr=[X-Y,X,Y];
+    if(X+Y>br[0]) br=[X+Y,X,Y]; if(X-Y<bl[0]) bl=[X-Y,X,Y]; }
+  var q=[tl,tr,br,bl].map(function(a){ return {x:(a[1]+.5)/k,y:(a[2]+.5)/k}; });
+  var ar=Math.abs((q[0].x*q[1].y-q[1].x*q[0].y)+(q[1].x*q[2].y-q[2].x*q[1].y)+(q[2].x*q[3].y-q[3].x*q[2].y)+(q[3].x*q[0].y-q[0].x*q[3].y))/2;
+  var fr=ar/(c.width*c.height);
+  if(fr<.12||fr>.985) return {quad:fb(),auto:false};
+  return {quad:q,auto:true};
+}
+/* --- 透視：解 8 參數（目的矩形 → 來源四邊形） --- */
+function docH(src,W,H){
+  var dst=[[0,0],[W,0],[W,H],[0,H]], A=[], i, j, k;
+  for(i=0;i<4;i++){ var u=dst[i][0], v=dst[i][1], x=src[i].x, y=src[i].y;
+    A.push([u,v,1,0,0,0,-u*x,-v*x,x]); A.push([0,0,0,u,v,1,-u*y,-v*y,y]); }
+  for(i=0;i<8;i++){ var m=i; for(j=i+1;j<8;j++) if(Math.abs(A[j][i])>Math.abs(A[m][i])) m=j;
+    var t=A[i]; A[i]=A[m]; A[m]=t; var p=A[i][i]||1e-12;
+    for(k=i;k<9;k++) A[i][k]/=p;
+    for(j=0;j<8;j++) if(j!==i){ var f=A[j][i]; if(f) for(k=i;k<9;k++) A[j][k]-=f*A[i][k]; } }
+  return A.map(function(r){ return r[8]; });
+}
+function docWarp(c,q,maxSide){
+  var dist=function(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); };
+  var W=Math.max(dist(q[0],q[1]),dist(q[3],q[2])), H=Math.max(dist(q[0],q[3]),dist(q[1],q[2]));
+  var s=Math.min(1,maxSide/Math.max(W,H)); W=Math.max(16,Math.round(W*s)); H=Math.max(16,Math.round(H*s));
+  var h=docH(q,W,H), sw=c.width, sh=c.height;
+  var sd=c.getContext('2d').getImageData(0,0,sw,sh).data;
+  var o=dCanvas(W,H), ox=o.getContext('2d'), od=ox.createImageData(W,H), D=od.data, p=0;
+  for(var v=0;v<H;v++){ for(var u=0;u<W;u++){
+    var z=h[6]*u+h[7]*v+1, X=(h[0]*u+h[1]*v+h[2])/z, Y=(h[3]*u+h[4]*v+h[5])/z;
+    if(X<0)X=0; if(Y<0)Y=0; if(X>sw-1.001)X=sw-1.001; if(Y>sh-1.001)Y=sh-1.001;
+    var x0=X|0, y0=Y|0, fx=X-x0, fy=Y-y0, i0=(y0*sw+x0)*4, i1=i0+4, i2=i0+sw*4, i3=i2+4;
+    for(var ch=0;ch<3;ch++){
+      D[p+ch]=(sd[i0+ch]*(1-fx)+sd[i1+ch]*fx)*(1-fy)+(sd[i2+ch]*(1-fx)+sd[i3+ch]*fx)*fy; }
+    D[p+3]=255; p+=4; } }
+  ox.putImageData(od,0,0); return o;
+}
+/* --- 濾鏡：增強（紙張變白）／灰階／黑白（局部門檻，掃描器效果） --- */
+function docFilter(c,f){
+  if(f==='color') return c;
+  var w=c.width, h=c.height, x=c.getContext('2d'), im=x.getImageData(0,0,w,h), d=im.data, n=w*h, i;
+  var L=new Uint8Array(n), hist=new Array(256).fill(0);
+  for(i=0;i<n;i++){ var v=(d[i*4]*77+d[i*4+1]*150+d[i*4+2]*29)>>8; L[i]=v; hist[v]++; }
+  if(f==='bw'){
+    var r=Math.max(6,Math.round(Math.min(w,h)/28)), I=new Float64Array((w+1)*(h+1)), y, xx;
+    for(y=0;y<h;y++){ var rs=0; for(xx=0;xx<w;xx++){ rs+=L[y*w+xx]; I[(y+1)*(w+1)+xx+1]=I[y*(w+1)+xx+1]+rs; } }
+    for(y=0;y<h;y++){ var y0=Math.max(0,y-r), y1=Math.min(h,y+r+1);
+      for(xx=0;xx<w;xx++){ var x0=Math.max(0,xx-r), x1=Math.min(w,xx+r+1);
+        var s=I[y1*(w+1)+x1]-I[y0*(w+1)+x1]-I[y1*(w+1)+x0]+I[y0*(w+1)+x0], m=s/((y1-y0)*(x1-x0));
+        var o=(L[y*w+xx]<m*.86&&L[y*w+xx]<215)?0:255, q=(y*w+xx)*4; d[q]=d[q+1]=d[q+2]=o; } }
+  }else{
+    /* 2% 當黑、80% 當紙白；增強＝每個色版各自拉，紙張偏黃也會變白 */
+    var pct=function(H){ var acc=0, lo=0, hi=255, j; for(j=0;j<256;j++){ acc+=H[j]; if(acc<=n*.02) lo=j; if(acc<=n*.80) hi=j; }
+      hi=Math.max(hi,140); lo=Math.min(lo,hi-60); return [lo,255/(hi-lo)]; };
+    if(f==='gray'){ var G=pct(hist);
+      for(i=0;i<n;i++){ var g=(L[i]-G[0])*G[1], q1=i*4; d[q1]=d[q1+1]=d[q1+2]=g; } }
+    else{ var Hc=[new Array(256).fill(0),new Array(256).fill(0),new Array(256).fill(0)], c2;
+      for(i=0;i<n;i++){ Hc[0][d[i*4]]++; Hc[1][d[i*4+1]]++; Hc[2][d[i*4+2]]++; }
+      var P=[pct(Hc[0]),pct(Hc[1]),pct(Hc[2])];
+      for(i=0;i<n;i++){ var q2=i*4; for(c2=0;c2<3;c2++) d[q2+c2]=(d[q2+c2]-P[c2][0])*P[c2][1]; } }
+  }
+  x.putImageData(im,0,0); return c;
+}
+/* --- 校正畫面 --- */
+function docOpen(blob,mode,idx){
+  dv.mode=mode; dv.idx=idx==null?-1:idx; dv.cache={};
+  $('dTitle').textContent=mode==='cam'?'文件校正（第 '+(camShots+1)+' 張）':'文件校正';
+  $('dRetake').textContent=mode==='cam'?'重拍':'取消';
+  $('dHint').textContent='讀取中…';
+  $('dov').classList.add('on');
+  return createImageBitmap(blob).then(function(bm){
+    var k=Math.min(1,3200/Math.max(bm.width,bm.height));
+    var c=dCanvas(Math.round(bm.width*k),Math.round(bm.height*k)); c.getContext('2d').drawImage(bm,0,0,c.width,c.height);
+    if(bm.close) bm.close();
+    dv.src=c; dv.name=blob.name||'';
+    var r=docDetect(c); dv.quad=r.quad;
+    $('dHint').textContent=r.auto?'已自動找到邊緣，拖四個角微調':'找不到明顯邊緣，請拖四個角對齊單據';
+    docSeg(); docLayout();
+  }).catch(function(e){ $('dHint').textContent='讀取失敗：'+(e&&e.message||e); });
+}
+function docSeg(){
+  [['dFilter',DOC.filter],['dPreset',DOC.preset]].forEach(function(a){
+    Array.prototype.forEach.call($(a[0]).querySelectorAll('button'),function(b){ b.setAttribute('aria-pressed',b.dataset.v===a[1]?'true':'false'); }); });
+}
+function docLayout(){
+  if(!dv.src) return;
+  var st=$('dStage'), cw=st.clientWidth, chh=st.clientHeight, s=Math.min((cw-36)/dv.src.width,(chh-36)/dv.src.height);
+  dv.scale=s; var w=Math.round(dv.src.width*s), h=Math.round(dv.src.height*s);
+  var cv=$('dCv'), dpr=window.devicePixelRatio||1;
+  cv.width=Math.round(cw*dpr); cv.height=Math.round(chh*dpr); cv.style.width=cw+'px'; cv.style.height=chh+'px';
+  dv.ox=Math.round((cw-w)/2); dv.oy=Math.round((chh-h)/2); dv.dpr=dpr;
+  if(!dv.disp||dv.disp.width!==w){ dv.disp=dCanvas(w,h); dv.disp.getContext('2d').drawImage(dv.src,0,0,w,h); dv.cache={}; }
+  docDraw();
+}
+function docDispF(){
+  var f=DOC.filter;
+  if(!dv.cache[f]){ var c=dCanvas(dv.disp.width,dv.disp.height); c.getContext('2d').drawImage(dv.disp,0,0); dv.cache[f]=docFilter(c,f); }
+  return dv.cache[f];
+}
+function docDraw(){
+  var cv=$('dCv'), x=cv.getContext('2d'), s=dv.scale, P=dv.quad.map(function(p){ return {x:dv.ox+p.x*s,y:dv.oy+p.y*s}; });
+  x.setTransform(dv.dpr,0,0,dv.dpr,0,0); x.clearRect(0,0,cv.width,cv.height);
+  x.drawImage(docDispF(),dv.ox,dv.oy);
+  x.fillStyle='rgba(0,0,0,.45)'; x.beginPath(); x.rect(dv.ox,dv.oy,dv.disp.width,dv.disp.height);
+  x.moveTo(P[0].x,P[0].y); for(var i=3;i>=0;i--) x.lineTo(P[i].x,P[i].y); x.closePath(); x.fill('evenodd');
+  x.strokeStyle='#FFA463'; x.lineWidth=2.5; x.beginPath(); P.forEach(function(p,i){ i?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y); }); x.closePath(); x.stroke();
+  P.forEach(function(p,i){ x.beginPath(); x.arc(p.x,p.y,i===dv.drag?17:13,0,6.2832); x.fillStyle='rgba(255,164,99,.35)'; x.fill(); x.lineWidth=3; x.strokeStyle='#FFA463'; x.stroke(); });
+}
+function docPt(e){ var r=$('dCv').getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}; }
+$('dCv').addEventListener('pointerdown',function(e){
+  if(!dv.quad) return; var p=docPt(e), s=dv.scale, best=-1, bd=40;
+  dv.quad.forEach(function(q,i){ var d=Math.hypot(dv.ox+q.x*s-p.x,dv.oy+q.y*s-p.y); if(d<bd){ bd=d; best=i; } });
+  if(best<0) return; dv.drag=best; this.setPointerCapture(e.pointerId); e.preventDefault(); docDraw();
+});
+$('dCv').addEventListener('pointermove',function(e){
+  if(dv.drag<0) return; var p=docPt(e), s=dv.scale;
+  dv.quad[dv.drag]={x:Math.max(0,Math.min(dv.src.width,(p.x-dv.ox)/s)),y:Math.max(0,Math.min(dv.src.height,(p.y-dv.oy)/s))}; docDraw();
+});
+['pointerup','pointercancel'].forEach(function(ev){ $('dCv').addEventListener(ev,function(){ if(dv.drag>=0){ dv.drag=-1; docDraw(); } }); });
+window.addEventListener('resize',function(){ if($('dov').classList.contains('on')) docLayout(); });
+$('dFilter').addEventListener('click',function(e){ var b=e.target.closest('button[data-v]'); if(!b) return; DOC.filter=b.dataset.v; docSave(); docSeg(); docDraw(); });
+$('dPreset').addEventListener('click',function(e){ var b=e.target.closest('button[data-v]'); if(!b) return; DOC.preset=b.dataset.v; docSave(); docSeg(); });
+$('dAuto').addEventListener('click',function(){ if(!dv.src) return; var r=docDetect(dv.src); dv.quad=r.quad; $('dHint').textContent=r.auto?'已自動找到邊緣':'找不到明顯邊緣，已框整張'; docDraw(); });
+$('dFull').addEventListener('click',function(){ if(!dv.src) return; var w=dv.src.width, h=dv.src.height; dv.quad=[{x:0,y:0},{x:w,y:0},{x:w,y:h},{x:0,y:h}]; $('dHint').textContent='整張保留，只做增強與壓縮'; docDraw(); });
+$('dRot').addEventListener('click',function(){
+  if(!dv.src) return; var s=dv.src, c=dCanvas(s.height,s.width), x=c.getContext('2d');
+  x.translate(c.width,0); x.rotate(Math.PI/2); x.drawImage(s,0,0);
+  var H0=s.height; dv.quad=dv.quad.map(function(p){ return {x:H0-p.y,y:p.x}; });
+  dv.quad=[dv.quad[3],dv.quad[0],dv.quad[1],dv.quad[2]];
+  dv.src=c; dv.disp=null; docLayout();
+});
+function docClose(){ $('dov').classList.remove('on'); dv.src=null; dv.disp=null; dv.cache={}; dv.busy=false; $('dKeep').disabled=false; }
+$('dRetake').addEventListener('click',docClose);
+$('dKeep').addEventListener('click',function(){
+  if(!dv.src||dv.busy) return; dv.busy=true; $('dKeep').disabled=true; $('dHint').textContent='處理中…';
+  var P=DOC_PRE[DOC.preset]||DOC_PRE.std, mode=dv.mode, idx=dv.idx, src=dv.src, quad=dv.quad.slice(), flt=DOC.filter;
+  setTimeout(function(){
+    var out;
+    try{ out=docFilter(docWarp(src,quad,P.max),flt); }catch(e){ $('dHint').textContent='處理失敗：'+(e&&e.message||e); dv.busy=false; $('dKeep').disabled=false; return; }
+    out.toBlob(function(b){
+      if(!b){ $('dHint').textContent='處理失敗'; dv.busy=false; $('dKeep').disabled=false; return; }
+      var d=new Date(), spec=docSpec(DOC.preset);
+      if(mode==='cam'){
+        var nm='文件_'+today()+'_'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds())+'_'+(camShots+1)+'.jpg';
+        camPush(new File([b],nm,{type:'image/jpeg'}),{doc:DOC.preset,spec:spec,name:nm});
+      }else{
+        var it=items[idx]; if(it){
+          var nm2=baseOf(it.name||'文件')+'_文件.jpg';
+          if(it.url) URL.revokeObjectURL(it.url);
+          it.file=new File([b],nm2,{type:'image/jpeg'}); it.url=URL.createObjectURL(it.file); it.name=nm2;
+          it.rot=0; it.crop=null; it.thumb=null; it.big=null; it.zs=spec; it.doc=DOC.preset; zCache=null; render();
+          $('status').textContent='第 '+(idx+1)+' 張已做文件校正（'+P.label+'壓縮）';
+        }
+      }
+      docClose();
+    },'image/jpeg',.92);
+  },30);
+});
+$('cDoc').addEventListener('click',function(){ DOC.on=!DOC.on; docSave(); docBtn(); });
+function docBtn(){ var b=$('cDoc'); b.textContent=DOC.on?'📄 文件模式 開':'📄 文件模式 關'; b.setAttribute('aria-pressed',DOC.on?'true':'false');
+  $('cRes').dataset.doc=DOC.on?'1':''; }
+docBtn();
+$('edDoc').addEventListener('click',function(){ var i=ed.idx; if(i<0||!items[i]) return; closeEditor(); docOpen(items[i].file,'item',i); });
+
+/* ==================== C2.24 個別壓縮 ==================== */
+var zsSel={};
+function zsOpen(){
+  zsSel={}; var any=false;
+  items.forEach(function(it){ if(it.kind==='img'&&it.zs){ zsSel[it.seq]=1; any=true; } });
+  var src=any?(items.filter(function(it){ return it.zs; })[0].zs):imgSpec();
+  $('zsMax').value=src.pass?'orig':(src.max>=100000?'0':String(src.max));
+  if(!$('zsMax').value) $('zsMax').value='0';
+  $('zsQ').value=Math.round((src.q||.3)*100); $('zsQv').textContent=$('zsQ').value;
+  $('zsKB').value=Math.round((src.target||512000)/1024);
+  Array.prototype.forEach.call($('zsMode').querySelectorAll('button'),function(b){ b.setAttribute('aria-pressed',b.dataset.v===(src.mode||'q')?'true':'false'); });
+  zsSync(); zsGrid(); $('zsSheet').classList.add('on');
+}
+function zsVal(){
+  var mv=$('zsMax').value; if(mv==='orig') return {max:100000,q:.95,pass:true,mode:'q'};
+  var m=parseInt(mv,10), mode=segVal('zsMode')||'q';
+  return {max:m>0?m:100000,q:parseInt($('zsQ').value,10)/100,pass:false,mode:mode,target:Math.max(20,parseInt($('zsKB').value,10)||500)*1024};
+}
+function zsSync(){
+  var orig=$('zsMax').value==='orig', s=segVal('zsMode')==='s';
+  $('zsModeRow').style.display=orig?'none':'flex'; $('zsQRow').style.display=(orig||s)?'none':'flex'; $('zsKBRow').style.display=(!orig&&s)?'flex':'none';
+}
+function zsGrid(){
+  var g=$('zsGrid'); g.innerHTML=''; var n=0;
+  items.forEach(function(it,i){
+    if(it.kind!=='img') return;
+    var on=!!zsSel[it.seq]; if(on) n++;
+    var b=document.createElement('button'); b.type='button'; b.className='zst'+(on?' on':'');
+    b.innerHTML='<img alt=""><i>'+(i+1)+'</i>'+(it.zs?'<em>'+(it.doc?'文件 ':'')+zsLabel(it.zs)+'</em>':'');
+    b.querySelector('img').src=it.thumb||it.url;
+    b.addEventListener('click',function(){ if(zsSel[it.seq]) delete zsSel[it.seq]; else zsSel[it.seq]=1; zsGrid(); });
+    g.appendChild(b);
+  });
+  $('zsCnt').textContent='已選 '+n+' 張';
+  $('zsApply').disabled=!n; $('zsClear').disabled=!n;
+}
+function zsApplyTo(spec){
+  var n=0; items.forEach(function(it){ if(zsSel[it.seq]&&it.kind==='img'){ if(spec){ it.zs=spec; } else { delete it.zs; delete it.doc; } n++; } });
+  zCache=null; render(); zsGrid(); return n;
+}
+$('zsOpen').addEventListener('click',function(){ if(!items.some(function(x){ return x.kind==='img'; })){ $('status').textContent='先加入照片'; return; } zsOpen(); });
+$('zsMax').addEventListener('change',zsSync);
+$('zsMode').addEventListener('click',function(e){ var b=e.target.closest('button[data-v]'); if(!b) return;
+  Array.prototype.forEach.call(this.querySelectorAll('button'),function(x){ x.setAttribute('aria-pressed',x===b?'true':'false'); }); zsSync(); });
+$('zsQ').addEventListener('input',function(){ $('zsQv').textContent=this.value; });
+$('zsAll').addEventListener('click',function(){ var all=items.filter(function(it){ return it.kind==='img'; }), allOn=all.every(function(it){ return zsSel[it.seq]; });
+  zsSel={}; if(!allOn) all.forEach(function(it){ zsSel[it.seq]=1; }); zsGrid(); });
+$('zsApply').addEventListener('click',function(){ var s=zsVal(), n=zsApplyTo(s); $('status').textContent=n+' 張改用個別壓縮：'+zsLabel(s); });
+$('zsClear').addEventListener('click',function(){ var n=zsApplyTo(null); $('status').textContent=n+' 張改回共用壓縮設定'; });
+$('zsClose').addEventListener('click',function(){ $('zsSheet').classList.remove('on'); });
+$('zsSheet').addEventListener('click',function(e){ if(e.target===this) this.classList.remove('on'); });
+function zsCount(){ var n=items.filter(function(it){ return it.kind==='img'&&it.zs; }).length; $('zsNote').textContent=n?('目前 '+n+' 張使用個別設定（縮圖下方橘標）'):'可挑幾張照片另設長邊與品質，其餘沿用上面的共用設定。'; }
+
 
 $('batchRot').addEventListener('click',function(e){
   var b=e.target.closest('button[data-r]'); if(!b) return;
@@ -6152,15 +6520,16 @@ function htmlEntries(){
   var S=imgSpec(), W=webpSpec(S), out=[], gifs=[], skipped=0, n=0, fb=0;
   var total=items.length;
   var enc=function(it){
-    var raw=(S.pass||it.keep)&&!it.rot&&!it.crop;
+    var SI=specFor(it,S), WI=(SI===S)?W:webpSpec(SI);
+    var raw=(SI.pass||it.keep)&&!it.rot&&!it.crop;
     if(raw) return imgDims(it.file).then(function(d){ return {blob:it.file,w:d.w,h:d.h}; });
     return renderItem(it,1e9).then(function(c){
       var srcMax=Math.max(c.width,c.height);
-      return encodeImg(c,W,'image/webp',null).then(function(r){
+      return encodeImg(c,WI,'image/webp',null).then(function(r){
         if(r.blob.type==='image/webp') return r;
-        fb=1; return encodeImg(c,S,'image/jpeg',null);
+        fb=1; return encodeImg(c,SI,'image/jpeg',null);
       }).then(function(r){
-        if(!it.rot&&!it.crop&&S.mode!=='s'&&it.file.size<=r.blob.size&&Math.max(r.w,r.h)===srcMax)
+        if(!it.rot&&!it.crop&&SI.mode!=='s'&&it.file.size<=r.blob.size&&Math.max(r.w,r.h)===srcMax)
           return {blob:it.file,w:r.w,h:r.h};
         return r;
       });
@@ -6271,7 +6640,7 @@ function buildHtml(name){
       'document.getElementById("pr").onclick=function(){window.print();};})();';
       var html='<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">'+
         '<meta name="viewport" content="width=device-width,initial-scale=1">'+
-        '<meta name="generator" content="圖影轉PDF.HTML報告 C2.23">'+
+        '<meta name="generator" content="圖影轉PDF.HTML報告 C2.24">'+
         '<title>'+escH(name)+'</title><style>'+css+'</style></head><body>'+
         '<div class="top"><b>'+escH(name)+'</b><span>'+total+' 頁</span><button id="pr" type="button">列印／存 PDF</button></div>'+
         '<main class="doc">'+body.join('\n')+'</main>'+
@@ -6332,7 +6701,7 @@ $('go').addEventListener('click',function(){
       return pre.then(function(){ return new Promise(function(r){ setTimeout(r,30); }); })
         .then(function(){ return buildDoc(seq,opts); })
         .then(function(bytes){
-          var name=($('fname').value||today()+'_匯出_C1.0').trim().replace(/\.pdf$/i,'');
+          var name=zipName();
           var blob=new Blob([bytes],{type:'application/pdf'});
           var url=URL.createObjectURL(blob);
           var a=document.createElement('a');
@@ -6419,6 +6788,7 @@ function pdfImages(f){
 
 /* ==================== 兩段式影像設定 ==================== */
 function fullHint(){
+  ['perPage','orient','fit','footerOpt'].forEach(function(id){ var r=$(id)&&$(id).closest('.row'); if(r) r.style.opacity=cfg.full?'.45':''; });
   $('fullHint').innerHTML = cfg.full
     ? '每頁一張，頁面尺寸直接取影像比例，<b>四邊零留白</b>，不加頁尾。重組掃描型 PDF 用這個。<br>此模式下「每頁張數／紙張方向／格子填法／頁尾」不作用。'
     : '固定 A4 版面，照片依每頁張數排格子，四周留白並可加頁尾。現場照片報告用這個。';
@@ -6483,7 +6853,7 @@ $('goZip').addEventListener('click',function(){
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
     };
-    if(z.files.length===1){ save(z.files[0],z.files[0].name); $('status').textContent='完成：'+zDone(z); return; }
+    if(z.files.length===1){ var f1=z.files[0], n1=zipName()+(f1.name.slice(f1.name.lastIndexOf('.'))||'.jpg'); save(f1,n1); $('status').textContent='完成：'+n1+'　'+zDone(z); if(window.TB&&TB.seqBump) TB.seqBump(); return; }
     if(!window.CMP||!CMP.makeZip) throw new Error('打包模組未就緒');
     $('status').textContent='打包中…';
     return CMP.makeZip(z.files.map(function(f){ return {name:f.name,blob:f}; })).then(function(zb){

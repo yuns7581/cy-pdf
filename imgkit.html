@@ -449,10 +449,12 @@ const extOf = n => { const i = n.lastIndexOf('.'); return i > 0 ? n.slice(i + 1)
 function ymd(d = new Date()) { return d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0'); }
 /* 共用每日流水號：與現場工具箱、錄音剪接同一組 tbSeq（{d:日期, n:序號}），取目前號碼後 +1 */
 function nextSerial() {
+  try { const T = window.parent && window.parent !== window && window.parent.TB;
+        if (T && T.seqName) { const nm = T.seqName(); T.seqBump(); return nm; } } catch (e) {}
   const today = ymd(); let n = 0;
   try { const o = JSON.parse(localStorage.getItem('tbSeq') || '{}'); if (o.d === today) n = o.n | 0; } catch (e) {}
   try { localStorage.setItem('tbSeq', JSON.stringify({ d: today, n: n + 1 })); } catch (e) {}
-  return `${today}_匯出_C1.${n}`;
+  return `${today}_圖影匯出_C1.${n}`;
 }
 let toastT;
 function toast(msg, err) {
