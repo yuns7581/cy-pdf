@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="圖影轉PDF.HTML報告">
 <meta name="mobile-web-app-capable" content="yes">
-<title>圖影轉PDF.HTML報告 C2.24</title>
+<title>圖影轉PDF.HTML報告 C2.25</title>
 <style>
 /* ===== 外殼 ===== */
 
@@ -329,6 +329,17 @@ body.imgOpen{overflow:hidden}
 #tPDF #zsSheet .zsft button{flex:1;border:1px solid var(--line);background:#fff;color:var(--ink);font-family:inherit;font-size:15px;font-weight:700;padding:12px;border-radius:9px;cursor:pointer}
 #tPDF #zsSheet .zsft button.pri{background:var(--signal);border-color:var(--signal);color:#fff}
 #tPDF #zsSheet .zsft button:disabled{opacity:.45;cursor:default}
+
+#tPDF #dNext{position:absolute;inset:0;background:rgba(13,20,27,.88);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff}
+#tPDF #dNext.on{display:flex}
+#tPDF #dNext p{font-size:16px;font-weight:700;margin:0 0 4px}
+#tPDF #dNext .nx{min-width:220px;text-align:center;border:1px solid #3A4C5A;background:#1B2733;color:#DCE4EA;font-family:inherit;font-size:16px;font-weight:700;padding:14px 18px;border-radius:10px;cursor:pointer}
+#tPDF #dNext .nx.pri{background:#FFA463;border-color:#FFA463;color:#16202B}
+#tPDF #dReshot{flex:1;display:none;align-items:center;justify-content:center;border:1px solid #2C3B48;background:#1B2733;color:#FFC48A;font-size:13.5px;font-weight:600;padding:10px 4px;border-radius:8px;cursor:pointer}
+#tPDF #dov[data-mode="nat"] #dReshot{display:flex}
+#tPDF #docCapBtn{border-style:solid;border-color:#FFA463;background:#FFF6EE;color:#A8420B}
+#tPDF #cFocus{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;border:2px solid #FFA463;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .4s}
+#tPDF #cFocus.on{opacity:1;transition:none}
 #tPDF #annRow{flex-wrap:wrap;justify-content:flex-start;gap:6px}
 #tPDF #annRow>span{flex:0 0 100%}
 #tPDF #toIK,#tPDF #toAnim{border:1px solid var(--line);background:#fff;color:var(--ink-2);font-family:inherit;font-size:13px;font-weight:600;padding:8px 12px;border-radius:8px;cursor:pointer;margin-left:0}
@@ -498,7 +509,7 @@ body.imgOpen{overflow:hidden}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">圖影轉PDF.HTML報告</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C2.24</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C2.25</span></header>
 <nav id="shellTabs">
   <button data-t="PDF" class="on">照片</button>
   <button data-t="CMP">影片</button>
@@ -813,6 +824,12 @@ body.imgOpen{overflow:hidden}
         <input type="file" id="afiles" multiple>
       </label>
     </div>
+    <div class="picks">
+      <label class="pick wide" for="docCap" id="docCapBtn">
+        <span>📄 文件掃描（手機原相機・最清晰）</span>
+        <input type="file" id="docCap" accept="image/*" capture="environment">
+      </label>
+    </div>
     <p class="empty" id="empty">還沒有內容。「選擇照片」叫出相片選擇器；「影片抓格」挑影片後逐格擷取畫面；PDF 會問你要整份附加還是拆出照片。<br>加好之後，下方可以<b>下載／分享壓縮後的照片</b>，或<b>排版成 PDF</b>，同一份清單。</p>
     <div class="grid" id="grid"></div>
     <div class="row" id="sortRow" style="margin-top:12px;display:none">
@@ -1070,7 +1087,7 @@ body.imgOpen{overflow:hidden}
     <button type="button" id="cDoc" aria-pressed="false">📄 文件模式 關</button>
     <span id="cCount">已拍 0 張</span>
   </div>
-  <div id="cWrap"><video id="cEl" playsinline autoplay muted></video><div id="cFlash"></div></div>
+  <div id="cWrap"><video id="cEl" playsinline autoplay muted></video><div id="cFlash"></div><div id="cFocus"></div></div>
   <div>
     <p id="cRes">—</p>
     <div id="cBot">
@@ -1088,7 +1105,11 @@ body.imgOpen{overflow:hidden}
     <b id="dTitle">文件校正</b>
     <button type="button" id="dKeep" class="apply">✓ 保留</button>
   </div>
-  <div id="dStage"><canvas id="dCv"></canvas></div>
+  <div id="dStage"><canvas id="dCv"></canvas>
+    <div id="dNext"><p id="dNextT">已加入</p>
+      <label class="nx pri" for="docCap">📷 拍下一張</label>
+      <button type="button" class="nx" id="dNextDone">完成</button></div>
+  </div>
   <div id="dBot">
     <p class="lbl" id="dHint">拖四個角對齊單據邊緣</p>
     <div class="seg" id="dFilter">
@@ -1099,14 +1120,15 @@ body.imgOpen{overflow:hidden}
     </div>
     <p class="lbl">壓縮（之後可在「個別壓縮」改）</p>
     <div class="seg" id="dPreset">
-      <button type="button" data-v="hi">清晰 2400px</button>
-      <button type="button" data-v="std" aria-pressed="true">標準 2000px</button>
+      <button type="button" data-v="hi" aria-pressed="true">清晰 4000px</button>
+      <button type="button" data-v="std">標準 2400px</button>
       <button type="button" data-v="lo">小檔 1600px</button>
     </div>
     <div class="acts">
       <button type="button" id="dAuto">自動找邊</button>
       <button type="button" id="dFull">整張不裁</button>
       <button type="button" id="dRot">↻ 轉 90°</button>
+      <label id="dReshot" for="docCap">📷 重拍</label>
     </div>
   </div>
 </div>
@@ -5772,7 +5794,7 @@ $('vClose').addEventListener('click',function(){
 
 /* ==================== 連續拍照 ==================== */
 var camStream=null, camTrack=null, camFacing='environment', camShots=0, camTorch=false;
-var camRot='auto', devAngle=0;
+var camRot='auto', devAngle=0, camPhoto=null;
 
 // 以重力感測判斷手機實際持握方向（自動旋轉關閉時仍有效）
 window.addEventListener('deviceorientation',function(e){
@@ -5833,7 +5855,14 @@ function startCam(){
     $('cEl').srcObject=s;
     $('cov').classList.add('on');
     var st=camTrack.getSettings?camTrack.getSettings():{};
-    $('cRes').textContent='解析度 '+(st.width||'?')+' × '+(st.height||'?')+'　橫拍時預覽會跟著轉，存出來就是正的';
+    var cap=camTrack.getCapabilities?camTrack.getCapabilities():{};
+    camPhoto=null;
+    if(cap.focusMode&&cap.focusMode.indexOf('continuous')>=0) camTrack.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(function(){});
+    var resTxt=function(){ $('cRes').textContent='預覽 '+(st.width||'?')+'×'+(st.height||'?')+(camPhoto?('｜拍照 '+camPhoto.w+'×'+camPhoto.h):'')+
+      '　點畫面可對焦'+(DOC.on?'｜要最清晰請改用「📄 文件掃描」（手機原相機）':''); };
+    resTxt();
+    if(window.ImageCapture){ try{ new ImageCapture(camTrack).getPhotoCapabilities().then(function(pc){
+      if(pc&&pc.imageWidth&&pc.imageWidth.max){ camPhoto={w:pc.imageWidth.max,h:(pc.imageHeight&&pc.imageHeight.max)||0}; resTxt(); } }).catch(function(){}); }catch(e){} }
     setTimeout(applyPreviewRot,120);
   }).catch(function(e){
     $('status').textContent='無法開啟相機：'+(e.name==='NotAllowedError'?'權限被拒絕，請在網址列左側允許相機':e.message);
@@ -5884,13 +5913,30 @@ $('cShot').addEventListener('click',function(){
   };
   if(window.ImageCapture&&camTrack){
     try{
-      new ImageCapture(camTrack).takePhoto()
+      var spx=(camTrack.getSettings&&camTrack.getSettings())||{};
+      if(camPhoto&&camPhoto.w*(camPhoto.h||camPhoto.w*.75)<(spx.width||0)*(spx.height||0)){ viaCanvas(); return; }  /* 拍照解析度比預覽低時直接取預覽畫格 */
+      var icap=new ImageCapture(camTrack);
+      (camPhoto?icap.takePhoto({imageWidth:camPhoto.w,imageHeight:camPhoto.h||undefined}).catch(function(){ return icap.takePhoto(); }):icap.takePhoto())
         .then(function(b){ return rotateBlobIfNeeded(b,rot); })
         .then(camPush).catch(viaCanvas);
       return;
     }catch(_){}
   }
   viaCanvas();
+});
+$('cWrap').addEventListener('click',function(e){   /* 點一下對焦 */
+  if(!camTrack||!camTrack.getCapabilities) return;
+  var cap=camTrack.getCapabilities(), r=$('cEl').getBoundingClientRect();
+  if(!cap.focusMode) return;
+  var u=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)), v=Math.max(0,Math.min(1,(e.clientY-r.top)/r.height)), rt=camRotation(), t;
+  if(rt===90){ t=u; u=v; v=1-t; } else if(rt===180){ u=1-u; v=1-v; } else if(rt===270){ t=u; u=1-v; v=t; }
+  var fc=$('cFocus'), wr=$('cWrap').getBoundingClientRect(); fc.style.left=(e.clientX-wr.left)+'px'; fc.style.top=(e.clientY-wr.top)+'px';
+  fc.classList.add('on'); setTimeout(function(){ fc.classList.remove('on'); },700);
+  var adv={pointsOfInterest:[{x:u,y:v}]};
+  if(cap.focusMode.indexOf('single-shot')>=0) adv.focusMode='single-shot';
+  camTrack.applyConstraints({advanced:[adv]}).then(function(){
+    if(cap.focusMode.indexOf('continuous')>=0) setTimeout(function(){ camTrack&&camTrack.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(function(){}); },2500);
+  }).catch(function(){});
 });
 $('cSwap').addEventListener('click',function(){
   camFacing=(camFacing==='environment')?'user':'environment';
@@ -5910,9 +5956,9 @@ $('cClose').addEventListener('click',function(){
 });
 
 /* ==================== C2.24 文件模式（單據拍照→找邊→拉正→增強→個別壓縮） ==================== */
-var DOC_PRE={hi:{max:2400,q:.6,label:'清晰'},std:{max:2000,q:.45,label:'標準'},lo:{max:1600,q:.35,label:'小檔'}};
-var DOC={on:false,filter:'enh',preset:'std'};
-try{ Object.assign(DOC,JSON.parse(localStorage.getItem('cyDoc1')||'{}')); }catch(e){}
+var DOC_PRE={hi:{max:4000,q:.75,label:'清晰'},std:{max:2400,q:.6,label:'標準'},lo:{max:1600,q:.45,label:'小檔'}};
+var DOC={on:false,filter:'enh',preset:'hi',v:2};
+try{ var _d=JSON.parse(localStorage.getItem('cyDoc1')||'{}'); if(_d.v!==2) delete _d.preset; Object.assign(DOC,_d,{v:2}); }catch(e){}
 function docSave(){ try{ localStorage.setItem('cyDoc1',JSON.stringify(DOC)); }catch(e){} }
 function docSpec(k){ var p=DOC_PRE[k]||DOC_PRE.std; return {max:p.max,q:p.q,pass:false,mode:'q',target:500*1024}; }
 function zsLabel(s){
@@ -5970,7 +6016,12 @@ function docH(src,W,H){
 function docWarp(c,q,maxSide){
   var dist=function(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); };
   var W=Math.max(dist(q[0],q[1]),dist(q[3],q[2])), H=Math.max(dist(q[0],q[3]),dist(q[1],q[2]));
-  var s=Math.min(1,maxSide/Math.max(W,H)); W=Math.max(16,Math.round(W*s)); H=Math.max(16,Math.round(H*s));
+  var s=Math.min(1,maxSide/Math.max(W,H));
+  if(s<.85){ /* C2.25：要縮小時先用高品質縮圖，再拉正，避免跳點取樣造成文字鋸齒、發糊 */
+    var c2=dCanvas(Math.max(1,Math.round(c.width*s)),Math.max(1,Math.round(c.height*s))), x2=c2.getContext('2d');
+    x2.imageSmoothingEnabled=true; x2.imageSmoothingQuality='high'; x2.drawImage(c,0,0,c2.width,c2.height);
+    c=c2; q=q.map(function(p){ return {x:p.x*s,y:p.y*s}; }); W*=s; H*=s; s=1; }
+  W=Math.max(16,Math.round(W*s)); H=Math.max(16,Math.round(H*s));
   var h=docH(q,W,H), sw=c.width, sh=c.height;
   var sd=c.getContext('2d').getImageData(0,0,sw,sh).data;
   var o=dCanvas(W,H), ox=o.getContext('2d'), od=ox.createImageData(W,H), D=od.data, p=0;
@@ -5984,7 +6035,17 @@ function docWarp(c,q,maxSide){
   ox.putImageData(od,0,0); return o;
 }
 /* --- 濾鏡：增強（紙張變白）／灰階／黑白（局部門檻，掃描器效果） --- */
+function docSharpen(c,amt){ /* 輕度銳利化（unsharp mask，3×3），補回拉正與縮圖損失的邊緣 */
+  var w=c.width, h=c.height, x=c.getContext('2d'), im=x.getImageData(0,0,w,h), d=im.data, n=w*h, ch, i, X, Y;
+  var t=new Uint8ClampedArray(d.length);
+  for(Y=0;Y<h;Y++){ var r=Y*w*4; for(X=0;X<w;X++){ var a=r+(X>0?X-1:X)*4, b=r+X*4, e=r+(X<w-1?X+1:X)*4;
+    for(ch=0;ch<3;ch++) t[b+ch]=(d[a+ch]+d[b+ch]+d[e+ch])/3; } }
+  for(Y=0;Y<h;Y++){ var up=(Y>0?Y-1:Y)*w*4, md=Y*w*4, dn=(Y<h-1?Y+1:Y)*w*4;
+    for(X=0;X<w;X++){ var o=X*4; for(ch=0;ch<3;ch++){ var bl=(t[up+o+ch]+t[md+o+ch]+t[dn+o+ch])/3, v=d[md+o+ch]; d[md+o+ch]=v+(v-bl)*amt; } } }
+  x.putImageData(im,0,0); return c;
+}
 function docFilter(c,f){
+  if(f!=='bw') docSharpen(c,f==='color'?.45:.6);
   if(f==='color') return c;
   var w=c.width, h=c.height, x=c.getContext('2d'), im=x.getImageData(0,0,w,h), d=im.data, n=w*h, i;
   var L=new Uint8Array(n), hist=new Array(256).fill(0);
@@ -6012,12 +6073,13 @@ function docFilter(c,f){
 /* --- 校正畫面 --- */
 function docOpen(blob,mode,idx){
   dv.mode=mode; dv.idx=idx==null?-1:idx; dv.cache={};
-  $('dTitle').textContent=mode==='cam'?'文件校正（第 '+(camShots+1)+' 張）':'文件校正';
+  $('dov').dataset.mode=mode; $('dNext').classList.remove('on'); $('dKeep').style.visibility='';
+  $('dTitle').textContent=mode==='cam'?'文件校正（第 '+(camShots+1)+' 張）':mode==='nat'?'文件校正（第 '+((dv.natN||0)+1)+' 張）':'文件校正';
   $('dRetake').textContent=mode==='cam'?'重拍':'取消';
   $('dHint').textContent='讀取中…';
   $('dov').classList.add('on');
   return createImageBitmap(blob).then(function(bm){
-    var k=Math.min(1,3200/Math.max(bm.width,bm.height));
+    var k=Math.min(1,4600/Math.max(bm.width,bm.height));
     var c=dCanvas(Math.round(bm.width*k),Math.round(bm.height*k)); c.getContext('2d').drawImage(bm,0,0,c.width,c.height);
     if(bm.close) bm.close();
     dv.src=c; dv.name=blob.name||'';
@@ -6079,6 +6141,13 @@ $('dRot').addEventListener('click',function(){
 });
 function docClose(){ $('dov').classList.remove('on'); dv.src=null; dv.disp=null; dv.cache={}; dv.busy=false; $('dKeep').disabled=false; }
 $('dRetake').addEventListener('click',docClose);
+$('dNextDone').addEventListener('click',function(){ docClose(); $('status').textContent='文件掃描完成，共 '+(dv.natN||0)+' 張'; });
+$('docCap').addEventListener('change',function(){
+  var f=this.files&&this.files[0]; this.value='';
+  if(!f) return;
+  if(!$('dov').classList.contains('on')||dv.mode!=='nat') dv.natN=0;
+  docOpen(f,'nat');
+});
 $('dKeep').addEventListener('click',function(){
   if(!dv.src||dv.busy) return; dv.busy=true; $('dKeep').disabled=true; $('dHint').textContent='處理中…';
   var P=DOC_PRE[DOC.preset]||DOC_PRE.std, mode=dv.mode, idx=dv.idx, src=dv.src, quad=dv.quad.slice(), flt=DOC.filter;
@@ -6091,6 +6160,16 @@ $('dKeep').addEventListener('click',function(){
       if(mode==='cam'){
         var nm='文件_'+today()+'_'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds())+'_'+(camShots+1)+'.jpg';
         camPush(new File([b],nm,{type:'image/jpeg'}),{doc:DOC.preset,spec:spec,name:nm});
+      }else if(mode==='nat'){
+        dv.natN=(dv.natN||0)+1;
+        var nm3='文件_'+today()+'_'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds())+'_'+dv.natN+'.jpg';
+        pushImage(new File([b],nm3,{type:'image/jpeg'}),nm3);
+        var li=items[items.length-1]; li.zs=spec; li.doc=DOC.preset; zCache=null; render();
+        $('status').textContent='文件掃描已加入 '+dv.natN+' 張';
+        dv.src=null; dv.busy=false; $('dKeep').disabled=false; $('dKeep').style.visibility='hidden';
+        $('dNextT').textContent='已加入第 '+dv.natN+' 張（'+P.label+'）'; $('dNext').classList.add('on'); $('dHint').textContent='';
+        var cv0=$('dCv'); cv0.getContext('2d').clearRect(0,0,cv0.width,cv0.height);
+        return;
       }else{
         var it=items[idx]; if(it){
           var nm2=baseOf(it.name||'文件')+'_文件.jpg';
@@ -6640,7 +6719,7 @@ function buildHtml(name){
       'document.getElementById("pr").onclick=function(){window.print();};})();';
       var html='<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">'+
         '<meta name="viewport" content="width=device-width,initial-scale=1">'+
-        '<meta name="generator" content="圖影轉PDF.HTML報告 C2.24">'+
+        '<meta name="generator" content="圖影轉PDF.HTML報告 C2.25">'+
         '<title>'+escH(name)+'</title><style>'+css+'</style></head><body>'+
         '<div class="top"><b>'+escH(name)+'</b><span>'+total+' 頁</span><button id="pr" type="button">列印／存 PDF</button></div>'+
         '<main class="doc">'+body.join('\n')+'</main>'+
