@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="圖影轉PDF.HTML報告">
 <meta name="mobile-web-app-capable" content="yes">
-<title>圖影轉PDF.HTML報告 C2.25</title>
+<title>圖影轉PDF.HTML報告 C2.26</title>
 <style>
 /* ===== 外殼 ===== */
 
@@ -509,7 +509,7 @@ body.imgOpen{overflow:hidden}
 <body>
 
 <header id="shellHead"><h1 id="shellTitle">圖影轉PDF.HTML報告</h1>
-<button id="tbInstall" type="button">安裝</button><span class="ver">C2.25</span></header>
+<button id="tbInstall" type="button">安裝</button><span class="ver">C2.26</span></header>
 <nav id="shellTabs">
   <button data-t="PDF" class="on">照片</button>
   <button data-t="CMP">影片</button>
@@ -1206,7 +1206,7 @@ body.imgOpen{overflow:hidden}
 /* ==================== 外殼：分頁切換 + 跨工具交接 ==================== */
 try{ var _v=document.querySelector('header .ver'); if(_v) document.title='圖影轉PDF.HTML報告 '+_v.textContent.trim(); }catch(e){}
 window.TB = (function(){
-  var NAME={CMP:'影片壓縮剪輯',ANN:'圖片標註',PDF:'照片處理（壓縮・轉 PDF）',IMG:'圖片工具（轉檔・裁剪・浮水印…）'};
+  var NAME={CMP:'影片壓縮剪輯',ANN:'圖片標註',PDF:'照片處理（壓縮・轉 PDF）',IMG:'圖片工具（轉檔・裁剪・小畫家…）'};
   var cur='PDF';
   /* ---- 共用檔名流水號：YYYYMMDD_名稱_C1.n，每天自動歸零 ---- */
   function p2(n){ return n<10?'0'+n:''+n; }
@@ -1402,6 +1402,7 @@ window.TB = (function(){
     }});
     if(rest.length) opts.push({t:'標註量測',fn:function(){ sendImgs(rest,'ann'); }});
     if(rest.length) opts.push({t:'圖片工具（轉檔・裁剪・浮水印…）',fn:function(){ exports.toIMG(rest,'conv'); }});
+    if(rest.length) opts.push({t:'小畫家（塗鴉・貼圖・框選搬移）',fn:function(){ exports.toIMG(rest.slice(0,1),'paint'); }});
     if(vids.length){
       opts.push({t:'影片抓格 → 照片處理',fn:function(){ go('PDF'); if(window.PDF&&PDF.openVideo) PDF.openVideo(vids); }});
       opts.push({t:'影片壓縮／剪輯',fn:function(){ go('CMP'); if(window.CMP&&CMP.setVideo) CMP.setVideo(vids[0]); }});
@@ -1533,7 +1534,7 @@ window.TB = (function(){
         : ('已送入 '+files.length+' 張（標註圖保持原樣，不二次壓縮）'),4600);
     },
     _ikReady:function(w){ ikWin=w; var q=ikWait; ikWait=[]; q.forEach(function(f){ f(w); }); },
-    /* 送進圖片工具的某個功能：conv 格式轉換、crop 裁剪、wm 浮水印、resize、splice、split、exif */
+    /* 送進圖片工具的某個功能：conv 格式轉換、crop 裁剪、wm 浮水印、resize、splice、split、exif、paint 小畫家 */
     toIMG:function(files,tool){
       if(!files||!files.length){ toast('沒有可送出的檔案'); return; }
       go('IMG');
@@ -6719,7 +6720,7 @@ function buildHtml(name){
       'document.getElementById("pr").onclick=function(){window.print();};})();';
       var html='<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">'+
         '<meta name="viewport" content="width=device-width,initial-scale=1">'+
-        '<meta name="generator" content="圖影轉PDF.HTML報告 C2.25">'+
+        '<meta name="generator" content="圖影轉PDF.HTML報告 C2.26">'+
         '<title>'+escH(name)+'</title><style>'+css+'</style></head><body>'+
         '<div class="top"><b>'+escH(name)+'</b><span>'+total+' 頁</span><button id="pr" type="button">列印／存 PDF</button></div>'+
         '<main class="doc">'+body.join('\n')+'</main>'+
