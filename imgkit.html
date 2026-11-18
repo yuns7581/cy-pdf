@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d6b6e">
-<title>圖片工具 C1.6</title>
+<title>圖片工具 C1.7</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d6b6e'/%3E%3Crect x='14' y='18' width='36' height='28' rx='3' fill='none' stroke='%23fff' stroke-width='4'/%3E%3Cpath d='M18 42l9-10 7 7 5-5 7 8' fill='none' stroke='%23f2b33d' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
 :root{
@@ -122,44 +122,71 @@ video{background:#000;border-radius:6px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (pointer:coarse){.pick>.hint{display:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
-/* ========== 小畫家（C1.6） ========== */
-#p-paint .ptbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px}
-#p-paint .ptgrp{display:flex;gap:2px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:2px;flex-wrap:wrap}
-#p-paint .ptt{width:36px;height:34px;border:0;background:transparent;border-radius:6px;cursor:pointer;display:grid;place-items:center;color:var(--ink);padding:0}
+/* ========== 小畫家（C1.7：畫布優先版面） ========== */
+body.pt-on{overflow:hidden}
+body.pt-on main{max-width:none;padding:6px 8px 0}
+body.pt-on .bar{display:none}
+body.pt-on.pt-focus header.top{display:none}
+#p-paint.on{display:flex;flex-direction:column;gap:6px;min-height:0}
+#p-paint .ptop{display:flex;gap:6px;align-items:center;min-width:0}
+#p-paint .ptprops{flex:1;min-width:0;display:flex;flex-wrap:nowrap;gap:4px 14px;align-items:center;font-size:13px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:4px 10px;overflow-x:auto;scrollbar-width:thin;height:42px}
+#p-paint .ptprops label{color:var(--sub);white-space:nowrap}
+#p-paint .ptprops .it,#p-paint .ptprops .ctx{display:flex;gap:6px;align-items:center;flex:0 0 auto;white-space:nowrap}
+#p-paint .ptprops .ctx{display:none;padding-left:12px;border-left:1px solid var(--line)}
+#p-paint .ptprops .ctx.on{display:flex}
+#p-paint .ptprops input[type=range]{width:86px;accent-color:var(--teal)}
+#p-paint .ptprops select{border:1px solid var(--line);border-radius:6px;padding:2px 4px;background:#fff}
+#p-paint .ptprops .val{min-width:32px;text-align:right;font-variant-numeric:tabular-nums}
+#p-paint .sw2{position:relative;width:38px;height:32px;flex:0 0 38px}
+#p-paint .sw2 input{position:absolute;width:22px;height:22px;border:2px solid #fff;border-radius:6px;padding:0;box-shadow:0 0 0 1px var(--line);cursor:pointer;background:none}
+#p-paint .sw2 input::-webkit-color-swatch-wrapper{padding:0}#p-paint .sw2 input::-webkit-color-swatch{border:0;border-radius:4px}
+#p-paint #pt-fg{left:0;top:0;z-index:2}#p-paint #pt-bg{right:0;bottom:0}
+#p-paint .pal{display:flex;flex-wrap:nowrap;gap:3px}
+#p-paint .pal button{width:18px;height:18px;border-radius:4px;border:1px solid rgba(0,0,0,.18);padding:0;cursor:pointer;flex:0 0 18px}
+#p-paint .ptact{display:flex;gap:6px;align-items:center;flex:0 0 auto}
+#p-paint .ptmenu{position:relative}
+#p-paint .ptdrop{position:absolute;right:0;top:calc(100% + 4px);z-index:40;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.18);padding:6px;min-width:220px;display:flex;flex-direction:column}
+#p-paint .ptdrop[hidden]{display:none}
+#p-paint .ptdrop>button{border:0;background:transparent;text-align:left;padding:8px 10px;border-radius:6px;cursor:pointer;font-size:14px}
+#p-paint .ptdrop>button:hover{background:var(--teal-l)}
+#p-paint .ptdrop .dz{color:var(--err)}
+#p-paint .ptdrop hr{border:0;border-top:1px solid var(--line);margin:4px 0;width:100%}
+#p-paint .ptdrop .fmtrow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 10px;font-size:13px;color:var(--sub)}
+#p-paint .ptt{width:36px;height:34px;border:0;background:transparent;border-radius:6px;cursor:pointer;display:grid;place-items:center;color:var(--ink);padding:0;flex:0 0 auto}
 #p-paint .ptt svg{width:19px;height:19px}
 #p-paint .ptt:hover{background:var(--teal-l)}
 #p-paint .ptt[aria-pressed="true"]{background:var(--teal);color:#fff}
 #p-paint .ptt:disabled{opacity:.35;cursor:default;background:transparent}
-#p-paint .ptprops{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:13px;margin-bottom:6px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
-#p-paint .ptprops label{color:var(--sub);white-space:nowrap}
-#p-paint .ptprops .it{display:flex;gap:6px;align-items:center}
-#p-paint .ptprops input[type=range]{width:96px;accent-color:var(--teal)}
-#p-paint .ptprops select,#p-paint .ptprops input[type=number]{border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:#fff}
-#p-paint .ptprops .val{min-width:34px;text-align:right;font-variant-numeric:tabular-nums}
-#p-paint .ptctx{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;min-height:30px;border-top:1px dashed var(--line);padding-top:6px}
-#p-paint .ptprops .ctx{display:none;gap:6px;align-items:center;flex-wrap:wrap}
-#p-paint .ptprops .ctx.on{display:flex}
-#p-paint .sw2{position:relative;width:40px;height:34px;flex:0 0 40px}
-#p-paint .sw2 input{position:absolute;width:24px;height:24px;border:2px solid #fff;border-radius:6px;padding:0;box-shadow:0 0 0 1px var(--line);cursor:pointer;background:none}
-#p-paint .sw2 input::-webkit-color-swatch-wrapper{padding:0}#p-paint .sw2 input::-webkit-color-swatch{border:0;border-radius:4px}
-#p-paint #pt-fg{left:0;top:0;z-index:2}#p-paint #pt-bg{right:0;bottom:0}
-#p-paint .pal{display:flex;flex-wrap:wrap;gap:3px;max-width:220px}
-#p-paint .pal button{width:18px;height:18px;border-radius:4px;border:1px solid rgba(0,0,0,.18);padding:0;cursor:pointer}
-#p-paint .stg{position:relative;overflow:auto;background:#dfe5e4;background-image:radial-gradient(#c8d1cf 1px,transparent 1px);background-size:18px 18px;border:1px solid var(--line);border-radius:10px;touch-action:none;min-height:300px;overscroll-behavior:contain}
-#p-paint .cwrap{position:relative;margin:14px;box-shadow:0 6px 20px rgba(0,0,0,.18);background:#fff}
+#p-paint .ptact .ptt{border:1px solid var(--line);background:#fff;height:32px;width:34px}
+body.pt-focus #p-paint #pt-fs{background:var(--teal);color:#fff;border-color:var(--teal)}
+#p-paint .pbody{flex:1;min-height:0;display:flex;gap:6px;position:relative}
+#p-paint .pside{flex:0 0 auto;display:flex;flex-direction:column;gap:2px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:3px;overflow-y:auto;scrollbar-width:none}
+#p-paint .pside::-webkit-scrollbar{display:none}
+#p-paint .pside .sep{height:1px;background:var(--line);margin:3px 4px;flex:0 0 1px}
+#p-paint .stg{flex:1;min-width:0;position:relative;overflow:auto;background:#dfe5e4;background-image:radial-gradient(#c8d1cf 1px,transparent 1px);background-size:18px 18px;border:1px solid var(--line);border-radius:8px;touch-action:none;overscroll-behavior:contain}
+#p-paint .cwrap{position:relative;margin:14px auto;box-shadow:0 6px 20px rgba(0,0,0,.18);background:#fff}
 #p-paint .cwrap canvas{display:block;position:absolute;left:0;top:0;touch-action:none}
 #p-paint #pt-main{position:relative}
 #p-paint #pt-prev{pointer-events:none}
 #p-paint #pt-text{position:absolute;display:none;margin:0;padding:0;border:0;outline:1.5px dashed var(--teal);background:rgba(255,255,255,.35);resize:both;overflow:hidden;min-width:60px;min-height:1.3em;line-height:1.25;white-space:pre;z-index:3}
-#p-paint .ptstat{display:flex;gap:12px;align-items:center;font-size:12px;color:var(--sub);margin-top:6px;flex-wrap:wrap}
-#p-paint .ptstat .zm{display:flex;gap:2px;align-items:center;margin-left:auto}
-#p-paint .ptstat .zm button{border:1px solid var(--line);background:#fff;border-radius:6px;min-width:30px;height:28px;cursor:pointer}
-#p-paint .ptstat .zm span{min-width:46px;text-align:center;font-variant-numeric:tabular-nums}
-#p-paint .ptfloat{position:sticky;bottom:6px;margin:8px auto 0;width:max-content;max-width:100%;display:none;gap:6px;align-items:center;flex-wrap:wrap;background:var(--ink);color:#fff;padding:6px 8px 6px 12px;border-radius:20px;font-size:13px;z-index:5}
+#p-paint .ptinfo,#p-paint .ptzm{position:absolute;bottom:8px;z-index:4;display:flex;gap:8px;align-items:center;font-size:12px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:8px;padding:2px 8px;pointer-events:none;max-width:60%}
+#p-paint .ptinfo{left:calc(var(--sideW,46px) + 14px);color:var(--sub);white-space:nowrap;overflow:hidden}
+#p-paint .ptinfo #pt-hint{overflow:hidden;text-overflow:ellipsis}
+#p-paint .ptzm{right:14px;pointer-events:auto;padding:2px}
+#p-paint .ptzm button{border:0;background:transparent;border-radius:6px;min-width:28px;height:26px;cursor:pointer;font-size:13px}
+#p-paint .ptzm button:hover{background:var(--teal-l)}
+#p-paint .ptzm span{min-width:42px;text-align:center;font-variant-numeric:tabular-nums;cursor:pointer}
+#p-paint .ptfloat{position:absolute;left:50%;transform:translateX(-50%);bottom:44px;display:none;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;background:var(--ink);color:#fff;padding:6px 8px 6px 12px;border-radius:20px;font-size:13px;z-index:6;max-width:calc(100% - 70px)}
 #p-paint .ptfloat.on{display:flex}
 #p-paint .ptfloat button{border:0;border-radius:14px;padding:4px 12px;cursor:pointer;background:#ffffff26;color:#fff}
 #p-paint .ptfloat button.pri{background:var(--teal)}
 #p-paint .ptfloat button.del{background:var(--err)}
+#p-paint .ptdrawer{position:fixed;right:0;top:0;bottom:0;width:min(440px,100%);background:var(--bg);border-left:1px solid var(--line);box-shadow:-8px 0 24px rgba(0,0,0,.15);z-index:45;overflow:auto;padding:10px}
+#p-paint .ptdrawer[hidden]{display:none}
+#p-paint .ptdrawer .dh{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+#p-paint .ptdrawer .dh .hint{flex:1}
+#p-paint .ptdrawer .results{margin-top:0}
+#p-paint .ptdrawer .ritem{flex-wrap:wrap}
 .ptdlg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
 .ptdlg.on{display:flex}
 .ptdlg .bx{background:#fff;border-radius:12px;padding:16px;width:100%;max-width:340px}
@@ -167,12 +194,23 @@ video{background:#000;border-radius:6px}
 .ptdlg .opts{margin-bottom:10px}
 .ptdlg .pre{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
 .ptdlg .act{display:flex;justify-content:flex-end;gap:8px}
-@media (max-width:700px){#p-paint .ptt{width:34px;height:32px}#p-paint .ptprops input[type=range]{width:74px}#p-paint .pal{max-width:none}}
+@media (max-width:700px){
+  body.pt-on main{padding:4px 4px 0}
+  #p-paint .ptprops{height:40px;padding:4px 6px}
+  #p-paint .ptprops .pcol{order:-1}
+  #p-paint .ptact{gap:4px}
+  #p-paint #pt-filebtn,#p-paint #pt-out{padding:4px 8px}
+  #p-paint .ptt{width:34px;height:32px}
+  #p-paint .ptprops input[type=range]{width:70px}
+  #p-paint .ptinfo{display:none}
+  #p-paint .ptfloat{bottom:44px;font-size:12px}
+  #p-paint .ptfloat #pt-floatmsg{display:none}
+}
 </style>
 </head>
 <body>
 <header class="top">
-  <div class="row"><h1>圖片工具</h1><span class="ver">C1.6</span><span class="local">全部在本機處理，不上傳</span></div>
+  <div class="row"><h1>圖片工具</h1><span class="ver">C1.7</span><span class="local">全部在本機處理，不上傳</span></div>
   <nav class="tabs" role="tablist" id="tabs">
     <button role="tab" data-t="conv">格式轉換</button>
     <button role="tab" data-t="splice">拼接</button>
@@ -406,60 +444,67 @@ video{background:#000;border-radius:6px}
 
 <!-- 小畫家 -->
 <section class="panel" id="p-paint">
-  <p class="intro">空白畫布或打開一張圖來畫：畫筆、螢光筆、油漆桶、文字、箭頭、框選搬移。電腦可直接 Ctrl+V 貼上截圖。</p>
-  <div class="ptbar">
-    <div class="ptgrp" id="pt-tools"></div>
-    <div class="ptgrp">
+  <div class="ptop">
+    <div class="ptprops" id="pt-props">
+      <span class="it"><label>粗細</label><input type="range" id="pt-lw" min="1" max="80" value="4"><span class="val" id="pt-lwv">4</span></span>
+      <span class="it"><label>不透明</label><input type="range" id="pt-op" min="10" max="100" value="100"><span class="val" id="pt-opv">100%</span></span>
+      <span class="it pcol">
+        <span class="sw2"><input type="color" id="pt-fg" value="#e53935" title="主色（左鍵）"><input type="color" id="pt-bg" value="#ffffff" title="副色／背景（右鍵、橡皮擦）"></span>
+        <button class="btn sm ghost" id="pt-swap" title="主副色互換" style="padding:2px 6px">⇄</button>
+        <span class="pal" id="pt-pal"></span>
+      </span>
+      <span class="ctx" id="pt-cx-shape"><label>樣式</label><div class="seg" id="pt-fill"><button data-v="stroke">外框</button><button data-v="both">外框＋底色</button><button data-v="fill">實心</button></div></span>
+      <span class="ctx" id="pt-cx-fill"><label>容差</label><input type="range" id="pt-tol" min="0" max="120" value="32"><span class="val" id="pt-tolv">32</span></span>
+      <span class="ctx" id="pt-cx-text">
+        <select id="pt-font"><option value='"Microsoft JhengHei","微軟正黑體","Noto Sans TC","PingFang TC",sans-serif'>微軟正黑體</option><option value='"Noto Sans TC","PingFang TC",sans-serif'>思源黑體</option><option value='"PMingLiU","新細明體","Noto Serif TC",serif'>明體</option><option value='Consolas,"Courier New",monospace'>等寬</option></select>
+        <select id="pt-fsize"><option>14</option><option>18</option><option selected>28</option><option>40</option><option>56</option><option>80</option><option>120</option><option>180</option></select>
+        <label class="chk"><input type="checkbox" id="pt-bold" checked>粗體</label>
+        <label class="chk"><input type="checkbox" id="pt-tbox">底框</label>
+      </span>
+    </div>
+    <div class="ptact">
+      <div class="ptmenu"><button class="btn sm" id="pt-filebtn" aria-haspopup="true" aria-expanded="false">檔案 ▾</button>
+        <div class="ptdrop" id="pt-filemenu" hidden>
+          <button id="pt-open">開啟圖片（取代畫布）</button>
+          <button id="pt-place">置入圖片（浮在上面）</button>
+          <button id="pt-paste">貼上剪貼簿（Ctrl+V）</button>
+          <button id="pt-new">新畫布…</button>
+          <button id="pt-size">畫布尺寸…</button>
+          <button id="pt-copy">複製整張到剪貼簿</button>
+          <hr>
+          <div class="fmtrow">輸出格式 <div class="seg" id="pt-fmt"><button data-v="jpg">JPG</button><button data-v="png">PNG</button></div></div>
+          <hr>
+          <button id="pt-clear" class="dz">清空畫布</button>
+        </div>
+      </div>
+      <button class="btn sm pri" id="pt-out" title="輸出圖片（Ctrl+S）">輸出</button>
+      <button class="btn sm" id="pt-resbtn" hidden>已輸出 <b id="pt-resn">0</b></button>
+      <button class="ptt" id="pt-fs" title="全螢幕（再按一次或 Esc 離開）" aria-label="全螢幕"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+    </div>
+    <input type="file" id="pt-fopen" accept="image/*,.heic,.heif,.tif,.tiff,.psd" class="sr" tabindex="-1">
+    <input type="file" id="pt-fplace" accept="image/*,.heic,.heif,.tif,.tiff,.psd" class="sr" tabindex="-1">
+  </div>
+  <div class="pbody">
+    <div class="pside" id="pt-tools">
+      <div class="sep" id="pt-sep"></div>
       <button class="ptt" id="pt-undo" title="復原（Ctrl+Z）" aria-label="復原"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg></button>
       <button class="ptt" id="pt-redo" title="重做（Ctrl+Y）" aria-label="重做"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 15-6.7L21 13"/></svg></button>
       <button class="ptt" id="pt-rotl" title="向左轉 90°" aria-label="向左轉"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2.5 2v6h6"/><path d="M2.66 15.57a10 10 0 1 0 .57-8.38"/></svg></button>
       <button class="ptt" id="pt-rotr" title="向右轉 90°" aria-label="向右轉"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 1 1-.57-8.38"/></svg></button>
       <button class="ptt" id="pt-flip" title="左右翻轉" aria-label="左右翻轉"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M8 7 3 12l5 5z"/><path d="m16 7 5 5-5 5z"/></svg></button>
     </div>
-    <div class="pick" style="margin:0">
-      <button class="btn sm pri" id="pt-open">開啟圖片</button>
-      <button class="btn sm" id="pt-place">置入圖片</button>
-      <button class="btn sm" id="pt-paste">貼上</button>
-      <button class="btn sm" id="pt-new">新畫布</button>
-      <button class="btn sm" id="pt-size">畫布尺寸</button>
-      <button class="btn sm ghost" id="pt-copy">複製整張</button>
-      <button class="btn sm ghost" id="pt-clear">清空</button>
-      <input type="file" id="pt-fopen" accept="image/*,.heic,.heif,.tif,.tiff,.psd" class="sr" tabindex="-1">
-      <input type="file" id="pt-fplace" accept="image/*,.heic,.heif,.tif,.tiff,.psd" class="sr" tabindex="-1">
+    <div class="stg" id="pt-stage">
+      <div class="cwrap" id="pt-wrap">
+        <canvas id="pt-main"></canvas>
+        <canvas id="pt-prev"></canvas>
+        <textarea id="pt-text" spellcheck="false" placeholder="輸入文字"></textarea>
+      </div>
     </div>
+    <div class="ptinfo"><span id="pt-size-l">—</span><span id="pt-xy"></span><span id="pt-hint"></span></div>
+    <div class="ptzm"><button id="pt-zo" title="縮小（-）">−</button><span id="pt-zl" title="點一下切換：符合視窗／100%">100%</span><button id="pt-zi" title="放大（+）">＋</button><button id="pt-zf" title="符合視窗（0）">符合</button></div>
+    <div class="ptfloat" id="pt-float"><span id="pt-floatmsg">拖曳移動、拉角縮放（Shift 等比）</span><button class="pri" id="pt-ok">確定（Enter）</button><button id="pt-cancel">取消（Esc）</button><button class="del" id="pt-del">刪除</button></div>
   </div>
-  <div class="ptprops">
-    <span class="it"><label>粗細</label><input type="range" id="pt-lw" min="1" max="80" value="4"><span class="val" id="pt-lwv">4</span></span>
-    <span class="it"><label>不透明</label><input type="range" id="pt-op" min="10" max="100" value="100"><span class="val" id="pt-opv">100%</span></span>
-    <span class="it">
-      <span class="sw2"><input type="color" id="pt-fg" value="#e53935" title="主色（左鍵）"><input type="color" id="pt-bg" value="#ffffff" title="副色／背景（右鍵、橡皮擦）"></span>
-      <button class="btn sm ghost" id="pt-swap" title="主副色互換" style="padding:2px 6px">⇄</button>
-      <span class="pal" id="pt-pal"></span>
-    </span>
-    <span class="it"><label>輸出</label><div class="seg" id="pt-fmt"><button data-v="jpg">JPG</button><button data-v="png">PNG</button></div></span>
-    <div class="ptctx">
-    <span class="ctx" id="pt-cx-shape"><label>樣式</label><div class="seg" id="pt-fill"><button data-v="stroke">外框</button><button data-v="both">外框＋底色</button><button data-v="fill">實心</button></div></span>
-    <span class="ctx" id="pt-cx-fill"><label>容差</label><input type="range" id="pt-tol" min="0" max="120" value="32"><span class="val" id="pt-tolv">32</span></span>
-    <span class="ctx" id="pt-cx-text">
-      <select id="pt-font"><option value='"Microsoft JhengHei","微軟正黑體","Noto Sans TC","PingFang TC",sans-serif'>微軟正黑體</option><option value='"Noto Sans TC","PingFang TC",sans-serif'>思源黑體</option><option value='"PMingLiU","新細明體","Noto Serif TC",serif'>明體</option><option value='Consolas,"Courier New",monospace'>等寬</option></select>
-      <select id="pt-fsize"><option>14</option><option>18</option><option selected>28</option><option>40</option><option>56</option><option>80</option><option>120</option><option>180</option></select>
-      <label class="chk"><input type="checkbox" id="pt-bold" checked>粗體</label>
-      <label class="chk"><input type="checkbox" id="pt-tbox">底框（用副色）</label>
-    </span>
-      <span id="pt-hint" class="hint"></span>
-    </div>
-  </div>
-  <div class="stg" id="pt-stage">
-    <div class="cwrap" id="pt-wrap">
-      <canvas id="pt-main"></canvas>
-      <canvas id="pt-prev"></canvas>
-      <textarea id="pt-text" spellcheck="false" placeholder="輸入文字"></textarea>
-    </div>
-  </div>
-  <div class="ptfloat" id="pt-float"><span id="pt-floatmsg">拖曳移動、拉角縮放（Shift 等比）</span><button class="pri" id="pt-ok">確定（Enter）</button><button id="pt-cancel">取消（Esc）</button><button class="del" id="pt-del">刪除</button></div>
-  <div class="ptstat"><span id="pt-size-l">—</span><span id="pt-xy"></span>
-    <span class="zm"><button id="pt-zo" title="縮小">−</button><span id="pt-zl" title="點一下切換：符合視窗／100%">100%</span><button id="pt-zi" title="放大">＋</button><button id="pt-zf" title="符合視窗">符合</button></span></div>
-  <div class="results" id="paint-res"></div>
+  <div class="ptdrawer" id="pt-drawer" hidden><div class="dh"><b>輸出結果</b><span class="hint">可下載、分享，或送到照片清單／標註</span><button class="btn sm ghost" id="pt-drclose">關閉</button></div><div class="results" id="paint-res"></div></div>
   <div class="ptdlg" id="pt-dlg"><div class="bx"><h4 id="pt-dlgt"></h4>
     <div class="pre" id="pt-dlgpre"></div>
     <div class="opts">
@@ -910,6 +955,7 @@ const Tools = {};
 let curTool = 'conv';
 function showTool(t) {
   if (!Tools[t]) t = 'conv';
+  if (curTool !== t && Tools[curTool] && Tools[curTool].onHide) Tools[curTool].onHide();
   curTool = t;
   $$('#tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.t === t ? 'true' : 'false'));
   $$('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + t));
@@ -2391,7 +2437,7 @@ const WM = (() => {
   };
 })();
 
-/* ========== 小畫家（C1.6，取材自 Gemini Paint Studio，改寫為離線、觸控、像素等大） ========== */
+/* ========== 小畫家（C1.7 版面改畫布優先；C1.6 起，取材自 Gemini Paint Studio，改寫為離線、觸控、像素等大） ========== */
 (() => {
   const PMAX_SIDE = 8192, PMAX_AREA = 16.7e6, HIST_BYTES = 256e6, HIST_MAX = 40;
   const TOOLS = [
@@ -2442,20 +2488,33 @@ const WM = (() => {
   function fitZoom() { const r = stage.getBoundingClientRect(); return clamp(Math.min((r.width - 30) / S.w, (r.height - 30) / S.h, 1), 0.05, 8); }
   function setZoom(z, cx, cy) {
     const r = stage.getBoundingClientRect(); cx = cx == null ? r.width / 2 : cx; cy = cy == null ? r.height / 2 : cy;
-    const lx = (stage.scrollLeft + cx - 14) / S.z, ly = (stage.scrollTop + cy - 14) / S.z;
+    const lx = (stage.scrollLeft + cx - wrap.offsetLeft) / S.z, ly = (stage.scrollTop + cy - wrap.offsetTop) / S.z;
     S.z = clamp(z, 0.05, 8); applyZoom();
-    stage.scrollLeft = lx * S.z + 14 - cx; stage.scrollTop = ly * S.z + 14 - cy;
+    stage.scrollLeft = lx * S.z + wrap.offsetLeft - cx; stage.scrollTop = ly * S.z + wrap.offsetTop - cy;
     if (sel) drawSel();
   }
+  /* 版面：工具直排在左、屬性一列在上，畫布吃滿剩下的高度；整頁不捲動 */
   function sizeStage() {
-    if (!$('#p-paint').classList.contains('on')) return;
-    const top = stage.getBoundingClientRect().top + (document.scrollingElement || document.documentElement).scrollTop, bar = document.querySelector('.bar');
-    const bh = bar ? bar.getBoundingClientRect().height : 60, sh = $('#p-paint .ptstat').getBoundingClientRect().height || 34;
-    /* 手機：工具列佔掉半個螢幕，畫布給 6 成高，捲一下就能全看到；電腦：剛好填滿剩下空間 */
-    const fit = window.innerHeight - top - bh - sh - 18;
-    stage.style.height = Math.round(window.innerWidth < 700 ? Math.max(fit, window.innerHeight * 0.6) : Math.max(280, fit)) + 'px';
+    const pn = $('#p-paint'); if (!pn.classList.contains('on')) return;
+    window.scrollTo(0, 0);
+    const top = pn.getBoundingClientRect().top;
+    pn.style.height = Math.max(260, Math.floor(window.innerHeight - top - 6)) + 'px';
+    pn.style.setProperty('--sideW', $('#pt-tools').getBoundingClientRect().width + 'px');
   }
-
+  function setOn(on) {
+    document.body.classList.toggle('pt-on', on);
+    if (!on) { document.body.classList.remove('pt-focus'); closeMenu(); if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); }
+  }
+  function closeMenu() { $('#pt-filemenu').hidden = true; $('#pt-filebtn').setAttribute('aria-expanded', 'false'); }
+  async function toggleFull() {
+    const on = !document.body.classList.contains('pt-focus');
+    document.body.classList.toggle('pt-focus', on);
+    try {
+      if (on && !document.fullscreenElement && document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+      else if (!on && document.fullscreenElement) await document.exitFullscreen();
+    } catch (e) { if (on) toast('瀏覽器不允許全螢幕，已先隱藏分頁列'); }
+    setTimeout(() => { sizeStage(); setZoom(fitZoom()); }, 120);
+  }
   /* ---- 歷史（記憶體上限，避免手機爆掉） ---- */
   function snap() { return { w: S.w, h: S.h, d: ctx.getImageData(0, 0, S.w, S.h) }; }
   function histReset() { H.list = [snap()]; H.i = 0; S.dirty = false; histUI(); }
@@ -2747,7 +2806,7 @@ const WM = (() => {
   function selectTool(t, settle = true) {
     if (settle) { endText(); dropSel(true); }
     S.tool = t; saveP();
-    $$('#pt-tools .ptt').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t ? 'true' : 'false'));
+    $$('#pt-tools .ptt[data-tool]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t ? 'true' : 'false'));
     $('#pt-cx-shape').classList.toggle('on', ['rect', 'roundRect', 'ellipse'].includes(t));
     $('#pt-cx-fill').classList.toggle('on', t === 'fill');
     $('#pt-cx-text').classList.toggle('on', t === 'text');
@@ -2768,15 +2827,15 @@ const WM = (() => {
   function exportCanvas(job) {
     endText(); dropSel(true);
     const fmt = S.fmt === 'png' ? 'png' : 'jpg', nm = nextSerial() + '.' + fmt;
-    return canvasBlob(main, fmt, 0.92).then(b => { res.add(nm, b, `${S.w}×${S.h}`); Bar.msg('已輸出 ' + nm); return b; });
+    return canvasBlob(main, fmt, 0.92).then(b => { res.add(nm, b, `${S.w}×${S.h}`); Bar.msg('已輸出 ' + nm); $('#pt-resn').textContent = res.ok().length; $('#pt-resbtn').hidden = false; $('#pt-drawer').hidden = false; toast('已輸出 ' + nm); return b; });
   }
 
   function init() {
     loadP();
     const tb = $('#pt-tools');
-    TOOLS.forEach(([k, t, svg]) => tb.append(el('button', { class: 'ptt', 'data-tool': k, title: t, 'aria-label': t })));
-    $$('#pt-tools .ptt').forEach((b, i) => b.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${TOOLS[i][2]}</svg>`);
-    tb.addEventListener('click', e => { const b = e.target.closest('.ptt'); if (b) selectTool(b.dataset.tool); });
+    const sep = $('#pt-sep'); TOOLS.forEach(([k, t]) => tb.insertBefore(el('button', { class: 'ptt', 'data-tool': k, title: t, 'aria-label': t }), sep));
+    $$('#pt-tools .ptt[data-tool]').forEach((b, i) => b.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${TOOLS[i][2]}</svg>`);
+    tb.addEventListener('click', e => { const b = e.target.closest('.ptt[data-tool]'); if (b) selectTool(b.dataset.tool); });
     const pal = $('#pt-pal');
     PAL.forEach(c => { const b = el('button', { style: 'background:' + c, title: c + '（左鍵主色、右鍵副色）', 'aria-label': c });
       b.addEventListener('click', () => setColor('fg', c)); b.addEventListener('contextmenu', e => { e.preventDefault(); setColor('bg', c); }); pal.append(b); });
@@ -2805,6 +2864,14 @@ const WM = (() => {
     tbox.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); endText(true); } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); endText(); } });
     tbox.addEventListener('blur', () => setTimeout(() => { if (textAt && document.activeElement !== tbox) endText(); }, 120));
 
+    $('#pt-filebtn').onclick = e => { e.stopPropagation(); const m = $('#pt-filemenu'); m.hidden = !m.hidden; $('#pt-filebtn').setAttribute('aria-expanded', String(!m.hidden)); };
+    $('#pt-filemenu').addEventListener('click', e => { if (e.target.closest('.ptdrop>button')) closeMenu(); });
+    document.addEventListener('pointerdown', e => { if (!e.target.closest('.ptmenu')) closeMenu(); });
+    $('#pt-out').onclick = () => Bar.run();
+    $('#pt-resbtn').onclick = () => { $('#pt-drawer').hidden = false; };
+    $('#pt-drclose').onclick = () => { $('#pt-drawer').hidden = true; };
+    $('#pt-fs').onclick = toggleFull;
+    document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && document.body.classList.contains('pt-focus')) { document.body.classList.remove('pt-focus'); } setTimeout(() => { sizeStage(); setZoom(fitZoom()); }, 120); });
     $('#pt-undo').onclick = undo; $('#pt-redo').onclick = redo;
     $('#pt-rotl').onclick = () => rot(-1); $('#pt-rotr').onclick = () => rot(1); $('#pt-flip').onclick = flip;
     $('#pt-open').onclick = () => { if (S.dirty && !confirm('開啟新圖片會取代目前畫布，還沒輸出的內容會消失。繼續？')) return; $('#pt-fopen').click(); };
@@ -2823,6 +2890,8 @@ const WM = (() => {
 
     document.addEventListener('keydown', e => {
       if (curTool !== 'paint' || $('#pt-dlg').classList.contains('on')) return;
+      if (e.key === 'Escape' && !$('#pt-filemenu').hidden) { closeMenu(); return; }
+      if (e.key === 'Escape' && !$('#pt-drawer').hidden && !sel) { $('#pt-drawer').hidden = true; return; }
       const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
       if (typing) return;
       const k = e.key.toLowerCase(), mod = e.ctrlKey || e.metaKey;
@@ -2846,8 +2915,9 @@ const WM = (() => {
 
   Tools.paint = {
     add: f => addFiles(f),
-    onShow: () => { sizeStage(); if (!S.shown) { S.shown = 1; setZoom(fitZoom()); } },
-    state() { return { label: '輸出圖片', ok: true, msg: `${S.w}×${S.h}｜${S.fmt === 'png' ? 'PNG' : 'JPG'}｜Ctrl+S 也可輸出` }; },
+    onShow: () => { setOn(true); requestAnimationFrame(() => { sizeStage(); if (!S.shown) { S.shown = 1; setZoom(fitZoom()); } }); },
+    onHide: () => setOn(false),
+    state() { return { label: '輸出圖片', ok: true, msg: `${S.w}×${S.h}｜${S.fmt === 'png' ? 'PNG' : 'JPG'}` }; },
     run: exportCanvas
   };
   window.PT = { S, H, get sel() { return sel; }, undo, redo, selectTool, openAsCanvas, placeFile, flood, setZoom };
